@@ -30,9 +30,8 @@ jobs:
           #test -d gitops
           #test -d platform-services
           #test -d reference-workloads
-
+          
       - name: Check Terraform formatting
         run: terraform fmt -check -recursive infrastructure/terraform || true
-
       - name: Check Ansible syntax
         run: ansible --version
