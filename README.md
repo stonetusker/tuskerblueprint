@@ -1,6 +1,8 @@
 # TuskerBlueprint
 
-TuskerBlueprint is a production-ready Internal Developer Platform (IDP) reference implementation built according to the Tusker Platform Reference Architecture (TPRA).
+TuskerBlueprint is a production-ready Internal Developer Platform (IDP)
+reference implementation built according to the Tusker Platform Reference
+Architecture (TPRA).
 
 ## Goals
 
