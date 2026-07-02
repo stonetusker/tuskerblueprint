@@ -1,0 +1,14 @@
+# Default ownership
+* @subeeshes
+
+# Platform
+/infrastructure/ @subeeshes
+
+# GitOps
+/gitops/ @subeeshes
+
+# Platform Services
+/platform-services/ @subeeshes
+
+# Documentation
+/docs/ @subeeshes

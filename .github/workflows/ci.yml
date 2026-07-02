@@ -1,0 +1,31 @@
+name: Repository CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate Markdown
+        uses: DavidAnson/markdownlint-cli2-action@v18
+
+      - name: Validate YAML
+        uses: ibiqlik/action-yamllint@v3
+
+      - name: Check formatting
+        run: |
+          echo "Formatting checks will be expanded in later phases."
+
+      - name: Repository structure
+        run: |
+          test -d infrastructure
+          test -d gitops
+          test -d platform-services
+          test -d reference-workloads
