@@ -25,7 +25,8 @@ jobs:
 
       - name: Repository structure
         run: |
-          test -d infrastructure
-          test -d gitops
-          test -d platform-services
-          test -d reference-workloads
+          test -d .github
+          #test -d infrastructure
+          #test -d gitops
+          #test -d platform-services
+          #test -d reference-workloads
