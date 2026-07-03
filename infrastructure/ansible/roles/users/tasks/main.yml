@@ -1,0 +1,51 @@
+---
+- name: Create platform group
+  ansible.builtin.group:
+    name: "{{ users_group }}"
+    state: present
+
+- name: Create platform user
+  ansible.builtin.user:
+    name: "{{ users_name }}"
+    group: "{{ users_group }}"
+    shell: "{{ users_shell }}"
+    home: "{{ users_home }}"
+    create_home: "{{ users_create_home }}"
+    state: present
+
+- name: Configure passwordless sudo
+  ansible.builtin.copy:
+    dest: "/etc/sudoers.d/{{ users_name }}"
+    content: "{{ users_name }} ALL=(ALL) NOPASSWD:ALL\n"
+    owner: root
+    group: root
+    mode: "0440"
+    validate: "visudo -cf %s"
+  when: users_sudo
+
+- name: Create .ssh directory
+  ansible.builtin.file:
+    path: "{{ users_home }}/.ssh"
+    state: directory
+    owner: "{{ users_name }}"
+    group: "{{ users_group }}"
+    mode: "0700"
+
+- name: Configure authorized keys
+  ansible.posix.authorized_key:
+    user: "{{ users_name }}"
+    key: "{{ item }}"
+    state: present
+  loop: "{{ users_authorized_keys }}"
+  when: users_authorized_keys | length > 0
+
+- name: Verify platform user exists
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ users_name }}"
+
+- name: Assert platform user exists
+  ansible.builtin.assert:
+    that:
+      - "users_name in getent_passwd"
+    fail_msg: "Platform user was not created successfully."

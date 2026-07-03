@@ -1,0 +1,8 @@
+---
+- name: Configure Common Operating System
+  hosts: all
+  become: true
+  gather_facts: true
+
+  roles:
+    - common

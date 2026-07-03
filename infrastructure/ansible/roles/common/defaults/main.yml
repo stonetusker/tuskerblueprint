@@ -1,0 +1,28 @@
+---
+# Default timezone
+common_timezone: UTC
+
+# Default locale
+common_locale: en_US.UTF-8
+
+# System packages installed on every host
+common_packages:
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - git
+  - gnupg
+  - jq
+  - software-properties-common
+  - unzip
+  - vim
+  - wget
+
+# Upgrade installed packages
+common_upgrade_packages: true
+
+# Remove unused packages
+common_autoremove: true
+
+# Clean package cache
+common_autoclean: true

@@ -1,0 +1,9 @@
+---
+# Placeholder for platform services
+
+# Future roles:
+# - argocd
+# - traefik
+# - cert-manager
+# - kyverno
+# - external-secrets

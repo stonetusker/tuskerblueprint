@@ -1,0 +1,7 @@
+---
+- name: Configure time synchronization
+  hosts: platform
+  become: true
+
+  roles:
+    - timesync

@@ -1,0 +1,14 @@
+---
+- name: Bootstrap Platform Hosts
+  hosts: all
+  become: true
+  gather_facts: true
+
+  roles:
+    - role: common
+      tags:
+        - common
+
+    - role: users
+      tags:
+        - users

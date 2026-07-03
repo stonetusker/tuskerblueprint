@@ -1,0 +1,14 @@
+---
+users_name: tusker
+
+users_group: "{{ users_name }}"
+
+users_shell: /bin/bash
+
+users_home: "/home/{{ users_name }}"
+
+users_create_home: true
+
+users_sudo: true
+
+users_authorized_keys: []
