@@ -1,0 +1,38 @@
+---
+name: Ansible
+
+on:
+  pull_request:
+    paths:
+      - "infrastructure/ansible/**"
+      - ".github/workflows/ansible.yml"
+
+  push:
+    branches:
+      - main
+    paths:
+      - "infrastructure/ansible/**"
+
+permissions:
+  contents: read
+
+jobs:
+  ansible:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Enable when Ansible playbooks are implemented
+      #
+      # - name: Install Ansible
+      #   run: pip install ansible ansible-lint
+      #
+      # - name: Ansible Lint
+      #   run: ansible-lint infrastructure/ansible
+      #
+      # - name: Syntax Check
+      #   run: |
+      #     ansible-playbook \
+      #       --syntax-check \
+      #       infrastructure/ansible/playbooks/site.yml

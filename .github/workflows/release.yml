@@ -1,0 +1,24 @@
+---
+name: Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Enable when release automation is implemented
+      #
+      # - Build
+      # - Test
+      # - Publish
+      # - Sign
+      # - Create Release

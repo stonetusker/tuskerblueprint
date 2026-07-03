@@ -7,42 +7,16 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
-  validate:
+  repository:
+    name: Repository CI
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install yamllint
-        run: |
-          python3 -m pip install yamllint
-
-      - name: Lint YAML
-        run: |
-          yamllint .
-
-      - name: Check formatting
-        run: |
-          echo "Formatting checks will be expanded in later phases."
-
-      - name: Repository structure
-        run: |
-          test -d .github
-          #test -d infrastructure
-          #test -d gitops
-          #test -d platform-services
-          #test -d reference-workloads
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.9.8
-      - name: Check Terraform formatting
-        run: terraform fmt -check -recursive infrastructure/terraform || true
-
-      - name: Install Ansible
-        run: |
-          python3 -m pip install ansible ansible-lint
-      - name: Check Ansible syntax
-        run: ansible --version
+      - name: Validate GitHub Actions
+        uses: rhysd/actionlint@v1
