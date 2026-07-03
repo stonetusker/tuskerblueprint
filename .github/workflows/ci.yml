@@ -1,3 +1,4 @@
+---
 name: Repository CI
 
 on:
@@ -13,11 +14,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Validate Markdown
-        uses: DavidAnson/markdownlint-cli2-action@v18
+      - name: Install yamllint
+        run: |
+          python3 -m pip install yamllint
 
-      - name: Validate YAML
-        uses: ibiqlik/action-yamllint@v3
+      - name: Lint YAML
+        run: |
+          yamllint .
 
       - name: Check formatting
         run: |
@@ -31,9 +34,15 @@ jobs:
           #test -d platform-services
           #test -d reference-workloads
 
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
       - name: Check Terraform formatting
         run: terraform fmt -check -recursive infrastructure/terraform || true
+
+      - name: Install Ansible
+        run: |
+          python3 -m pip install ansible ansible-lint
       - name: Check Ansible syntax
         run: ansible --version
-
-    
