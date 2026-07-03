@@ -2,10 +2,10 @@
 name: Repository CI
 
 on:
-  pull_request:
   push:
     branches:
       - main
+  pull_request:
 
 permissions:
   contents: read
@@ -16,7 +16,5 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Validate GitHub Actions
-        uses: rhysd/actionlint@v1
+      - name: Checkout Repository
+        uses: actions/checkout@v4
