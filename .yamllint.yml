@@ -2,15 +2,17 @@
 extends: default
 
 rules:
+  document-start: disable
+
+  empty-lines: disable
+
+  trailing-spaces:
+    level: warning
+
   line-length:
-    max: 120
+    max: 140
     allow-non-breakable-words: true
-
-  comments:
-    min-spaces-from-content: 1
-
-  document-start:
-    present: true
+    allow-non-breakable-inline-mappings: true
 
   truthy:
     ignore: |
@@ -18,4 +20,4 @@ rules:
 
 ignore: |
   .terraform/
-
+  node_modules/
