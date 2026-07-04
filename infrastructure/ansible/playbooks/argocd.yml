@@ -1,0 +1,7 @@
+---
+- name: Bootstrap Argo CD
+  hosts: k3s_servers
+  become: true
+
+  roles:
+    - argocd

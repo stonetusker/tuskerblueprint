@@ -1,0 +1,35 @@
+---
+- name: Ensure GitOps bootstrap directory exists
+  ansible.builtin.file:
+    path: /opt/tuskerblueprint/gitops/bootstrap
+    state: directory
+    mode: "0755"
+
+- name: Copy Argo CD bootstrap manifests
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../../../gitops/bootstrap/argocd/"
+    dest: /opt/tuskerblueprint/gitops/bootstrap/argocd/
+    mode: preserve
+
+- name: Check if Argo CD namespace exists
+  ansible.builtin.command:
+    cmd: kubectl get namespace argocd
+  register: argocd_namespace
+  failed_when: false
+  changed_when: false
+
+- name: Bootstrap Argo CD
+  ansible.builtin.command:
+    cmd: kubectl apply -k /opt/tuskerblueprint/gitops/bootstrap/argocd
+  when: argocd_namespace.rc != 0
+  register: argocd_bootstrap
+
+- name: Wait for Argo CD server deployment
+  ansible.builtin.command:
+    cmd: kubectl -n argocd rollout status deployment/argocd-server --timeout=300s
+  changed_when: false
+
+- name: Wait for Argo CD application controller
+  ansible.builtin.command:
+    cmd: kubectl -n argocd rollout status statefulset/argocd-application-controller --timeout=300s
+  changed_when: false
