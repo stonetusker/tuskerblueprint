@@ -1,0 +1,7 @@
+---
+#- name: Configure kernel
+#  hosts: platform
+#  become: true
+#
+#  roles:
+#    - kernel

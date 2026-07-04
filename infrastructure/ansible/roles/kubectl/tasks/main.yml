@@ -1,0 +1,30 @@
+---
+- name: Ensure .kube directory exists
+  ansible.builtin.file:
+    path: /home/github-runner/.kube
+    state: directory
+    owner: github-runner
+    group: github-runner
+    mode: "0700"
+
+- name: Copy kubeconfig for github-runner
+  ansible.builtin.copy:
+    src: /etc/rancher/k3s/k3s.yaml
+    remote_src: true
+    dest: /home/github-runner/.kube/config
+    owner: github-runner
+    group: github-runner
+    mode: "0600"
+
+- name: Update kubeconfig server address
+  ansible.builtin.replace:
+    path: /home/github-runner/.kube/config
+    regexp: 'https://127\.0\.0\.1:6443'
+    replace: 'https://72.60.30.149:6443'
+
+- name: Verify kubectl connectivity
+  become: true
+  become_user: github-runner
+  ansible.builtin.command:
+    cmd: kubectl cluster-info
+  changed_when: false

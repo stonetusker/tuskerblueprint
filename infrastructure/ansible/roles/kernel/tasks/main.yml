@@ -1,0 +1,21 @@
+---
+#- name: Ensure br_netfilter module is loaded
+#  community.general.modprobe:
+#    name: br_netfilter
+#    state: present
+#    persistent: present
+
+#- name: Ensure overlay module is loaded
+#  community.general.modprobe:
+#    name: overlay
+#    state: present
+#    persistent: present
+#
+#- name: Configure kernel parameters
+#  ansible.posix.sysctl:
+#    name: "{{ item.key }}"
+#    value: "{{ item.value }}"
+#    state: present
+#    reload: true
+#    sysctl_set: true
+#  loop: "{{ kernel_sysctl_settings | dict2items }}"

@@ -1,0 +1,7 @@
+---
+- name: Configure kubectl
+  hosts: k3s_servers
+  become: true
+
+  roles:
+    - kubectl
