@@ -1,2 +1,24 @@
 ---
-# Implemented in Commit 2.4
+- name: Check whether Argo CD release exists
+  ansible.builtin.command:
+    cmd: >
+      helm status
+      {{ argocd_release_name }}
+      --namespace {{ argocd_namespace }}
+  register: argocd_status
+  failed_when: false
+  changed_when: false
+
+- name: Install Argo CD
+  ansible.builtin.command:
+    cmd: >
+      helm upgrade
+      --install
+      {{ argocd_release_name }}
+      {{ argocd_chart_name }}
+      --namespace {{ argocd_namespace }}
+      --version {{ argocd_chart_version }}
+      --create-namespace
+      --wait
+      --timeout {{ argocd_wait_timeout }}s
+  when: argocd_status.rc != 0

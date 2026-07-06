@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: platform
+  namespace: argocd
+spec:
+  description: TuskerBlueprint Platform Services
+
+  sourceRepos:
+    - git@github.com:stonetusker/tuskerblueprint.git
+
+  destinations:
+    - namespace: "*"
+      server: https://kubernetes.default.svc
+
+  sourceNamespaces:
+    - argocd
+
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"
+
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"
+
+  orphanedResources:
+    warn: true
