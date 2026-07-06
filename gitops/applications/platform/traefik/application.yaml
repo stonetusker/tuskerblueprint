@@ -15,18 +15,10 @@ metadata:
 spec:
   project: platform
 
-  sources:
-    - repoURL: https://traefik.github.io/charts
-      chart: traefik
-      targetRevision: 37.1.1
-      helm:
-        releaseName: traefik
-        valueFiles:
-          - $values/platform-services/traefik/values/development.yaml
-
-    - repoURL: git@github.com:stonetusker/tuskerblueprint.git
-      targetRevision: main
-      ref: values
+  source:
+    repoURL: git@github.com:stonetusker/tuskerblueprint.git
+    targetRevision: main
+    path: platform-services/traefik/helm
 
   destination:
     server: https://kubernetes.default.svc
