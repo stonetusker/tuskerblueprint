@@ -10,7 +10,7 @@ spec:
   project: default
 
   source:
-    repoURL: repoURL: git@github.com:stonetusker/tuskerblueprint.git
+    repoURL: git@github.com:stonetusker/tuskerblueprint.git
     targetRevision: main
     path: gitops/environments/development
 
