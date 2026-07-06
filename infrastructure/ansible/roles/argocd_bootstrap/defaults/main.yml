@@ -1,2 +1,16 @@
 ---
 argocd_namespace: argocd
+
+argocd_helm_repository_name: argo
+
+argocd_helm_repository_url: https://argoproj.github.io/argo-helm
+
+argocd_chart_name: argo/argo-cd
+
+argocd_chart_version: "8.3.2"
+
+argocd_release_name: argocd
+
+argocd_create_namespace: false
+
+argocd_wait_timeout: 600

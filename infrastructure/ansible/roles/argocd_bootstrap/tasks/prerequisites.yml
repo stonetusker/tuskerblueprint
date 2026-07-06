@@ -1,0 +1,10 @@
+---
+- name: Verify kubectl is installed
+  ansible.builtin.command:
+    cmd: kubectl version --client
+  changed_when: false
+
+- name: Verify Helm is installed
+  ansible.builtin.command:
+    cmd: helm version
+  changed_when: false

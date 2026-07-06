@@ -1,0 +1,6 @@
+---
+- name: Download pinned Argo CD manifest
+  ansible.builtin.get_url:
+    url: "{{ argocd_manifest_url }}"
+    dest: "{{ playbook_dir }}/../../../gitops/bootstrap/argocd/install.yaml"
+    mode: "0644"
