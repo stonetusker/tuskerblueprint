@@ -22,7 +22,6 @@
       {{ argocd_chart_name }}
       --namespace {{ argocd_namespace }}
       --version {{ argocd_chart_version }}
-      --create-namespace
       --wait
       --timeout {{ argocd_wait_timeout }}s
       --values {{ role_path }}/files/values.yaml

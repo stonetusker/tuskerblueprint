@@ -10,8 +10,14 @@
   failed_when:
     - helm_repo_add.rc != 0
     - "'already exists' not in helm_repo_add.stderr"
+  delegate_to: localhost
+  become: false
+  run_once: true
 
 - name: Update Helm repositories
   ansible.builtin.command:
     cmd: helm repo update
   changed_when: false
+  delegate_to: localhost
+  become: false
+  run_once: true
