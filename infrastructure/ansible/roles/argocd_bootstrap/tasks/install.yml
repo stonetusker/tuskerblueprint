@@ -21,4 +21,5 @@
       --create-namespace
       --wait
       --timeout {{ argocd_wait_timeout }}s
+      --values {{ role_path }}/files/values.yaml
   when: argocd_status.rc != 0

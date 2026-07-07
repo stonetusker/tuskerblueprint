@@ -4,4 +4,4 @@
   become: true
 
   roles:
-    - argocd
+    - argocd_bootstrap
