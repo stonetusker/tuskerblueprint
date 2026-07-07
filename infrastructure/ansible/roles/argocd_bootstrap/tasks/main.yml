@@ -16,3 +16,6 @@
 
 - name: Verify Argo CD installation
   ansible.builtin.include_tasks: verify.yml
+
+- name: Register Git repository
+  ansible.builtin.import_tasks: repository.yml

@@ -21,3 +21,9 @@
   delegate_to: localhost
   become: false
   run_once: true
+
+---
+- name: Create ArgoCD repository secret
+  kubernetes.core.k8s:
+    state: present
+    template: repository-secret.yaml.j2
