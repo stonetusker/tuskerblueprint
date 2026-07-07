@@ -1,14 +1,11 @@
 ---
-- name: Install prerequisites
+- name: Verify prerequisites
   ansible.builtin.include_tasks: prerequisites.yml
 
 - name: Ensure Argo CD namespace exists
   ansible.builtin.include_tasks: namespace.yml
 
-- name: Configure Helm repository
-  ansible.builtin.include_tasks: repository.yml
-
-- name: Install Argo CD
+- name: Install or upgrade Argo CD
   ansible.builtin.include_tasks: install.yml
 
 - name: Wait for Argo CD
@@ -18,4 +15,10 @@
   ansible.builtin.include_tasks: verify.yml
 
 - name: Register Git repository
-  ansible.builtin.import_tasks: repository.yml
+  ansible.builtin.include_tasks: repository.yml
+
+- name: Bootstrap Root Application
+  ansible.builtin.include_tasks: root_application.yml
+
+- name: Validate bootstrap
+  ansible.builtin.include_tasks: validation.yml

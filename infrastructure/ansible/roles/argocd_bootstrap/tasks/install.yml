@@ -13,6 +13,25 @@
   become: false
   run_once: true
 
+- name: Add Argo Helm repository
+  ansible.builtin.command:
+    cmd: >
+      helm repo add
+      {{ argocd_chart_repo_name }}
+      {{ argocd_chart_repo }}
+  delegate_to: localhost
+  become: false
+  run_once: true
+  changed_when: false
+  failed_when: false
+
+- name: Update Helm repositories
+  ansible.builtin.command:
+    cmd: helm repo update
+  delegate_to: localhost
+  become: false
+  run_once: true
+
 - name: Install or upgrade Argo CD
   ansible.builtin.command:
     cmd: >
@@ -21,6 +40,7 @@
       {{ argocd_release_name }}
       {{ argocd_chart_name }}
       --namespace {{ argocd_namespace }}
+      --create-namespace
       --version {{ argocd_chart_version }}
       --wait
       --timeout {{ argocd_wait_timeout }}s

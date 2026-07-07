@@ -1,9 +1,10 @@
 ---
-# Placeholder for platform services
+- name: Bootstrap Platform Services
+  hosts: platform
+  become: true
+  gather_facts: true
 
-# Future roles:
-# - argocd
-# - traefik
-# - cert-manager
-# - kyverno
-# - external-secrets
+  roles:
+    - role: argocd_bootstrap
+      tags:
+        - argocd

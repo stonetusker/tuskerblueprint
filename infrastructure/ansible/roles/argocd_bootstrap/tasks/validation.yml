@@ -1,0 +1,18 @@
+---
+- name: Verify repository secret
+  ansible.builtin.command:
+    cmd: >
+      kubectl get secret
+      {{ argocd_repo_secret_name }}
+      -n {{ argocd_namespace }}
+  register: repo_secret
+  changed_when: false
+
+- name: Verify Root Application
+  ansible.builtin.command:
+    cmd: >
+      kubectl get application
+      {{ argocd_root_app_name }}
+      -n {{ argocd_namespace }}
+  register: root_application
+  changed_when: false

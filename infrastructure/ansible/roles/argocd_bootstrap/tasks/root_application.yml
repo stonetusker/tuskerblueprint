@@ -1,0 +1,19 @@
+---
+- name: Copy Root Application manifest to target
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../../../gitops/applications/root/application.yaml"
+    dest: /tmp/platform-root-application.yaml
+    mode: "0644"
+
+- name: Apply Root Application
+  ansible.builtin.command:
+    cmd: kubectl apply -f /tmp/platform-root-application.yaml
+
+- name: Verify Root Application exists
+  ansible.builtin.command:
+    cmd: >
+      kubectl get application
+      {{ argocd_root_app_name }}
+      -n {{ argocd_namespace }}
+  register: root_app
+  changed_when: false

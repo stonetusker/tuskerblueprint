@@ -1,29 +1,20 @@
 ---
-- name: Add Argo Helm repository
+- name: Render Argo CD repository secret
+  ansible.builtin.template:
+    src: repository-secret.yaml.j2
+    dest: /tmp/argocd-repository-secret.yaml
+    mode: "0600"
+
+- name: Apply Argo CD repository secret
+  ansible.builtin.command:
+    cmd: kubectl apply -f /tmp/argocd-repository-secret.yaml
+  register: repo_apply
+
+- name: Verify repository secret exists
   ansible.builtin.command:
     cmd: >
-      helm repo add
-      {{ argocd_helm_repository_name }}
-      {{ argocd_helm_repository_url }}
-  register: helm_repo_add
-  changed_when: "'has been added' in helm_repo_add.stdout"
-  failed_when:
-    - helm_repo_add.rc != 0
-    - "'already exists' not in helm_repo_add.stderr"
-  delegate_to: localhost
-  become: false
-  run_once: true
-
-- name: Update Helm repositories
-  ansible.builtin.command:
-    cmd: helm repo update
+      kubectl get secret
+      {{ argocd_repo_secret_name }}
+      -n {{ argocd_namespace }}
+  register: repo_secret
   changed_when: false
-  delegate_to: localhost
-  become: false
-  run_once: true
-
----
-- name: Create ArgoCD repository secret
-  kubernetes.core.k8s:
-    state: present
-    template: repository-secret.yaml.j2

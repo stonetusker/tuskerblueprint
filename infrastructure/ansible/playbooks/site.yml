@@ -1,11 +1,9 @@
----
 - import_playbook: bootstrap.yml
 - import_playbook: common.yml
+- import_playbook: kubernetes.yml
+- import_playbook: platform.yml
 
-# Enable as implementation progresses
-#
-# - import_playbook: kubernetes.yml
-# - import_playbook: platform.yml
+# Remaining phases
 # - import_playbook: observability.yml
 # - import_playbook: security.yml
 # - import_playbook: validate.yml

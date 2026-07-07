@@ -1,16 +1,50 @@
 ---
+###########################################################
+# Argo CD
+###########################################################
+
 argocd_namespace: argocd
-
-argocd_helm_repository_name: argo
-
-argocd_helm_repository_url: https://argoproj.github.io/argo-helm
-
-argocd_chart_name: argo/argo-cd
-
-argocd_chart_version: "8.3.2"
 
 argocd_release_name: argocd
 
-argocd_create_namespace: false
+argocd_chart_repo_name: argo
+
+argocd_chart_repo: https://argoproj.github.io/argo-helm
+
+argocd_chart_name: argo/argo-cd
+
+argocd_chart_version: 8.3.2
 
 argocd_wait_timeout: 600
+
+###########################################################
+# Kubernetes
+###########################################################
+
+kubeconfig: "{{ lookup('env', 'HOME') }}/.kube/config"
+
+###########################################################
+# Git Repository
+###########################################################
+
+argocd_repo_name: tuskerblueprint
+
+argocd_repo_url: git@github.com:stonetusker/tuskerblueprint.git
+
+argocd_repo_secret_name: argocd-repository-tuskerblueprint
+
+argocd_repo_key_path: "{{ lookup('env','HOME') }}/.ssh/tuskerblueprint-argocd"
+
+argocd_repo_branch: main
+
+###########################################################
+# Root Application
+###########################################################
+
+argocd_root_app_name: platform-root
+
+argocd_root_app_path: gitops/environments/development
+
+argocd_destination_namespace: argocd
+
+argocd_destination_server: https://kubernetes.default.svc
