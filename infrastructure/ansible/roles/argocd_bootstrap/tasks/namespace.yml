@@ -1,9 +1,13 @@
 ---
 - name: Ensure Argo CD namespace exists
   kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
     state: present
     definition:
       apiVersion: v1
       kind: Namespace
       metadata:
         name: "{{ argocd_namespace }}"
+  delegate_to: localhost
+  become: false
+  run_once: true

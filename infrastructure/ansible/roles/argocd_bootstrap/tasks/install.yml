@@ -5,11 +5,15 @@
       helm status
       {{ argocd_release_name }}
       --namespace {{ argocd_namespace }}
+      --kubeconfig {{ kubeconfig }}
   register: argocd_status
   failed_when: false
   changed_when: false
+  delegate_to: localhost
+  become: false
+  run_once: true
 
-- name: Install Argo CD
+- name: Install or upgrade Argo CD
   ansible.builtin.command:
     cmd: >
       helm upgrade
@@ -22,4 +26,7 @@
       --wait
       --timeout {{ argocd_wait_timeout }}s
       --values {{ role_path }}/files/values.yaml
-  when: argocd_status.rc != 0
+      --kubeconfig {{ kubeconfig }}
+  delegate_to: localhost
+  become: false
+  run_once: true
