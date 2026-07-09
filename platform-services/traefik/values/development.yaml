@@ -1,3 +1,9 @@
+# ==============================================================================
+# TuskerBlueprint
+# Traefik Helm Values
+# Environment: Development
+# ==============================================================================
+
 deployment:
   replicas: 1
 
@@ -29,14 +35,42 @@ dashboard:
 
 ports:
   web:
-    port: 80
     expose:
       default: true
 
   websecure:
-    port: 443
     expose:
       default: true
 
 service:
   type: LoadBalancer
+
+additionalArguments:
+  - "--serversTransport.insecureSkipVerify=false"
+
+globalArguments:
+  - "--global.checknewversion=false"
+  - "--global.sendanonymoususage=false"
+
+resources:
+
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+podSecurityContext:
+  fsGroup: 65532
+
+securityContext:
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+
+persistence:
+  enabled: false

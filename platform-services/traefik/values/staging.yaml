@@ -1,0 +1,40 @@
+# ==============================================================================
+# TuskerBlueprint
+# Traefik Helm Values
+# Environment: Staging
+# ==============================================================================
+
+# Initially aligned with development.
+# Environment-specific tuning will be introduced as staging evolves.
+
+deployment:
+  replicas: 1
+
+ingressClass:
+  enabled: true
+  isDefaultClass: true
+  name: traefik
+
+providers:
+  kubernetesCRD:
+    enabled: true
+
+  kubernetesIngress:
+    enabled: true
+
+logs:
+  general:
+    level: INFO
+
+accessLog:
+  enabled: true
+
+metrics:
+  prometheus:
+    enabled: true
+
+dashboard:
+  enabled: false
+
+service:
+  type: LoadBalancer
