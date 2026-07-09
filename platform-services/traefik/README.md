@@ -2,29 +2,26 @@
 
 ## Purpose
 
-Traefik is the platform ingress controller.
+Traefik is the platform ingress controller for TuskerBlueprint.
 
-## Owner
+## Ownership
 
 Git → Argo CD
 
-## Chart
+## Deployment
 
-Traefik Helm Chart
+Official Traefik Helm Chart
 
 ## Configuration
 
-Environment-specific configuration is located in:
+Environment values are stored under:
 
 values/
-    development.yaml
-    staging.yaml
-    production.yaml
 
 ## Validation
 
 kubectl get pods -n traefik
 
-kubectl get ingressclass
-
 kubectl get svc -n traefik
+
+kubectl get ingressclass
