@@ -9,7 +9,6 @@ spec:
   sourceRepos:
     - 'https://traefik.github.io/charts'
     - 'git@github.com:stonetusker/tuskerblueprint.git'
-    - '*'
 
   destinations:
     - namespace: '*'
