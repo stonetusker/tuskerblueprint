@@ -15,7 +15,6 @@ ingressClass:
 providers:
   kubernetesCRD:
     enabled: true
-
   kubernetesIngress:
     enabled: true
 
@@ -35,3 +34,25 @@ dashboard:
 
 service:
   type: LoadBalancer
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+
+podSecurityContext:
+  fsGroup: 65532
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  runAsNonRoot: true
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL

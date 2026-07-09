@@ -4,9 +4,6 @@
 # Environment: Staging
 # ==============================================================================
 
-# Initially aligned with development.
-# Environment-specific tuning will be introduced as staging evolves.
-
 deployment:
   replicas: 1
 
@@ -18,7 +15,6 @@ ingressClass:
 providers:
   kubernetesCRD:
     enabled: true
-
   kubernetesIngress:
     enabled: true
 
@@ -38,3 +34,25 @@ dashboard:
 
 service:
   type: LoadBalancer
+
+resources:
+  requests:
+    cpu: 200m
+    memory: 256Mi
+  limits:
+    cpu: 750m
+    memory: 768Mi
+
+podSecurityContext:
+  fsGroup: 65532
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  runAsNonRoot: true
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL

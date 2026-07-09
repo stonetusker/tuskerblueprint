@@ -35,7 +35,7 @@ Every platform component upgrade must update this document as part of the same p
 | k3s                       |             TBD | Stable Releases | Planned  | Managed by Ansible   |
 | Kubernetes                |             TBD | k3s Compatible  | Planned  | Managed by k3s       |
 | Argo CD                   |           3.1.1 | Stable Minor    | Approved | Installed by Ansible |
-| Traefik                   |             TBD | Stable Minor    | Planned  | Managed by GitOps    |
+| Traefik                   |          37.1.0 | Stable Minor    | Approved | Managed by GitOps    |
 | cert-manager              |             TBD | Stable Minor    | Planned  | Managed by GitOps    |
 | External Secrets Operator |             TBD | Stable Minor    | Planned  | Managed by GitOps    |
 | Doppler Operator          |             TBD | Stable Minor    | Planned  | Managed by GitOps    |

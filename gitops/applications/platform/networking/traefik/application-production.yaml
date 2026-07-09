@@ -15,30 +15,25 @@ metadata:
     argocd.argoproj.io/sync-wave: "10"
 
 spec:
-
   project: platform
 
   destination:
     server: https://kubernetes.default.svc
     namespace: traefik
 
-  source:
-
-    repoURL: https://traefik.github.io/charts
-
-    chart: traefik
-
-    targetRevision: 37.1.0
-
-    helm:
-
-      releaseName: traefik
-
-      valueFiles:
-        - $values/platform-services/traefik/values/production.yaml
+  sources:
+    - repoURL: https://traefik.github.io/charts
+      chart: traefik
+      targetRevision: 37.1.0
+      helm:
+        releaseName: traefik
+        valueFiles:
+          - $values/platform-services/traefik/values/production.yaml
+    - repoURL: git@github.com:stonetusker/tuskerblueprint.git
+      targetRevision: main
+      ref: values
 
   syncPolicy:
-
     automated:
       prune: true
       selfHeal: true

@@ -15,7 +15,6 @@ ingressClass:
 providers:
   kubernetesCRD:
     enabled: true
-
   kubernetesIngress:
     enabled: true
 
@@ -37,7 +36,6 @@ ports:
   web:
     expose:
       default: true
-
   websecure:
     expose:
       default: true
@@ -53,19 +51,21 @@ globalArguments:
   - "--global.sendanonymoususage=false"
 
 resources:
-
   requests:
     cpu: 100m
     memory: 128Mi
-
   limits:
     cpu: 500m
     memory: 512Mi
 
 podSecurityContext:
   fsGroup: 65532
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
 
 securityContext:
+  runAsNonRoot: true
   readOnlyRootFilesystem: true
   allowPrivilegeEscalation: false
   capabilities:
