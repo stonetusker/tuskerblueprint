@@ -7,6 +7,8 @@ spec:
   description: TuskerBlueprint Platform Services
 
   sourceRepos:
+    - 'https://traefik.github.io/charts'
+    - 'git@github.com:stonetusker/tuskerblueprint.git'
     - '*'
 
   destinations:

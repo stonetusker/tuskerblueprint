@@ -38,14 +38,25 @@ values/
 
 ## Validation
 
-From the platform controller or a workstation with access to the cluster:
+Use the following verification steps from the platform controller or any workstation with cluster access:
 
 ```bash
+# 1. Confirm the Argo CD Application is healthy
 kubectl get applications -n argocd
+kubectl get application traefik-development -n argocd
+
+# 2. Confirm the Traefik workload is running
 kubectl get pods -n traefik
+kubectl get deployment -n traefik
+kubectl wait --for=condition=available deployment/traefik -n traefik --timeout=300s
+
+# 3. Confirm the service and ingress resources are present
 kubectl get svc -n traefik
-kubectl get ingressclass
 kubectl get endpoints -n traefik traefik
+kubectl get ingressclass
+
+# 4. Review the Traefik logs if startup issues are suspected
+kubectl logs deployment/traefik -n traefik --tail=100
 ```
 
 Expected results:
@@ -54,6 +65,18 @@ Expected results:
 - Traefik pods are `Running` and `Ready`
 - Service `traefik` is present and has endpoints
 - IngressClass `traefik` exists
+- The deployment becomes `Available` within the timeout window
+
+If the namespace is still missing, the application has not reconciled successfully. In that case, run:
+
+```bash
+kubectl describe application traefik-development -n argocd
+kubectl get events -n argocd --sort-by=.metadata.creationTimestamp | tail -20
+kubectl logs deployment/argocd-repo-server -n argocd --tail=100
+kubectl logs deployment/argocd-application-controller -n argocd --tail=100
+```
+
+If `kubectl` fails with a certificate error, verify that the local kubeconfig points to the intended cluster and trusts the cluster CA.
 
 ## Rollback
 
