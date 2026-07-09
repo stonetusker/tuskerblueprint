@@ -19,14 +19,14 @@ spec:
 
   destination:
     server: https://kubernetes.default.svc
-    namespace: traefik
+    namespace: traefik-development
 
   sources:
     - repoURL: https://traefik.github.io/charts
       chart: traefik
       targetRevision: 37.1.0
       helm:
-        releaseName: traefik
+        releaseName: traefik-development
         valueFiles:
           - $values/platform-services/traefik/values/development.yaml
     - repoURL: git@github.com:stonetusker/tuskerblueprint.git

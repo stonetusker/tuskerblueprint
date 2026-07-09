@@ -7,10 +7,13 @@
 deployment:
   replicas: 2
 
+nameOverride: traefik-production
+fullnameOverride: traefik-production
+
 ingressClass:
   enabled: true
-  isDefaultClass: true
-  name: traefik
+  isDefaultClass: false
+  name: traefik-production
 
 providers:
   kubernetesCRD:

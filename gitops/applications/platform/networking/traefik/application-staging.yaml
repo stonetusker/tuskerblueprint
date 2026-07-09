@@ -19,14 +19,14 @@ spec:
 
   destination:
     server: https://kubernetes.default.svc
-    namespace: traefik
+    namespace: traefik-staging
 
   sources:
     - repoURL: https://traefik.github.io/charts
       chart: traefik
       targetRevision: 37.1.0
       helm:
-        releaseName: traefik
+        releaseName: traefik-staging
         valueFiles:
           - $values/platform-services/traefik/values/staging.yaml
     - repoURL: git@github.com:stonetusker/tuskerblueprint.git

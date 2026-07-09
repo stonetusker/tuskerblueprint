@@ -7,10 +7,13 @@
 deployment:
   replicas: 1
 
+nameOverride: traefik-staging
+fullnameOverride: traefik-staging
+
 ingressClass:
   enabled: true
-  isDefaultClass: true
-  name: traefik
+  isDefaultClass: false
+  name: traefik-staging
 
 providers:
   kubernetesCRD:
