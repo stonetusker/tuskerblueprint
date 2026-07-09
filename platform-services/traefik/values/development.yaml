@@ -1,28 +1,10 @@
 deployment:
-  replicas: 2
-
-service:
-  type: LoadBalancer
+  replicas: 1
 
 ingressClass:
   enabled: true
   isDefaultClass: true
   name: traefik
-
-logs:
-  general:
-    level: INFO
-    format: json
-
-accessLogs:
-  enabled: true
-  format: json
-
-metrics:
-  prometheus:
-    enabled: true
-    service:
-      enabled: true
 
 providers:
   kubernetesCRD:
@@ -31,29 +13,30 @@ providers:
   kubernetesIngress:
     enabled: true
 
+logs:
+  general:
+    level: INFO
+
+accessLog:
+  enabled: true
+
+metrics:
+  prometheus:
+    enabled: true
+
 dashboard:
   enabled: false
 
-resources:
-  requests:
-    cpu: 100m
-    memory: 128Mi
+ports:
+  web:
+    port: 80
+    expose:
+      default: true
 
-  limits:
-    cpu: 500m
-    memory: 512Mi
+  websecure:
+    port: 443
+    expose:
+      default: true
 
-podDisruptionBudget:
-  enabled: true
-
-securityContext:
-  capabilities:
-    drop:
-      - ALL
-
-  readOnlyRootFilesystem: true
-
-  runAsNonRoot: true
-
-persistence:
-  enabled: false
+service:
+  type: LoadBalancer
