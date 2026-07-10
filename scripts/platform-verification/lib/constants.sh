@@ -72,7 +72,7 @@ fi
 
 readonly NS_ARGOCD="argocd"
 
-readonly NS_TRAEFIK="traefik"
+readonly NS_TRAEFIK="traefik-development"
 
 readonly NS_CERT_MANAGER="cert-manager"
 
@@ -157,4 +157,3 @@ readonly LINE_WIDTH=80
 ################################################################################
 # End of File
 ################################################################################
-

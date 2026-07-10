@@ -37,19 +37,19 @@ verify_namespace "${NS_TRAEFIK}"
 
 verify_deployment \
     "${NS_TRAEFIK}" \
-    "traefik"
+    "traefik-development"
 
 verify_deployment_ready \
     "${NS_TRAEFIK}" \
-    "traefik"
+    "traefik-development"
 
 verify_service \
     "${NS_TRAEFIK}" \
-    "traefik"
+    "traefik-development"
 
 verify_pods \
     "${NS_TRAEFIK}"
 
 section "Ingress"
 
-verify_ingressclass "traefik"
+verify_ingressclass "traefik-development"
