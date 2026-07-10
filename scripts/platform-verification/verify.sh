@@ -267,7 +267,13 @@ run_command() {
 
 main() {
 
-    validate_runtime
+    if [[ $# -eq 0 ]]; then
+        validate_runtime
+    elif [[ "$1" == "--help" || "$1" == "-h" || "$1" == "--version" || "$1" == "-v" ]]; then
+        :
+    else
+        validate_runtime
+    fi
 
     run_command "$@"
 

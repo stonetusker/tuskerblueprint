@@ -72,9 +72,11 @@ validate_kubeconfig() {
         exit "${EXIT_KUBERNETES_UNAVAILABLE}"
     fi
 
+    export KUBECONFIG="${DEFAULT_KUBECONFIG}"
+
     success "Using kubeconfig"
 
-    info "${DEFAULT_KUBECONFIG}"
+    info "${KUBECONFIG}"
 }
 
 ################################################################################

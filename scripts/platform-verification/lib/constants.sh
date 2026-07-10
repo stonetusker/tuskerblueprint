@@ -58,7 +58,13 @@ readonly DEFAULT_RETRY_INTERVAL_SECONDS=5
 # Kubernetes
 ################################################################################
 
-readonly DEFAULT_KUBECONFIG="${KUBECONFIG:-$HOME/.kube/config}"
+if [[ -n "${KUBECONFIG:-}" ]]; then
+    readonly DEFAULT_KUBECONFIG="${KUBECONFIG}"
+elif [[ -f "${HOME}/.kube/tuskerblueprint-dev.yaml" ]]; then
+    readonly DEFAULT_KUBECONFIG="${HOME}/.kube/tuskerblueprint-dev.yaml"
+else
+    readonly DEFAULT_KUBECONFIG="${HOME}/.kube/config"
+fi
 
 ################################################################################
 # Namespaces
