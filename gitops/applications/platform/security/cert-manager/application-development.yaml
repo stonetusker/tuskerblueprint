@@ -1,0 +1,44 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+
+metadata:
+  name: cert-manager-development
+  namespace: argocd
+
+  labels:
+    app.kubernetes.io/name: cert-manager
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: tuskerblueprint
+    app.kubernetes.io/environment: development
+
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
+
+spec:
+  project: platform
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cert-manager-development
+
+  sources:
+    - repoURL: https://charts.jetstack.io
+      chart: cert-manager
+      targetRevision: v1.21.0
+      helm:
+        releaseName: cert-manager-development
+        valueFiles:
+          - $values/platform-services/cert-manager/values/development.yaml
+    - repoURL: git@github.com:stonetusker/tuskerblueprint.git
+      targetRevision: main
+      ref: values
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true
+      - PrunePropagationPolicy=foreground

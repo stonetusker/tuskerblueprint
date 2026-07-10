@@ -8,6 +8,7 @@ spec:
 
   sourceRepos:
     - https://traefik.github.io/charts
+    - https://charts.jetstack.io
     - git@github.com:stonetusker/tuskerblueprint.git
 
   destinations:

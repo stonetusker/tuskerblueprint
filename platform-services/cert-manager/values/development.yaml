@@ -1,0 +1,38 @@
+# ==============================================================================
+# TuskerBlueprint
+# cert-manager Helm Values
+# Environment: Development
+# ==============================================================================
+
+crds:
+  enabled: true
+
+installCRDs: false
+
+replicaCount: 1
+
+global:
+  leaderElection:
+    namespace: cert-manager
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+podSecurityContext:
+  fsGroup: 1001
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true

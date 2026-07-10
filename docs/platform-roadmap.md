@@ -24,7 +24,7 @@ It provides a single view of platform maturity and implementation progress.
 | Repository Registration     | ✅ Complete     | Ansible   | Ansible    | Bootstrap               |
 | Root Application            | ✅ Complete     | Ansible   | Ansible    | GitOps handoff complete |
 | Traefik                     | ✅ Complete    | Git       | Argo CD    | GitOps implementation   |
-| cert-manager                | ⏳ Planned      | Git       | Argo CD    | PR-003                  |
+| cert-manager                | ✅ Complete     | Git       | Argo CD    | GitOps implementation   |
 | External Secrets Operator   | ⏳ Planned      | Git       | Argo CD    | PR-004                  |
 | Doppler Integration         | ⏳ Planned      | Git       | Argo CD    | PR-005                  |
 | Kyverno                     | ⏳ Planned      | Git       | Argo CD    | PR-006                  |
