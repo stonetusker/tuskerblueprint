@@ -113,6 +113,35 @@ readonly APP_LOKI="loki"
 readonly APP_BACKSTAGE="backstage"
 
 ################################################################################
+# cert-manager Resources
+################################################################################
+
+readonly DEP_CERT_MANAGER="cert-manager"
+
+readonly DEP_CERT_MANAGER_WEBHOOK="cert-manager-webhook"
+
+readonly DEP_CERT_MANAGER_CAINJECTOR="cert-manager-cainjector"
+
+readonly SVC_CERT_MANAGER="cert-manager"
+
+readonly SVC_CERT_MANAGER_WEBHOOK="cert-manager-webhook"
+
+readonly SVC_CERT_MANAGER_CAINJECTOR="cert-manager-cainjector"
+
+readonly CERT_MANAGER_API_PATH="/apis/cert-manager.io/v1"
+
+readonly CERT_MANAGER_ACME_API_PATH="/apis/acme.cert-manager.io/v1"
+
+readonly -a CERT_MANAGER_CRDS=(
+    "certificaterequests.cert-manager.io"
+    "certificates.cert-manager.io"
+    "clusterissuers.cert-manager.io"
+    "issuers.cert-manager.io"
+    "challenges.acme.cert-manager.io"
+    "orders.acme.cert-manager.io"
+)
+
+################################################################################
 # Verification Profiles
 ################################################################################
 

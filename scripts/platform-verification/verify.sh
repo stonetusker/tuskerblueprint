@@ -166,7 +166,7 @@ run_command() {
         security)
 
             CURRENT_CAPABILITY="${DOMAIN_SECURITY}"
-            printf "Security domain verification not yet implemented.\n"
+            source "${SCRIPT_DIR}/security/verify-cert-manager.sh"
             ;;
 
         observability)
@@ -194,7 +194,7 @@ run_command() {
         cert-manager)
 
             CURRENT_CAPABILITY="${APP_CERT_MANAGER}"
-            printf "cert-manager verification not yet implemented.\n"
+            source "${SCRIPT_DIR}/security/verify-cert-manager.sh"
             ;;
 
         external-secrets)

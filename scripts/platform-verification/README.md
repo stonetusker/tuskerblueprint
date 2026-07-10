@@ -48,6 +48,7 @@ scripts/
     ├── verify.sh
     │
     ├── profiles/
+    │   ├── platform.sh
     │   ├── smoke.sh
     │   ├── e2e.sh
     │   ├── regression.sh
@@ -59,30 +60,26 @@ scripts/
     │   └── verify-traefik.sh
     │
     ├── security/
-    │   ├── verify-cert-manager.sh
-    │   ├── verify-external-secrets.sh
-    │   ├── verify-doppler.sh
-    │   └── verify-kyverno.sh
+    │   └── verify-cert-manager.sh
     │
-    ├── observability/
-    │   ├── verify-prometheus.sh
-    │   ├── verify-grafana.sh
-    │   └── verify-loki.sh
-    │
-    ├── developer-platform/
-    │   └── verify-backstage.sh
+    ├── tests/
+    │   └── cert-manager.md
     │
     └── lib/
-        ├── README.md
-        ├── assertions.sh
-        ├── argocd.sh
+        ├── argocd-api.sh
+        ├── bootstrap.sh
         ├── common.sh
         ├── constants.sh
-        ├── github.sh
-        ├── helm.sh
-        ├── kubernetes.sh
+        ├── executor.sh
+        ├── kubernetes-api.sh
         ├── output.sh
-        └── report.sh
+        ├── report.sh
+        ├── runtime.sh
+        ├── state.sh
+        ├── verifiers.sh
+        └── checks/
+            ├── argocd.sh
+            └── kubernetes.sh
 ```
 
 ---
@@ -196,19 +193,6 @@ Networking
 Security
 
 * cert-manager
-* External Secrets Operator
-* Doppler
-* Kyverno
-
-Observability
-
-* Prometheus
-* Grafana
-* Loki
-
-Developer Platform
-
-* Backstage
 
 Capability verifiers are independent.
 
@@ -273,6 +257,15 @@ Verify security:
 ./scripts/platform-verification/verify.sh security
 ```
 
+Verify cert-manager:
+
+```bash
+./scripts/platform-verification/verify.sh cert-manager
+```
+
+Manual cert-manager validation commands are available in
+[`tests/cert-manager.md`](tests/cert-manager.md).
+
 Display help:
 
 ```bash
@@ -298,7 +291,7 @@ Display version:
 | 4    | Kubernetes unavailable         |
 | 5    | Argo CD unavailable            |
 | 6    | Capability verification failed |
-| 7    | Internal framework error       |
+| 99   | Internal framework error       |
 
 ---
 
@@ -387,4 +380,3 @@ Future enhancements may include:
 * Multi-cluster verification
 
 The architecture is designed to support these capabilities without structural changes.
-

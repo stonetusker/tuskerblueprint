@@ -25,21 +25,7 @@ readonly PROFILE_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${PROFILE_SCRIPT_DIR}/../networking/verify-traefik.sh"
 
 ################################################################################
-# Future
+# Security
 ################################################################################
 
-#
-# Security
-#
-# ../security/verify-cert-manager.sh
-#
-# ../security/verify-external-secrets.sh
-#
-# Observability
-#
-# ../observability/verify-prometheus.sh
-#
-# Developer Platform
-#
-# ../developer-platform/verify-backstage.sh
-#
+source "${PROFILE_SCRIPT_DIR}/../security/verify-cert-manager.sh"

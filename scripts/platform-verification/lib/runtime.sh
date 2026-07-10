@@ -87,7 +87,7 @@ validate_cluster() {
 
     section "Validating Kubernetes Connectivity"
 
-    if kubectl version --request-timeout=10s >/dev/null 2>&1; then
+    if kube version >/dev/null 2>&1; then
 
         success "Connected to Kubernetes cluster"
 

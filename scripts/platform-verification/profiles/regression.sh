@@ -16,17 +16,19 @@ IFS=$'\n\t'
 
 header "Regression Verification"
 
+readonly PROFILE_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 ###############################################################################
 # Networking
 ###############################################################################
 
-"$(dirname "$0")"/../networking/verify-traefik.sh
+source "${PROFILE_SCRIPT_DIR}/../networking/verify-traefik.sh"
 
 ###############################################################################
 # Security
 ###############################################################################
 
-# "$(dirname "$0")"/../security/verify-cert-manager.sh
+source "${PROFILE_SCRIPT_DIR}/../security/verify-cert-manager.sh"
 # "$(dirname "$0")"/../security/verify-external-secrets.sh
 # "$(dirname "$0")"/../security/verify-doppler.sh
 # "$(dirname "$0")"/../security/verify-kyverno.sh

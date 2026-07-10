@@ -3,10 +3,10 @@
 # ==============================================================================
 # TuskerBlueprint Platform Verification Framework (TPVF)
 #
-# File: e2e.sh
+# File: platform.sh
 #
 # Purpose:
-#     Execute end-to-end verification.
+#     Execute verification for all implemented platform capabilities.
 #
 # shellcheck shell=bash
 # ==============================================================================
@@ -14,7 +14,7 @@
 set -Eeuo pipefail
 IFS=$'\n\t'
 
-header "End-to-End Verification"
+header "Platform Verification"
 
 readonly PROFILE_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
