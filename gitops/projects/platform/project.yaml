@@ -7,8 +7,8 @@ spec:
   description: TuskerBlueprint Platform Services
 
   sourceRepos:
-    - https://traefik.github.io/charts
-    - https://charts.jetstack.io
+    - https://traefik.github.io/charts*
+    - https://charts.jetstack.io*
     - git@github.com:stonetusker/tuskerblueprint.git
 
   destinations:
