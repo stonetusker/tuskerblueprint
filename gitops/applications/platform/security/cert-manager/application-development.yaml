@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 
 metadata:
-  name: cert-manager-development
+  name: cert-manager
   namespace: argocd
 
   labels:
@@ -19,14 +19,14 @@ spec:
 
   destination:
     server: https://kubernetes.default.svc
-    namespace: cert-manager-development
+    namespace: cert-manager
 
   sources:
     - repoURL: https://charts.jetstack.io
       chart: cert-manager
       targetRevision: v1.21.0
       helm:
-        releaseName: cert-manager-development
+        releaseName: cert-manager
         valueFiles:
           - $values/platform-services/cert-manager/values/development.yaml
     - repoURL: git@github.com:stonetusker/tuskerblueprint.git
