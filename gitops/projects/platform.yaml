@@ -9,6 +9,9 @@ spec:
   sourceRepos:
     - 'https://traefik.github.io/charts'
     - 'https://charts.jetstack.io'
+    - 'https://charts.external-secrets.io'
+    - 'https://helm.doppler.com'
+    - 'https://kyverno.github.io/kyverno/'
     - 'git@github.com:stonetusker/tuskerblueprint.git'
 
   destinations:

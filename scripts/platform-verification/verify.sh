@@ -200,13 +200,19 @@ run_command() {
         external-secrets)
 
             CURRENT_CAPABILITY="${APP_EXTERNAL_SECRETS}"
-            printf "External Secrets verification not yet implemented.\n"
+            source "${SCRIPT_DIR}/security/verify-external-secrets.sh"
             ;;
 
         kyverno)
 
             CURRENT_CAPABILITY="${APP_KYVERNO}"
-            printf "Kyverno verification not yet implemented.\n"
+            source "${SCRIPT_DIR}/security/verify-kyverno.sh"
+            ;;
+
+        doppler)
+
+            CURRENT_CAPABILITY="${APP_DOPPLER}"
+            source "${SCRIPT_DIR}/security/verify-doppler.sh"
             ;;
 
         prometheus)

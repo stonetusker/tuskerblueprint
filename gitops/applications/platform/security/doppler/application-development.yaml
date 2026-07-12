@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: doppler
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: doppler
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: tuskerblueprint
+    app.kubernetes.io/environment: development
+  annotations:
+    argocd.argoproj.io/sync-wave: "25"
+spec:
+  project: platform
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: doppler
+  sources:
+    - repoURL: https://helm.doppler.com
+      chart: doppler-operator
+      targetRevision: 1.5.0
+      helm:
+        releaseName: doppler
+        valueFiles:
+          - $values/platform-services/doppler/values/development.yaml
+    - repoURL: git@github.com:stonetusker/tuskerblueprint.git
+      targetRevision: main
+      ref: values
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true
+      - PrunePropagationPolicy=foreground

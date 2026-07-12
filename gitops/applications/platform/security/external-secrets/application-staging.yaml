@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: external-secrets-staging
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: external-secrets
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: tuskerblueprint
+    app.kubernetes.io/environment: staging
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
+spec:
+  project: platform
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: external-secrets-staging
+  sources:
+    - repoURL: https://charts.external-secrets.io
+      chart: external-secrets
+      targetRevision: 0.14.2
+      helm:
+        releaseName: external-secrets-staging
+        valueFiles:
+          - $values/platform-services/external-secrets/values/staging.yaml
+    - repoURL: git@github.com:stonetusker/tuskerblueprint.git
+      targetRevision: main
+      ref: values
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true
+      - PrunePropagationPolicy=foreground
