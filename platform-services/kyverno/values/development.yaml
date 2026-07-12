@@ -6,6 +6,18 @@
 
 replicaCount: 1
 
+crds:
+  install: false
+
+admissionController:
+  enabled: false
+
+reportsController:
+  enabled: false
+
+cleanupController:
+  enabled: false
+
 resources:
   requests:
     cpu: 100m

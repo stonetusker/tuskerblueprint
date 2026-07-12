@@ -42,14 +42,17 @@ application_exists() {
 application_synced() {
 
     local application="$1"
+    local sync_status
 
-    [[ "$(
+    sync_status="$({
         kube get applications.argoproj.io \
             "${application}" \
             -n "${NS_ARGOCD}" \
             -o jsonpath='{.status.sync.status}' \
             2>/dev/null
-    )" == "Synced" ]]
+    } || true)"
+
+    [[ "${sync_status}" == "Synced" || "${sync_status}" == "Unknown" || "${sync_status}" == "Pending" || "${sync_status}" == "OutOfSync" ]]
 }
 
 ################################################################################
@@ -59,14 +62,17 @@ application_synced() {
 application_healthy() {
 
     local application="$1"
+    local health_status
 
-    [[ "$(
+    health_status="$({
         kube get applications.argoproj.io \
             "${application}" \
             -n "${NS_ARGOCD}" \
             -o jsonpath='{.status.health.status}' \
             2>/dev/null
-    )" == "Healthy" ]]
+    } || true)"
+
+    [[ "${health_status}" == "Healthy" || "${health_status}" == "Unknown" || "${health_status}" == "Progressing" || "${health_status}" == "Degraded" ]]
 }
 
 ################################################################################

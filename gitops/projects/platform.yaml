@@ -7,14 +7,7 @@ spec:
   description: TuskerBlueprint Platform Services
 
   sourceRepos:
-    - 'https://traefik.github.io/charts'
-    - 'https://charts.jetstack.io'
-    - 'https://charts.external-secrets.io'
-    - 'https://helm.doppler.com'
-    - 'https://kyverno.github.io/kyverno/'
-    - 'https://prometheus-community.github.io/helm-charts'
-    - 'https://grafana.github.io/helm-charts'
-    - 'https://backstage.github.io/charts'
+    - '*'
     - 'git@github.com:stonetusker/tuskerblueprint.git'
 
   destinations:
