@@ -19,11 +19,13 @@ Platform Status
 * Bootstrap Complete
 * GitOps Operational
 * Governance Complete
-* Platform Service Implementation In Progress
+* Platform Service Implementation Expanded
 
 Bootstrap is considered complete.
 
 GitOps is now the only deployment mechanism.
+
+The repository now contains GitOps-ready scaffolds for the major platform service domains, including security, observability, developer platform, and reference workloads.
 
 ---
 
@@ -254,6 +256,21 @@ Developer Platform
 * Backstage
 
 Reference Workloads
+
+## Capability Catalog
+
+The repository now includes GitOps-ready implementation scaffolds for the following capabilities:
+
+* External Secrets Operator: secret synchronization and secret-store integration patterns
+* Doppler: external secret source integration for environment-specific values
+* Kyverno: policy-as-code scaffolding for admission control and governance
+* Prometheus: metrics collection baseline
+* Grafana: visualization and dashboards baseline
+* Loki: log aggregation baseline
+* Backstage: developer portal scaffolding
+* Reference workloads: example application manifests aligned with the platform GitOps model
+
+These implementations are intended to be reconciled through Argo CD and further hardened as the platform matures.
 
 ---
 

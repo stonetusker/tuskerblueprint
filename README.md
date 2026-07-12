@@ -39,7 +39,19 @@ Architecture (TPRA).
 - infrastructure/
 - gitops/
 - platform-services/
-- reference-workloads/
+- workloads/
 - docs/
+
+## Current Platform Capability Coverage
+
+The repository now includes GitOps-ready scaffolds for the core TPRA-aligned platform capabilities:
+
+- Networking: Traefik ingress and routing
+- Security: cert-manager, External Secrets Operator, Doppler, Kyverno
+- Observability: Prometheus, Grafana, Loki
+- Developer Platform: Backstage
+- Workloads: reference workload onboarding and deployment manifests
+
+These capabilities are organized under the GitOps application tree and are intended to be reconciled by Argo CD.
 
 See the TPRA documentation for architecture decisions.

@@ -25,14 +25,14 @@ It provides a single view of platform maturity and implementation progress.
 | Root Application            | ✅ Complete     | Ansible   | Ansible    | GitOps handoff complete |
 | Traefik                     | ✅ Complete    | Git       | Argo CD    | GitOps implementation   |
 | cert-manager                | ✅ Complete     | Git       | Argo CD    | GitOps implementation   |
-| External Secrets Operator   | ⏳ Planned      | Git       | Argo CD    | PR-004                  |
-| Doppler Integration         | ⏳ Planned      | Git       | Argo CD    | PR-005                  |
-| Kyverno                     | ⏳ Planned      | Git       | Argo CD    | PR-006                  |
-| Prometheus                  | ⏳ Planned      | Git       | Argo CD    | PR-007                  |
-| Grafana                     | ⏳ Planned      | Git       | Argo CD    | PR-008                  |
-| Loki                        | ⏳ Planned      | Git       | Argo CD    | PR-009                  |
-| Backstage                   | ⏳ Planned      | Git       | Argo CD    | PR-010                  |
-| Reference Workloads         | ⏳ Planned      | Git       | Argo CD    | PR-011                  |
+| External Secrets Operator   | ✅ Implemented (scaffolded) | Git       | Argo CD    | GitOps implementation   |
+| Doppler Integration         | ✅ Implemented (scaffolded) | Git       | Argo CD    | GitOps implementation   |
+| Kyverno                     | ✅ Implemented (scaffolded) | Git       | Argo CD    | GitOps implementation   |
+| Prometheus                  | ✅ Implemented (scaffolded) | Git       | Argo CD    | GitOps implementation   |
+| Grafana                     | ✅ Implemented (scaffolded) | Git       | Argo CD    | GitOps implementation   |
+| Loki                        | ✅ Implemented (scaffolded) | Git       | Argo CD    | GitOps implementation   |
+| Backstage                   | ✅ Implemented (scaffolded) | Git       | Argo CD    | GitOps implementation   |
+| Reference Workloads         | ✅ Implemented (scaffolded) | Git       | Argo CD    | GitOps implementation   |
 
 ---
 
