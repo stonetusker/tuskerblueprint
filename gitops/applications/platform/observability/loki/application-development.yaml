@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: loki
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: loki
+    app.kubernetes.io/component: observability
+    app.kubernetes.io/part-of: tuskerblueprint
+    app.kubernetes.io/environment: development
+  annotations:
+    argocd.argoproj.io/sync-wave: "45"
+spec:
+  project: platform
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  sources:
+    - repoURL: https://grafana.github.io/helm-charts
+      chart: loki
+      targetRevision: 6.29.0
+      helm:
+        releaseName: loki
+        valueFiles:
+          - $values/platform-services/loki/values/development.yaml
+    - repoURL: git@github.com:stonetusker/tuskerblueprint.git
+      targetRevision: main
+      ref: values
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true
+      - PrunePropagationPolicy=foreground

@@ -5,3 +5,4 @@ resources:
   - ../../projects
   - ../../applications
   - ../../appsets
+  - ../../applications/workloads

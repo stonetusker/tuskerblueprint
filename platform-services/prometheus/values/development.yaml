@@ -1,0 +1,22 @@
+# ==============================================================================
+# TuskerBlueprint
+# Prometheus Helm Values
+# Environment: Development
+# ==============================================================================
+
+server:
+  replicaCount: 1
+
+alertmanager:
+  enabled: false
+
+pushgateway:
+  enabled: false
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi

@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: grafana-staging
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/component: observability
+    app.kubernetes.io/part-of: tuskerblueprint
+    app.kubernetes.io/environment: staging
+  annotations:
+    argocd.argoproj.io/sync-wave: "50"
+spec:
+  project: platform
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: grafana-staging
+  sources:
+    - repoURL: https://grafana.github.io/helm-charts
+      chart: grafana
+      targetRevision: 8.10.0
+      helm:
+        releaseName: grafana-staging
+        valueFiles:
+          - $values/platform-services/grafana/values/staging.yaml
+    - repoURL: git@github.com:stonetusker/tuskerblueprint.git
+      targetRevision: main
+      ref: values
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true
+      - PrunePropagationPolicy=foreground

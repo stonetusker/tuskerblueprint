@@ -172,13 +172,15 @@ run_command() {
         observability)
 
             CURRENT_CAPABILITY="${DOMAIN_OBSERVABILITY}"
-            printf "Observability domain verification not yet implemented.\n"
+            source "${SCRIPT_DIR}/observability/verify-prometheus.sh"
+            source "${SCRIPT_DIR}/observability/verify-loki.sh"
+            source "${SCRIPT_DIR}/observability/verify-grafana.sh"
             ;;
 
         developer-platform)
 
             CURRENT_CAPABILITY="${DOMAIN_DEVELOPER_PLATFORM}"
-            printf "Developer Platform verification not yet implemented.\n"
+            source "${SCRIPT_DIR}/developer-platform/verify-backstage.sh"
             ;;
 
         ########################################################################
@@ -218,25 +220,25 @@ run_command() {
         prometheus)
 
             CURRENT_CAPABILITY="${APP_PROMETHEUS}"
-            printf "Prometheus verification not yet implemented.\n"
+            source "${SCRIPT_DIR}/observability/verify-prometheus.sh"
             ;;
 
         grafana)
 
             CURRENT_CAPABILITY="${APP_GRAFANA}"
-            printf "Grafana verification not yet implemented.\n"
+            source "${SCRIPT_DIR}/observability/verify-grafana.sh"
             ;;
 
         loki)
 
             CURRENT_CAPABILITY="${APP_LOKI}"
-            printf "Loki verification not yet implemented.\n"
+            source "${SCRIPT_DIR}/observability/verify-loki.sh"
             ;;
 
         backstage)
 
             CURRENT_CAPABILITY="${APP_BACKSTAGE}"
-            printf "Backstage verification not yet implemented.\n"
+            source "${SCRIPT_DIR}/developer-platform/verify-backstage.sh"
             ;;
 
         ########################################################################

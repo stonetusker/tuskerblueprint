@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: backstage-production
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: backstage
+    app.kubernetes.io/component: developer-platform
+    app.kubernetes.io/part-of: tuskerblueprint
+    app.kubernetes.io/environment: production
+  annotations:
+    argocd.argoproj.io/sync-wave: "60"
+spec:
+  project: platform
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: backstage-production
+  sources:
+    - repoURL: https://backstage.github.io/charts
+      chart: backstage
+      targetRevision: 1.10.0
+      helm:
+        releaseName: backstage-production
+        valueFiles:
+          - $values/platform-services/backstage/values/production.yaml
+    - repoURL: git@github.com:stonetusker/tuskerblueprint.git
+      targetRevision: main
+      ref: values
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true
+      - PrunePropagationPolicy=foreground
