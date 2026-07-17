@@ -4,15 +4,23 @@
 # Environment: Staging
 # ==============================================================================
 
-replicaCount: 1
+backstage:
+  replicas: 1
+
+  containerPorts:
+    backend: 7007
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
 
 service:
   type: ClusterIP
-
-resources:
-  requests:
-    cpu: 100m
-    memory: 128Mi
-  limits:
-    cpu: 500m
-    memory: 512Mi
+  ports:
+    backend: 7007
+    name: http-backend
+    targetPort: backend

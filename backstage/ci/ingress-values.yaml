@@ -1,6 +1,0 @@
-ingress:
-  enabled: true
-  host: backstage.example.com
-  tls:
-    enabled: true
-    secretName: "backstage-tls"

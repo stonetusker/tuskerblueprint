@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: backstage-rbac
-  namespace: __BACKSTAGE_NAMESPACE__
+  namespace: backstage
 data:
   rbac.yaml: |
     rolePolicies: []
