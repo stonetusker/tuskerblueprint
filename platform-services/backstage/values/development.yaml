@@ -1,18 +1,62 @@
-# ==============================================================================
-# TuskerBlueprint
-# Backstage Helm Values
-# Environment: Development
-# ==============================================================================
+backstage:
+  replicas: 1
 
-replicaCount: 1
+  containerPorts:
+    backend: 7007
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  appConfig:
+    app:
+      title: TuskerBlueprint Internal Developer Portal
+      baseUrl: http://localhost:7007
+
+    organization:
+      name: TuskerBlueprint
+
+    backend:
+      baseUrl: http://localhost:7007
+      listen:
+        port: 7007
+      cors:
+        origin: http://localhost:7007
+        methods:
+          - GET
+          - HEAD
+          - PATCH
+          - POST
+          - PUT
+          - DELETE
+        credentials: true
+
+    techdocs:
+      builder: local
+      generator:
+        runIn: local
+      publisher:
+        type: local
+
+    catalog:
+      rules:
+        - allow:
+            - Component
+            - API
+            - Resource
+            - Group
+            - User
+            - System
+            - Location
+            - Template
 
 service:
   type: ClusterIP
-
-resources:
-  requests:
-    cpu: 100m
-    memory: 128Mi
-  limits:
-    cpu: 500m
-    memory: 512Mi
+  ports:
+    backend: 7007
+    name: http-backend
+    targetPort: backend
