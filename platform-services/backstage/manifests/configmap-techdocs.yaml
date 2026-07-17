@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backstage-techdocs
+  namespace: __BACKSTAGE_NAMESPACE__
+data:
+  techdocs.yaml: |
+    techdocs:
+      publisher:
+        type: ${BACKSTAGE_TECHDOCS_PUBLISHER_TYPE}
+      storageUrl: ${BACKSTAGE_TECHDOCS_STORAGE_URL}
+      requestTimeout: ${BACKSTAGE_TECHDOCS_REQUEST_TIMEOUT}

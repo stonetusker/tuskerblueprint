@@ -1,0 +1,100 @@
+# ==============================================================================
+# TuskerBlueprint
+# Backstage Helm Values
+# Environment: Testing
+# ==============================================================================
+
+global:
+  environment: testing
+  namespace: backstage-testing
+  appName: backstage
+  domain: ""
+  ingress:
+    host: ""
+    className: ""
+    tls:
+      enabled: false
+  image:
+    repository: ""
+    tag: ""
+    pullPolicy: IfNotPresent
+
+backstage:
+  appConfig:
+    app:
+      baseUrl: ""
+      title: "TuskerBlueprint Internal Developer Portal"
+      support:
+        url: ""
+    organization:
+      name: "TuskerBlueprint"
+    backend:
+      baseUrl: ""
+      database:
+        client: "pg"
+        connection:
+          host: ""
+          port: 5432
+          user: ""
+          password: ""
+          database: "backstage"
+
+  auth:
+    provider: "guest"
+    providers:
+      guest:
+        enabled: true
+      github:
+        enabled: false
+      azure:
+        enabled: false
+      keycloak:
+        enabled: false
+
+  plugins:
+    catalog:
+      enabled: true
+    catalogImport:
+      enabled: true
+    kubernetes:
+      enabled: false
+      clusters: []
+    argocd:
+      enabled: false
+      url: ""
+    grafana:
+      enabled: false
+      url: ""
+    techdocs:
+      enabled: false
+      publisher:
+        type: "local"
+    search:
+      enabled: true
+    scaffolder:
+      enabled: true
+
+  providers:
+    github:
+      tokenEnvVar: "GITHUB_TOKEN"
+      orgs: []
+      repositories: []
+    catalog:
+      locations: []
+    kubernetes:
+      clusterName: ""
+    argocd:
+      tokenEnvVar: "ARGOCD_TOKEN"
+    grafana:
+      tokenEnvVar: "GRAFANA_TOKEN"
+
+  rbac:
+    policies: []
+    roles: []
+
+  secrets:
+    existingSecret: "backstage-secrets"
+    backend: "doppler"
+    storeRef:
+      name: ""
+      kind: "ClusterSecretStore"

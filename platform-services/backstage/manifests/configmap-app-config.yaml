@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backstage-app-config
+  namespace: __BACKSTAGE_NAMESPACE__
+data:
+  app-config.yaml: |
+    app:
+      baseUrl: ${BACKSTAGE_APP_BASE_URL}
+      title: ${BACKSTAGE_APP_TITLE}
+      support:
+        url: ${BACKSTAGE_SUPPORT_URL}
+
+    organization:
+      name: ${BACKSTAGE_ORGANIZATION_NAME}
+
+    backend:
+      baseUrl: ${BACKSTAGE_BACKEND_BASE_URL}
+      database:
+        client: ${BACKSTAGE_DATABASE_CLIENT}
+        connection:
+          host: ${BACKSTAGE_DATABASE_HOST}
+          port: ${BACKSTAGE_DATABASE_PORT}
+          user: ${BACKSTAGE_DATABASE_USER}
+          password: ${BACKSTAGE_DATABASE_PASSWORD}
+          database: ${BACKSTAGE_DATABASE_NAME}
+
+    auth:
+      environment: ${BACKSTAGE_AUTH_PROVIDER}
+
+    catalog:
+      import:
+        entityFilename: catalog-info.yaml
