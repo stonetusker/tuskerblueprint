@@ -1,44 +1,40 @@
 backstage:
-  replicas: 1
-
-  containerPorts:
-    backend: 7007
-
-  resources:
-    requests:
-      cpu: 500m
-      memory: 512Mi
-    limits:
-      cpu: "1"
-      memory: 1Gi
+  image:
+    repository: ghcr.io/backstage/backstage
+    tag: "1.42.0" # Replace with the chosen pinned release
+    pullPolicy: IfNotPresent
 
   appConfig:
     app:
-      title: TuskerBlueprint Internal Developer Portal
-      baseUrl: http://localhost:7007
+      title: TuskerBlueprint Developer Portal
+      baseUrl: http://localhost:3000
+
+    backend:
+      baseUrl: http://backstage.backstage.svc.cluster.local:7007
+      listen:
+        port: 7007
 
     auth:
       environment: development
       providers:
-        guest: {}
+        guest:
+          dangerouslyAllowOutsideDevelopment: true
+
+    catalog:
+      rules:
+        - allow:
+            - Component
+            - System
+            - API
+            - Resource
+            - Location
+            - Template
+            - User
+            - Group
+            - Domain
 
     organization:
       name: TuskerBlueprint
-
-    backend:
-      baseUrl: http://localhost:7007
-      listen:
-        port: 7007
-      cors:
-        origin: http://localhost:7007
-        methods:
-          - GET
-          - HEAD
-          - PATCH
-          - POST
-          - PUT
-          - DELETE
-        credentials: true
 
     techdocs:
       builder: local
@@ -47,21 +43,17 @@ backstage:
       publisher:
         type: local
 
-    catalog:
-      rules:
-        - allow:
-            - Component
-            - API
-            - Resource
-            - Group
-            - User
-            - System
-            - Location
-            - Template
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
 
 service:
   type: ClusterIP
-  ports:
-    backend: 7007
-    name: http-backend
-    targetPort: backend
+  port: 7007
+
+ingress:
+  enabled: false
