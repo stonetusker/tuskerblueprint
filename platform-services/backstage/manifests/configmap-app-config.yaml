@@ -45,3 +45,10 @@ data:
             - System
             - Location
             - Template
+
+    notifications:
+      debug: false
+      defaultSettings:
+        channels:
+          - id: Web
+            enabled: false
