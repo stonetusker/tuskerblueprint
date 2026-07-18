@@ -6,16 +6,21 @@ backstage:
 
   resources:
     requests:
-      cpu: 100m
-      memory: 128Mi
-    limits:
       cpu: 500m
       memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
 
   appConfig:
     app:
       title: TuskerBlueprint Internal Developer Portal
       baseUrl: http://localhost:7007
+
+    auth:
+      environment: development
+      providers:
+        guest: {}
 
     organization:
       name: TuskerBlueprint
