@@ -1,16 +1,16 @@
 backstage:
   image:
     repository: ghcr.io/backstage/backstage
-    tag: "1.42.0" # Replace with the chosen pinned release
+    tag: "1.34.1"
     pullPolicy: IfNotPresent
 
   appConfig:
     app:
       title: TuskerBlueprint Developer Portal
-      baseUrl: http://localhost:3000
+      baseUrl: http://localhost:7007
 
     backend:
-      baseUrl: http://backstage.backstage.svc.cluster.local:7007
+      baseUrl: http://localhost:7007
       listen:
         port: 7007
 
@@ -24,14 +24,14 @@ backstage:
       rules:
         - allow:
             - Component
-            - System
             - API
             - Resource
+            - System
+            - Domain
+            - Group
+            - User
             - Location
             - Template
-            - User
-            - Group
-            - Domain
 
     organization:
       name: TuskerBlueprint
