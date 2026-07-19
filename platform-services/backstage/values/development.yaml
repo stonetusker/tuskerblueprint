@@ -51,9 +51,5 @@ resources:
     cpu: 500m
     memory: 512Mi
 
-service:
-  type: ClusterIP
-  port: 7007
-
 ingress:
   enabled: false
