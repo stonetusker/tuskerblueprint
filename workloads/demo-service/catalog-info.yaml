@@ -1,0 +1,20 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: demo-service
+  title: TuskerBlueprint Demo Service
+  description: Reference workload deployed to Kubernetes through Argo CD
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+  links:
+    - url: https://github.com/stonetusker/tuskerblueprint
+      title: Source Repository
+      icon: github
+    - url: https://localhost:8080/applications/argocd/demo-service-development
+      title: Open in Argo CD
+      icon: dashboard
+spec:
+  type: service
+  lifecycle: experimental
+  owner: group:default/platform-team
+  system: tuskerblueprint
