@@ -58,3 +58,14 @@ spec:
   lifecycle: experimental
   owner: group:default/platform-team
   system: tuskerblueprint
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: Location
+metadata:
+  name: tuskerblueprint-demo-service
+  description: Catalog location for the TuskerBlueprint demo workload
+spec:
+  type: url
+  targets:
+    - https://github.com/stonetusker/tuskerblueprint/blob/main/workloads/demo-service/catalog-info.yaml
