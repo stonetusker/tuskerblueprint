@@ -1,7 +1,10 @@
 backstage:
   image:
-    repository: ghcr.io/backstage/backstage:1.34.1
+    registry: ghcr.io
+    repository: backstage/backstage
+    tag: "1.34.1"
     pullPolicy: IfNotPresent
+
 
   extraEnvVars:
     - name: GITHUB_TOKEN
