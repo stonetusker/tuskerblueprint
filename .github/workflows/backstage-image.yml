@@ -32,8 +32,10 @@ jobs:
       - name: Enable Corepack
         run: corepack enable
 
-      - name: Generate custom application
-        run: scripts/backstage/bootstrap-custom-app.sh
+	- name: Generate custom application
+	  env:
+	    BACKSTAGE_APP_NAME: tuskerblueprint-backstage
+	  run: scripts/backstage/bootstrap-custom-app.sh
 
       - name: Validate application
         working-directory: .generated/backstage

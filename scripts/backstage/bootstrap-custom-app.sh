@@ -12,12 +12,18 @@ command -v yarn >/dev/null || { echo "Yarn is required" >&2; exit 1; }
 rm -rf "${APP_DIR}"
 mkdir -p "$(dirname "${APP_DIR}")"
 
+APP_NAME="${BACKSTAGE_APP_NAME:-tuskerblueprint-backstage}"
+
 echo "Creating official Backstage application skeleton in ${APP_DIR}"
-if ! npx --yes @backstage/create-app@latest --path "${APP_DIR}" --skip-install; then
-  echo "The installed create-app CLI does not support --skip-install; retrying with its default install behavior"
-  rm -rf "${APP_DIR}"
-  npx --yes @backstage/create-app@latest --path "${APP_DIR}"
-fi
+echo "Application name: ${APP_NAME}"
+
+# Backstage create-app asks for the application name interactively.
+# GitHub Actions has no interactive terminal, so provide the answer through stdin.
+printf '%s\n' "${APP_NAME}" |
+  npx --yes @backstage/create-app@latest \
+    --path "${APP_DIR}"
+
+
 
 pushd "${APP_DIR}" >/dev/null
 corepack enable || true
