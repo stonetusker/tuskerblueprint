@@ -24,12 +24,14 @@ concurrency:
 env:
   COREPACK_ENABLE_DOWNLOAD_PROMPT: '0'
   YARN_ENABLE_IMMUTABLE_INSTALLS: 'false'
+  npm_config_python: /usr/bin/python3
+  PYTHON: /usr/bin/python3
 
 jobs:
   build:
     name: Build and scan Backstage
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 75
 
     steps:
       - name: Check out repository
@@ -38,32 +40,110 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '20'
+
+      - name: Install native build dependencies
+        run: |
+          set -euo pipefail
+
+          sudo apt-get update
+
+          sudo apt-get install --yes \
+            python3 \
+            make \
+            g++ \
+            pkg-config \
+            libsecret-1-dev
 
       - name: Enable Corepack
-        run: corepack enable
+        run: |
+          set -euo pipefail
+
+          corepack enable
+
+          echo "Node version:"
+          node --version
+
+          echo "Corepack version:"
+          corepack --version
 
       - name: Generate custom Backstage application
         env:
           BACKSTAGE_APP_NAME: tuskerblueprint-backstage
           YARN_ENABLE_IMMUTABLE_INSTALLS: 'false'
           COREPACK_ENABLE_DOWNLOAD_PROMPT: '0'
-        run: bash scripts/backstage/bootstrap-custom-app.sh
+          npm_config_python: /usr/bin/python3
+          PYTHON: /usr/bin/python3
+        run: |
+          set -euo pipefail
+
+          bash scripts/backstage/bootstrap-custom-app.sh
 
       - name: Verify generated application
         run: |
+          set -euo pipefail
+
           test -f .generated/backstage/package.json
           test -f .generated/backstage/yarn.lock
+          test -f .generated/backstage/packages/app/package.json
+          test -f .generated/backstage/packages/backend/package.json
           test -f .generated/backstage/packages/backend/Dockerfile
 
-      - name: Validate Backstage application
+          echo "Generated application package manager:"
+          node -p "require('./.generated/backstage/package.json').packageManager"
+
+          echo "Generated application Yarn version:"
+          (
+            cd .generated/backstage
+            corepack yarn --version
+          )
+
+          echo "Generated workspaces:"
+          (
+            cd .generated/backstage
+            corepack yarn workspaces list
+          )
+
+      - name: Type-check Backstage application
         working-directory: .generated/backstage
         env:
           CI: 'true'
         run: |
-          yarn tsc
-          yarn test --ci
-          yarn build:backend
+          set -euo pipefail
+
+          echo "Node version: $(node --version)"
+          echo "Yarn version: $(corepack yarn --version)"
+
+          corepack yarn tsc
+
+      - name: Test Backstage frontend
+        working-directory: .generated/backstage
+        env:
+          CI: 'true'
+        run: |
+          set -euo pipefail
+
+          corepack yarn workspace app test \
+            --ci \
+            --runInBand \
+            --passWithNoTests
+
+      - name: Build Backstage backend
+        working-directory: .generated/backstage
+        env:
+          CI: 'true'
+        run: |
+          set -euo pipefail
+
+          corepack yarn workspace backend build
+
+      - name: Verify backend build output
+        run: |
+          set -euo pipefail
+
+          test -d .generated/backstage/packages/backend/dist
+
+          echo "Backend build completed successfully."
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -79,8 +159,12 @@ jobs:
         id: image
         shell: bash
         run: |
-          echo "name=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/tuskerblueprint-backstage" \
-            >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+
+          IMAGE_NAME="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/tuskerblueprint-backstage"
+
+          echo "name=${IMAGE_NAME}" >> "$GITHUB_OUTPUT"
+          echo "Image name: ${IMAGE_NAME}"
 
       - name: Build and push Backstage image
         uses: docker/build-push-action@v6

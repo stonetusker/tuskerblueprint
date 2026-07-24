@@ -17,9 +17,9 @@ import { EntityApiDefinitionCard } from '@backstage/plugin-api-docs';
 import { EntityTechdocsContent } from '@backstage/plugin-techdocs';
 
 import {
-  EntityGithubActionsContent,
-  isGithubActionsAvailable,
-} from '@backstage-community/plugin-github-actions';
+  EntityKubernetesContent,
+  isKubernetesAvailable,
+} from '@backstage/plugin-kubernetes';
 
 import {
   EntityGithubActionsContent,
@@ -32,11 +32,7 @@ import {
 } from '@roadiehq/backstage-plugin-argo-cd';
 
 const overviewContent = (
-  <Grid
-    container
-    spacing={3}
-    alignItems="stretch"
-  >
+  <Grid container spacing={3} alignItems="stretch">
     <Grid item md={6} xs={12}>
       <EntityAboutCard variant="gridItem" />
     </Grid>
