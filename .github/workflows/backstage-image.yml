@@ -77,7 +77,21 @@ jobs:
         run: |
           set -euo pipefail
 
-          bash scripts/backstage/bootstrap-custom-app.sh
+          if ! bash scripts/backstage/bootstrap-custom-app.sh; then
+            echo
+            echo "Recent Yarn native build logs:"
+            find /tmp \
+              -path '*/xfs-*/build.log' \
+              -type f \
+              -mmin -30 \
+              -print \
+              -exec sh -c '
+                echo "===== $1 ====="
+                sed -n "1,260p" "$1"
+              ' sh {} \; || true
+
+            exit 1
+          fi
 
       - name: Verify generated application
         run: |

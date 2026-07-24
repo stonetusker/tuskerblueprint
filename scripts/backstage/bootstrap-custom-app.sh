@@ -149,25 +149,29 @@ rsync -a \
   "${OVERRIDES_DIR}/" \
   "${APP_DIR}/"
 
+
 echo
-echo "Installing the aligned dependency tree with lifecycle scripts enabled"
+echo "Installing the aligned dependency tree without native lifecycle builds"
 echo
 
 #
-# Native package builds are enabled only now, after dependencies have been
-# aligned to the selected Backstage release.
+# TypeScript checks, frontend tests and backend bundling do not require native
+# modules such as better-sqlite3 to be compiled during repository bootstrap.
+#
+# Native production dependencies are compiled later inside the Backstage
+# container image, where the OS and toolchain are controlled.
 #
 YARN_ENABLE_IMMUTABLE_INSTALLS=false \
-YARN_ENABLE_SCRIPTS=true \
-  yarn install
+YARN_ENABLE_SCRIPTS=false \
+  corepack yarn install --mode=skip-build
 
 echo
 echo "Confirming that the generated lockfile is stable"
 echo
 
 YARN_ENABLE_IMMUTABLE_INSTALLS=true \
-YARN_ENABLE_SCRIPTS=true \
-  yarn install --immutable
+YARN_ENABLE_SCRIPTS=false \
+  corepack yarn install --immutable --mode=skip-build
 
 popd >/dev/null
 
