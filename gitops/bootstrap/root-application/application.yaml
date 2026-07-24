@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: platform-root
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: platform-root
+    app.kubernetes.io/part-of: tuskerblueprint
+spec:
+  project: default
+
+  source:
+    repoURL: git@github.com:stonetusker/tuskerblueprint.git
+    targetRevision: main
+    path: gitops/environments/development
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - ApplyOutOfSyncOnly=true

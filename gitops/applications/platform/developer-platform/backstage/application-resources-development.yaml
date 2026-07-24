@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: backstage-platform-resources
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: backstage
+    app.kubernetes.io/component: runtime-access
+    app.kubernetes.io/part-of: tuskerblueprint
+    app.kubernetes.io/environment: development
+  annotations:
+    argocd.argoproj.io/sync-wave: "55"
+spec:
+  project: platform
+  source:
+    repoURL: git@github.com:stonetusker/tuskerblueprint.git
+    targetRevision: main
+    path: platform-services/backstage/manifests
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: backstage
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true

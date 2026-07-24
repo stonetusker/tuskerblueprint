@@ -1,0 +1,19 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: prometheus
+  title: Prometheus
+  description: Metrics collection and alerting platform
+  annotations:
+    argocd/app-name: prometheus
+    argocd/instance-name: development
+  tags: [observability, metrics]
+  links:
+    - url: http://localhost:9090
+      title: Open Prometheus
+      icon: dashboard
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: tuskerblueprint

@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: backstage-rbac
-  namespace: backstage
-data:
-  rbac.yaml: |
-    rolePolicies: []
-    roleMappings: []

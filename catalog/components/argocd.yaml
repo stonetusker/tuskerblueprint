@@ -1,0 +1,25 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: argocd
+  title: Argo CD GitOps Control Plane
+  description: Continuously reconciles platform and workload desired state from Git
+  annotations:
+    github.com/project-slug: stonetusker/tuskerblueprint
+    backstage.io/kubernetes-id: argocd-server
+    backstage.io/kubernetes-namespace: argocd
+  tags:
+    - gitops
+    - deployment
+  links:
+    - url: https://localhost:8080/applications
+      title: Open Argo CD
+      icon: dashboard
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: tuskerblueprint
+  dependsOn:
+    - resource:default/tuskerblueprint-repository
+    - resource:default/tuskerblueprint-development-cluster

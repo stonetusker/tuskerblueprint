@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: generated-workloads
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: generated-workloads
+    app.kubernetes.io/component: application-controller
+    app.kubernetes.io/part-of: tuskerblueprint
+  annotations:
+    argocd.argoproj.io/sync-wave: "75"
+spec:
+  project: platform
+  source:
+    repoURL: git@github.com:stonetusker/tuskerblueprint.git
+    targetRevision: main
+    path: gitops/generated-workloads
+    directory:
+      recurse: true
+      include: '*.yaml'
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ApplyOutOfSyncOnly=true

@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ${{ values.name }}-development
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: ${{ values.name }}
+    app.kubernetes.io/component: workload
+    app.kubernetes.io/part-of: tuskerblueprint
+    app.kubernetes.io/environment: development
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: workloads
+  source:
+    repoURL: https://github.com/${{ values.repoUrl | parseRepoUrl | pick('owner') }}/${{ values.repoUrl | parseRepoUrl | pick('repo') }}.git
+    targetRevision: main
+    path: deploy/overlays/development
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ${{ values.name }}-development
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    retry:
+      limit: 5
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true

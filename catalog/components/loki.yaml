@@ -1,0 +1,15 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: loki
+  title: Loki
+  description: Centralized log storage and query backend
+  annotations:
+    argocd/app-name: loki
+    argocd/instance-name: development
+  tags: [observability, logs]
+spec:
+  type: service
+  lifecycle: experimental
+  owner: group:default/platform-team
+  system: tuskerblueprint

@@ -1,0 +1,17 @@
+site_name: TuskerBlueprint Internal Developer Platform
+site_description: Architecture, operating model, golden paths, and customer demo guidance
+repo_url: https://github.com/stonetusker/tuskerblueprint
+edit_uri: edit/main/docs/
+nav:
+  - Home: index.md
+  - Architecture: architecture.md
+  - Developer journey: developer-journey.md
+  - Service onboarding: service-onboarding.md
+  - GitOps operating model: gitops.md
+  - Backstage: backstage.md
+  - Security: security.md
+  - Operations: operations.md
+  - Service standards: service-standards.md
+  - Customer demo: demo-runbook.md
+plugins:
+  - techdocs-core

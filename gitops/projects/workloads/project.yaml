@@ -4,23 +4,42 @@ metadata:
   name: workloads
   namespace: argocd
 spec:
-  description: TuskerBlueprint Application Workloads
-
+  description: TuskerBlueprint application workloads created through approved golden paths
   sourceRepos:
     - git@github.com:stonetusker/tuskerblueprint.git
-
+    - https://github.com/stonetusker/*.git
   destinations:
-    - namespace: "*"
+    - namespace: '*-development'
       server: https://kubernetes.default.svc
-
+    - namespace: '*-staging'
+      server: https://kubernetes.default.svc
+    - namespace: '*-production'
+      server: https://kubernetes.default.svc
   sourceNamespaces:
     - argocd
-
   clusterResourceWhitelist: []
-
   namespaceResourceWhitelist:
-    - group: "*"
-      kind: "*"
-
+    - group: ''
+      kind: ConfigMap
+    - group: ''
+      kind: Service
+    - group: ''
+      kind: ServiceAccount
+    - group: apps
+      kind: Deployment
+    - group: apps
+      kind: StatefulSet
+    - group: batch
+      kind: Job
+    - group: batch
+      kind: CronJob
+    - group: autoscaling
+      kind: HorizontalPodAutoscaler
+    - group: networking.k8s.io
+      kind: Ingress
+    - group: networking.k8s.io
+      kind: NetworkPolicy
+    - group: policy
+      kind: PodDisruptionBudget
   orphanedResources:
     warn: true

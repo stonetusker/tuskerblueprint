@@ -1,71 +1,27 @@
 apiVersion: backstage.io/v1alpha1
-kind: Group
-metadata:
-  name: platform-team
-  title: StoneTusker Platform Team
-  description: Team responsible for the TuskerBlueprint reference platform
-spec:
-  type: team
-  profile:
-    displayName: StoneTusker Platform Team
-  children: []
-
----
-apiVersion: backstage.io/v1alpha1
-kind: System
-metadata:
-  name: tuskerblueprint
-  title: TuskerBlueprint Platform
-  description: GitOps-driven internal developer platform reference implementation
-spec:
-  owner: group:default/platform-team
-
----
-apiVersion: backstage.io/v1alpha1
-kind: Component
-metadata:
-  name: backstage
-  title: TuskerBlueprint Developer Portal
-  description: Backstage developer portal deployed and managed through Argo CD
-  annotations:
-    backstage.io/techdocs-ref: dir:.
-  links:
-    - url: https://github.com/stonetusker/tuskerblueprint
-      title: Source Repository
-      icon: github
-    - url: https://localhost:8080/applications/argocd/backstage
-      title: Open in Argo CD
-      icon: dashboard
-spec:
-  type: website
-  lifecycle: experimental
-  owner: group:default/platform-team
-  system: tuskerblueprint
-
----
-apiVersion: backstage.io/v1alpha1
-kind: Component
-metadata:
-  name: argocd
-  title: Argo CD GitOps Control Plane
-  description: Reconciles platform services from the private Git repository
-  links:
-    - url: https://localhost:8080/applications
-      title: Open Argo CD
-      icon: dashboard
-spec:
-  type: service
-  lifecycle: experimental
-  owner: group:default/platform-team
-  system: tuskerblueprint
-
----
-apiVersion: backstage.io/v1alpha1
 kind: Location
 metadata:
-  name: tuskerblueprint-demo-service
-  description: Catalog location for the TuskerBlueprint demo workload
+  name: tuskerblueprint-catalog
+  title: TuskerBlueprint IDP Catalog
+  description: Root catalog location for the TuskerBlueprint Internal Developer Platform
 spec:
   type: url
   targets:
-    - https://github.com/stonetusker/tuskerblueprint/blob/main/workloads/demo-service/catalog-info.yaml
+    - ./catalog/groups/platform-team.yaml
+    - ./catalog/users/subeesh.yaml
+    - ./catalog/domains/platform-engineering.yaml
+    - ./catalog/systems/tuskerblueprint.yaml
+    - ./catalog/resources/development-cluster.yaml
+    - ./catalog/resources/tuskerblueprint-repository.yaml
+    - ./catalog/components/backstage.yaml
+    - ./catalog/components/argocd.yaml
+    - ./catalog/components/demo-service.yaml
+    - ./catalog/components/traefik.yaml
+    - ./catalog/components/cert-manager.yaml
+    - ./catalog/components/external-secrets.yaml
+    - ./catalog/components/kyverno.yaml
+    - ./catalog/components/prometheus.yaml
+    - ./catalog/components/grafana.yaml
+    - ./catalog/components/loki.yaml
+    - ./catalog/apis/demo-service-api.yaml
+    - ./software-templates/tusker-service/template.yaml

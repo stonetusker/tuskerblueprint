@@ -1,14 +1,27 @@
+.PHONY: help validate idp-validate shell-check demo-preflight demo-status backstage-bootstrap
+
 help:
 	@echo "Available targets:"
-	@echo "  lint"
-	@echo "  validate"
-	@echo "  fmt"
+	@echo "  idp-validate       Validate YAML, required IDP assets, secrets, and Kustomize when available"
+	@echo "  shell-check        Run Bash syntax checks"
+	@echo "  backstage-bootstrap Generate the custom Backstage application source"
+	@echo "  demo-preflight     Verify Backstage and demo-service are ready"
+	@echo "  demo-status        Show current platform demo status"
+	@echo "  validate           Run IDP validation"
 
-fmt:
-	terraform fmt -recursive infrastructure/terraform || true
+validate: idp-validate
 
-validate:
-	terraform -chdir=infrastructure/terraform validate || true
+idp-validate:
+	python scripts/validate_idp.py
 
-lint:
-	@echo "Linting will be added during CI implementation."
+shell-check:
+	find scripts -type f -name '*.sh' -print0 | xargs -0 -n1 bash -n
+
+backstage-bootstrap:
+	scripts/backstage/bootstrap-custom-app.sh
+
+demo-preflight:
+	scripts/demo/preflight.sh
+
+demo-status:
+	scripts/demo/status.sh

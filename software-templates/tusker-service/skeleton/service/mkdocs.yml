@@ -1,0 +1,7 @@
+site_name: ${{ values.name }}
+site_description: ${{ values.description }}
+nav:
+  - Overview: docs/index.md
+  - Operations: docs/runbook.md
+plugins:
+  - techdocs-core

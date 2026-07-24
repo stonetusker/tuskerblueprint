@@ -1,16 +1,43 @@
 ---
-- name: Render Argo CD repository secret
-  ansible.builtin.template:
-    src: repository-secret.yaml.j2
-    dest: /tmp/argocd-repository-secret.yaml
-    mode: "0600"
+- name: Read Argo CD repository deploy key into memory
+  ansible.builtin.set_fact:
+    argocd_repo_private_key: "{{ lookup('file', argocd_repo_key_path) }}"
+  no_log: true
+  delegate_to: localhost
+  become: false
+  run_once: true
 
-- name: Apply Argo CD repository secret
-  ansible.builtin.command:
-    cmd: kubectl apply -f /tmp/argocd-repository-secret.yaml
-  register: repo_apply
+- name: Create or update Argo CD repository Secret without a temporary file
+  kubernetes.core.k8s:
+    kubeconfig: "{{ kubeconfig }}"
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ argocd_repo_secret_name }}"
+        namespace: "{{ argocd_namespace }}"
+        labels:
+          argocd.argoproj.io/secret-type: repository
+      type: Opaque
+      stringData:
+        type: git
+        url: "{{ argocd_repo_url }}"
+        sshPrivateKey: "{{ argocd_repo_private_key }}"
+  no_log: true
+  delegate_to: localhost
+  become: false
+  run_once: true
 
-- name: Verify repository secret exists
+- name: Remove repository key from Ansible facts
+  ansible.builtin.set_fact:
+    argocd_repo_private_key: null
+  no_log: true
+  delegate_to: localhost
+  become: false
+  run_once: true
+
+- name: Verify repository Secret exists
   ansible.builtin.command:
     cmd: >
       kubectl get secret
@@ -18,3 +45,6 @@
       -n {{ argocd_namespace }}
   register: repo_secret
   changed_when: false
+  delegate_to: localhost
+  become: false
+  run_once: true

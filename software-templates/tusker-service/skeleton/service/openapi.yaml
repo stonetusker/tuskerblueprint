@@ -1,0 +1,24 @@
+openapi: 3.0.3
+info:
+  title: ${{ values.name }} API
+  version: 0.1.0
+  description: ${{ values.description }}
+paths:
+  /:
+    get:
+      summary: Service metadata
+      responses:
+        '200':
+          description: Service metadata
+  /healthz:
+    get:
+      summary: Liveness endpoint
+      responses:
+        '200':
+          description: Service is alive
+  /readyz:
+    get:
+      summary: Readiness endpoint
+      responses:
+        '200':
+          description: Service is ready

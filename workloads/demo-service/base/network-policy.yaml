@@ -1,0 +1,42 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: demo-service-default-deny
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: demo-service
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: demo-service-allow-ingress
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: demo-service
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchExpressions:
+              - key: kubernetes.io/metadata.name
+                operator: In
+                values:
+                  - traefik-development
+                  - traefik-staging
+                  - traefik-production
+      ports:
+        - port: 8080
+          protocol: TCP
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: default
+      ports:
+        - port: 8080
+          protocol: TCP

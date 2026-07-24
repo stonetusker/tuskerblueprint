@@ -1,0 +1,17 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: traefik
+  title: Traefik Ingress Controller
+  description: Cluster ingress and routing capability
+  annotations:
+    argocd/app-name: traefik-development
+    argocd/instance-name: development
+    backstage.io/kubernetes-id: traefik
+    backstage.io/kubernetes-namespace: traefik-development
+  tags: [networking, ingress]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: tuskerblueprint

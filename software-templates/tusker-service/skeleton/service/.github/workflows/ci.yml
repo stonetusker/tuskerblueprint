@@ -1,0 +1,41 @@
+name: Service CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: write
+  security-events: write
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: pytest -q
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        if: github.event_name == 'push'
+        with:
+          registry: ghcr.io
+          username: ${{ '${{ github.actor }}' }}
+          password: ${{ '${{ secrets.GITHUB_TOKEN }}' }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ '${{ github.event_name == \'push\' }}' }}
+          tags: ghcr.io/${{ values.repoUrl | parseRepoUrl | pick('owner') }}/${{ values.name }}:${{ '${{ github.sha }}' }}
+      - uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: HIGH,CRITICAL
+          exit-code: '1'

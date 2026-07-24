@@ -1,0 +1,29 @@
+openapi: 3.0.3
+info:
+  title: TuskerBlueprint Demo Service API
+  version: 1.0.0
+  description: Reference API used to demonstrate Backstage API discovery and documentation.
+servers:
+  - url: http://demo-service.demo-service-development.svc.cluster.local
+paths:
+  /:
+    get:
+      summary: Return the demo page
+      responses:
+        '200':
+          description: HTML demo page
+          content:
+            text/html:
+              schema:
+                type: string
+  /healthz:
+    get:
+      summary: Liveness endpoint
+      responses:
+        '200':
+          description: Service is alive
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: ok

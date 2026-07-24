@@ -1,0 +1,3 @@
+site_name: TuskerBlueprint Demo Service
+nav:
+  - Overview: docs/index.md

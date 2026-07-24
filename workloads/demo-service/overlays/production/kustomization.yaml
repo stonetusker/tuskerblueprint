@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: demo-service-production
+resources:
+  - ../../base
+
+replicas:
+  - name: demo-service
+    count: 3
+
+commonLabels:
+  app.kubernetes.io/environment: production

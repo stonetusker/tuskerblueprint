@@ -1,0 +1,22 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: grafana
+  title: Grafana
+  description: Dashboards and operational visualization
+  annotations:
+    argocd/app-name: grafana
+    argocd/instance-name: development
+  tags: [observability, dashboards]
+  links:
+    - url: http://localhost:3000
+      title: Open Grafana
+      icon: dashboard
+spec:
+  type: website
+  lifecycle: production
+  owner: group:default/platform-team
+  system: tuskerblueprint
+  dependsOn:
+    - component:default/prometheus
+    - component:default/loki

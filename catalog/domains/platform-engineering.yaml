@@ -1,0 +1,8 @@
+apiVersion: backstage.io/v1alpha1
+kind: Domain
+metadata:
+  name: platform-engineering
+  title: Platform Engineering
+  description: Internal developer platform, GitOps, delivery automation, security, and observability
+spec:
+  owner: group:default/platform-team

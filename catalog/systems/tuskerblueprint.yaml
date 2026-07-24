@@ -1,0 +1,14 @@
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: tuskerblueprint
+  title: TuskerBlueprint Internal Developer Platform
+  description: GitOps-driven reference platform for service creation, deployment, operations, and governance
+  tags:
+    - backstage
+    - argocd
+    - kubernetes
+    - platform-engineering
+spec:
+  owner: group:default/platform-team
+  domain: platform-engineering

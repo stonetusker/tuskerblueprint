@@ -4,27 +4,43 @@ metadata:
   name: platform
   namespace: argocd
 spec:
-  description: TuskerBlueprint Platform Services
-
+  description: TuskerBlueprint platform services and GitOps controllers
   sourceRepos:
-    - https://traefik.github.io/charts*
-    - https://charts.jetstack.io*
     - git@github.com:stonetusker/tuskerblueprint.git
-
+    - https://backstage.github.io/charts
+    - https://charts.external-secrets.io
+    - https://charts.jetstack.io
+    - https://grafana.github.io/helm-charts
+    - https://helm.doppler.com
+    - https://kyverno.github.io/kyverno/
+    - https://prometheus-community.github.io/helm-charts
+    - https://traefik.github.io/charts
   destinations:
-    - namespace: "*"
+    - namespace: argocd
       server: https://kubernetes.default.svc
-
+    - namespace: backstage*
+      server: https://kubernetes.default.svc
+    - namespace: cert-manager*
+      server: https://kubernetes.default.svc
+    - namespace: doppler*
+      server: https://kubernetes.default.svc
+    - namespace: external-secrets*
+      server: https://kubernetes.default.svc
+    - namespace: grafana*
+      server: https://kubernetes.default.svc
+    - namespace: kyverno*
+      server: https://kubernetes.default.svc
+    - namespace: monitoring
+      server: https://kubernetes.default.svc
+    - namespace: traefik*
+      server: https://kubernetes.default.svc
   sourceNamespaces:
     - argocd
-
   clusterResourceWhitelist:
-    - group: "*"
-      kind: "*"
-
+    - group: '*'
+      kind: '*'
   namespaceResourceWhitelist:
-    - group: "*"
-      kind: "*"
-
+    - group: '*'
+      kind: '*'
   orphanedResources:
     warn: true

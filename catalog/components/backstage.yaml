@@ -1,0 +1,32 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: backstage
+  title: TuskerBlueprint Developer Portal
+  description: Backstage portal that provides catalog, documentation, golden paths, runtime visibility, and platform navigation
+  annotations:
+    backstage.io/techdocs-ref: dir:../..
+    github.com/project-slug: stonetusker/tuskerblueprint
+    argocd/app-name: backstage
+    argocd/instance-name: development
+    backstage.io/kubernetes-id: backstage
+    backstage.io/kubernetes-namespace: backstage
+  tags:
+    - idp
+    - backstage
+    - developer-experience
+  links:
+    - url: https://github.com/stonetusker/tuskerblueprint
+      title: Source repository
+      icon: github
+    - url: https://localhost:8080/applications/argocd/backstage
+      title: Open in Argo CD
+      icon: dashboard
+spec:
+  type: website
+  lifecycle: experimental
+  owner: group:default/platform-team
+  system: tuskerblueprint
+  dependsOn:
+    - component:default/argocd
+    - resource:default/tuskerblueprint-development-cluster

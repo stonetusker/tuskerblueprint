@@ -1,0 +1,134 @@
+# CUSTOM IDP MODE
+# Activate this file only after ghcr.io/stonetusker/tuskerblueprint-backstage
+# has been built and the required Kubernetes Secrets have been created.
+backstage:
+  image:
+    registry: ghcr.io
+    repository: stonetusker/tuskerblueprint-backstage
+    tag: "main"
+    pullPolicy: Always
+
+  extraEnvVarsSecrets:
+    - backstage-github-credentials
+    - backstage-auth-secrets
+    - backstage-argocd-credentials
+
+  appConfig:
+    app:
+      title: TuskerBlueprint Developer Portal
+      baseUrl: http://localhost:7007
+      support:
+        url: https://github.com/stonetusker/tuskerblueprint/issues
+        items:
+          - title: Platform support
+            icon: email
+            links:
+              - url: https://github.com/stonetusker/tuskerblueprint/issues
+                title: Create an issue
+
+    organization:
+      name: StoneTusker Systems
+
+    backend:
+      baseUrl: http://localhost:7007
+      listen:
+        port: 7007
+      auth:
+        keys:
+          - secret: ${BACKEND_SECRET}
+      cors:
+        origin: http://localhost:7007
+        methods: [GET, HEAD, PATCH, POST, PUT, DELETE]
+        credentials: true
+
+    integrations:
+      github:
+        - host: github.com
+          token: ${GITHUB_TOKEN}
+
+    auth:
+      environment: development
+      providers:
+        github:
+          development:
+            clientId: ${AUTH_GITHUB_CLIENT_ID}
+            clientSecret: ${AUTH_GITHUB_CLIENT_SECRET}
+            signIn:
+              resolvers:
+                - resolver: usernameMatchingUserEntityName
+
+    catalog:
+      locations:
+        - type: url
+          target: https://github.com/stonetusker/tuskerblueprint/blob/main/catalog-info.yaml
+      rules:
+        - allow:
+            - Component
+            - API
+            - Resource
+            - System
+            - Domain
+            - Group
+            - User
+            - Location
+            - Template
+
+    scaffolder:
+      defaultAuthor:
+        name: TuskerBlueprint Platform
+        email: platform@stonetusker.com
+      defaultCommitMessage: "chore: scaffold service from TuskerBlueprint golden path"
+
+    techdocs:
+      builder: local
+      generator:
+        runIn: local
+      publisher:
+        type: local
+
+    permission:
+      enabled: true
+
+    kubernetes:
+      serviceLocatorMethod:
+        type: multiTenant
+      clusterLocatorMethods:
+        - type: config
+          clusters:
+            - name: tuskerblueprint-development
+              url: https://kubernetes.default.svc
+              authProvider: serviceAccount
+              skipTLSVerify: false
+              skipMetricsLookup: true
+
+    argocd:
+      appLocatorMethods:
+        - type: config
+          instances:
+            - name: development
+              url: https://argocd-server.argocd.svc.cluster.local
+              token: ${ARGOCD_AUTH_TOKEN}
+
+    proxy:
+      endpoints:
+        /argocd/api:
+          target: https://argocd-server.argocd.svc.cluster.local/api/v1/
+          changeOrigin: true
+          secure: false
+          headers:
+            Authorization: Bearer ${ARGOCD_AUTH_TOKEN}
+
+serviceAccount:
+  create: false
+  name: backstage
+
+ingress:
+  enabled: false
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: "1"
+    memory: 1Gi

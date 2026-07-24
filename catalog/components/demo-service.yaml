@@ -1,0 +1,35 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: demo-service
+  title: TuskerBlueprint Demo Service
+  description: Secure reference workload deployed through the TuskerBlueprint GitOps golden path
+  annotations:
+    backstage.io/techdocs-ref: dir:../../workloads/demo-service
+    github.com/project-slug: stonetusker/tuskerblueprint
+    argocd/app-name: demo-service-development
+    argocd/instance-name: development
+    backstage.io/kubernetes-id: demo-service
+    backstage.io/kubernetes-namespace: demo-service-development
+  tags:
+    - demo
+    - gitops
+    - kubernetes
+  links:
+    - url: https://github.com/stonetusker/tuskerblueprint/tree/main/workloads/demo-service
+      title: Workload source
+      icon: github
+    - url: https://localhost:8080/applications/argocd/demo-service-development
+      title: Open in Argo CD
+      icon: dashboard
+spec:
+  type: service
+  lifecycle: experimental
+  owner: group:default/platform-team
+  system: tuskerblueprint
+  providesApis:
+    - demo-service-api
+  dependsOn:
+    - component:default/argocd
+    - component:default/traefik
+    - resource:default/tuskerblueprint-development-cluster

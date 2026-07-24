@@ -1,0 +1,158 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: tusker-service
+  title: Tusker Service
+  description: Create a secure FastAPI service with CI, TechDocs, OpenAPI, Kubernetes manifests, and GitOps onboarding
+  tags:
+    - recommended
+    - python
+    - fastapi
+    - kubernetes
+    - gitops
+spec:
+  owner: group:default/platform-team
+  type: service
+
+  parameters:
+    - title: Service identity
+      required:
+        - name
+        - description
+        - owner
+        - system
+      properties:
+        name:
+          title: Service name
+          type: string
+          description: Lowercase Kubernetes-compatible service identifier
+          pattern: '^[a-z][a-z0-9-]{2,40}$'
+          ui:field: EntityNamePicker
+        description:
+          title: Description
+          type: string
+        owner:
+          title: Owner
+          type: string
+          ui:field: OwnerPicker
+          ui:options:
+            catalogFilter:
+              kind:
+                - Group
+        system:
+          title: System
+          type: string
+          default: system:default/tuskerblueprint
+          ui:field: EntityPicker
+          ui:options:
+            catalogFilter:
+              kind:
+                - System
+        port:
+          title: Application port
+          type: integer
+          default: 8000
+          minimum: 1024
+          maximum: 65535
+
+    - title: Repository
+      required:
+        - repoUrl
+        - repoVisibility
+      properties:
+        repoUrl:
+          title: Repository location
+          type: string
+          ui:field: RepoUrlPicker
+          ui:options:
+            allowedHosts:
+              - github.com
+            allowedOwners:
+              - stonetusker
+            requestUserCredentials:
+              secretsKey: USER_OAUTH_TOKEN
+              additionalScopes:
+                github:
+                  - repo
+                  - workflow
+        repoVisibility:
+          title: Repository visibility
+          type: string
+          default: private
+          enum:
+            - private
+            - internal
+            - public
+          enumNames:
+            - Private
+            - Internal
+            - Public
+
+  steps:
+    - id: fetch-service
+      name: Generate service repository
+      action: fetch:template
+      input:
+        url: ./skeleton/service
+        targetPath: ./service
+        values:
+          name: ${{ parameters.name }}
+          description: ${{ parameters.description }}
+          owner: ${{ parameters.owner }}
+          system: ${{ parameters.system }}
+          port: ${{ parameters.port }}
+          repoUrl: ${{ parameters.repoUrl }}
+
+    - id: publish-service
+      name: Create GitHub repository
+      action: publish:github
+      input:
+        sourcePath: ./service
+        repoUrl: ${{ parameters.repoUrl }}
+        description: ${{ parameters.description }}
+        defaultBranch: main
+        repoVisibility: ${{ parameters.repoVisibility }}
+        protectDefaultBranch: true
+        requireCodeOwnerReviews: false
+        token: ${{ secrets.USER_OAUTH_TOKEN }}
+
+    - id: register-service
+      name: Register service in Backstage
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps['publish-service'].output.repoContentsUrl }}
+        catalogInfoPath: /catalog-info.yaml
+
+    - id: fetch-gitops
+      name: Generate Argo CD onboarding manifest
+      action: fetch:template
+      input:
+        url: ./skeleton/gitops-registration
+        targetPath: ./gitops-registration
+        values:
+          name: ${{ parameters.name }}
+          repoUrl: ${{ parameters.repoUrl }}
+
+    - id: publish-gitops-pr
+      name: Open GitOps onboarding pull request
+      action: publish:github:pull-request
+      input:
+        repoUrl: github.com?owner=stonetusker&repo=tuskerblueprint
+        branchName: onboard-${{ parameters.name }}
+        title: 'feat(gitops): onboard ${{ parameters.name }}'
+        description: |
+          Registers `${{ parameters.name }}` with the TuskerBlueprint generated-workloads controller.
+          Review ownership, namespace, image policy, and resource settings before merging.
+        sourcePath: ./gitops-registration
+        targetPath: gitops/generated-workloads
+        token: ${{ secrets.USER_OAUTH_TOKEN }}
+
+  output:
+    links:
+      - title: Service repository
+        url: ${{ steps['publish-service'].output.remoteUrl }}
+      - title: Catalog entity
+        icon: catalog
+        entityRef: ${{ steps['register-service'].output.entityRef }}
+      - title: GitOps pull request
+        url: ${{ steps['publish-gitops-pr'].output.remoteUrl }}

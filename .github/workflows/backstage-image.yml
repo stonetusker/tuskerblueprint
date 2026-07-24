@@ -1,0 +1,80 @@
+name: Backstage IDP Image
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'backstage-app/**'
+      - 'scripts/backstage/bootstrap-custom-app.sh'
+      - '.github/workflows/backstage-image.yml'
+
+permissions:
+  contents: read
+  packages: write
+  security-events: write
+  id-token: write
+
+concurrency:
+  group: backstage-image-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Generate custom application
+        run: scripts/backstage/bootstrap-custom-app.sh
+
+      - name: Validate application
+        working-directory: .generated/backstage
+        run: |
+          yarn tsc
+          yarn test --ci
+          yarn build:backend
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Prepare image name
+        id: image
+        shell: bash
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/tuskerblueprint-backstage" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .generated/backstage
+          file: .generated/backstage/packages/backend/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.image.outputs.name }}:${{ github.sha }}
+            ${{ steps.image.outputs.name }}:main
+          provenance: true
+          sbom: true
+
+      - uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ steps.image.outputs.name }}:${{ github.sha }}
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+          format: sarif
+          output: trivy-backstage.sarif
+
+      - uses: github/codeql-action/upload-sarif@v3
+        if: always() && hashFiles('trivy-backstage.sarif') != ''
+        with:
+          sarif_file: trivy-backstage.sarif

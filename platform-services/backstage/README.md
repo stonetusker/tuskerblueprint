@@ -1,21 +1,35 @@
-# Backstage
+# Backstage platform service
 
-## Purpose
+This directory contains the Kubernetes deployment configuration and runtime-access resources for the TuskerBlueprint developer portal.
 
-Backstage provides a developer portal and service catalog for the TuskerBlueprint platform.
+## Active deployment files
 
-It is intended to be deployed through Argo CD using a pinned Helm chart and environment-specific values stored in Git.
+- `values/development.yaml`: current safe stock-image deployment.
+- `values/development-idp.yaml`: plugin-enabled custom-image deployment.
+- `values/development-stock.yaml`: rollback copy of the original working values.
+- `manifests/`: read-only ServiceAccount, RBAC, and NetworkPolicy applied by Argo CD.
+- `examples/`: External Secret contracts that are intentionally not applied until a real secret store is selected.
 
-## Ownership
+## Application source
 
-| Component | Owner |
-| --------- | ----- |
-| Deployment | Git → Argo CD |
-| Configuration | Git |
-| Helm chart | Upstream Backstage |
+The custom Backstage source overlay is kept at:
 
-## Notes
+```text
+backstage-app/
+```
 
-- Backstage should be deployed after the core networking, security, and observability layers are available.
-- It should provide a developer-facing entry point for platform capabilities and service discovery.
-- Authentication and ingress should be wired through the platform services already in place.
+The image workflow is:
+
+```text
+.github/workflows/backstage-image.yml
+```
+
+## Migration
+
+Follow:
+
+```text
+docs/IDP-MIGRATION-RUNBOOK.md
+```
+
+Do not change the active Argo CD value file to `development-idp.yaml` until the custom image and required Secrets exist.

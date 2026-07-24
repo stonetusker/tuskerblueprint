@@ -1,0 +1,15 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: kyverno
+  title: Kyverno Policy Engine
+  description: Kubernetes admission policy and configuration governance
+  annotations:
+    argocd/app-name: kyverno
+    argocd/instance-name: development
+  tags: [security, policy]
+spec:
+  type: service
+  lifecycle: experimental
+  owner: group:default/platform-team
+  system: tuskerblueprint

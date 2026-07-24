@@ -1,57 +1,75 @@
-# TuskerBlueprint
+# TuskerBlueprint IDP Reference
 
-TuskerBlueprint is a production-ready Internal Developer Platform (IDP)
-reference implementation built according to the Tusker Platform Reference
-Architecture (TPRA).
+TuskerBlueprint is a customer-facing Internal Developer Platform reference implementation built with Backstage, Argo CD, Kubernetes, GitHub, policy controls, and observability.
 
-## Goals
+## Demonstrated capabilities
 
-- GitOps-first
-- Infrastructure as Code
-- Secure by Default
-- Kubernetes Native
-- Observable
-- Reproducible
-- Production Ready
+- Structured Backstage Software Catalog with ownership, domains, systems, components, APIs, and resources
+- Private GitHub repository ingestion
+- TechDocs documentation-as-code
+- OpenAPI discovery
+- Secure golden-path service creation through Backstage Software Templates
+- GitHub repository creation and GitOps onboarding pull requests
+- Argo CD deployment visibility and reconciliation
+- Read-only Kubernetes runtime visibility
+- GitHub OAuth sign-in
+- GitHub Actions visibility
+- Least-privilege runtime access for Backstage
+- A hardened demo workload for release and self-healing demonstrations
 
-## Technology Stack
+## Safe migration design
 
-- Ubuntu Server 24.04 LTS
-- k3s
-- Argo CD
-- Traefik
-- cert-manager
-- Kyverno
-- External Secrets Operator
-- Doppler
-- Prometheus
-- Grafana
-- Loki
-- Backstage
-- Terraform
-- Ansible
-- Helm
-- Kustomize
-- GitHub Actions
+The repository deliberately keeps the active Argo CD Application on:
 
-## Repository Structure
+```text
+platform-services/backstage/values/development.yaml
+```
 
-- infrastructure/
-- gitops/
-- platform-services/
-- workloads/
-- docs/
+That file uses the currently working stock Backstage image.
 
-## Current Platform Capability Coverage
+The plugin-enabled custom image is configured in:
 
-The repository now includes GitOps-ready scaffolds for the core TPRA-aligned platform capabilities:
+```text
+platform-services/backstage/values/development-idp.yaml
+```
 
-- Networking: Traefik ingress and routing
-- Security: cert-manager, External Secrets Operator, Doppler, Kyverno
-- Observability: Prometheus, Grafana, Loki
-- Developer Platform: Backstage
-- Workloads: reference workload onboarding and deployment manifests
+Switch only after the custom image workflow has published the image and the runtime Secrets exist. This prevents a failed image build or missing Secret from taking down the current portal.
 
-These capabilities are organized under the GitOps application tree and are intended to be reconciled by Argo CD.
+## Important paths
 
-See the TPRA documentation for architecture decisions.
+| Path | Purpose |
+| --- | --- |
+| `catalog-info.yaml` | Root Backstage Location |
+| `catalog/` | Users, groups, systems, components, APIs, and resources |
+| `mkdocs.yml`, `docs/` | Platform TechDocs |
+| `software-templates/tusker-service/` | Golden-path service template |
+| `backstage-app/` | Custom Backstage app bootstrap overlay |
+| `platform-services/backstage/values/development.yaml` | Working stock-image values |
+| `platform-services/backstage/values/development-idp.yaml` | Custom IDP-image values |
+| `platform-services/backstage/manifests/` | Read-only Kubernetes RBAC and NetworkPolicy |
+| `workloads/demo-service/` | Hardened demonstration workload |
+| `gitops/generated-workloads/` | Template-generated Argo CD Applications |
+| `scripts/backstage/` | Runtime configuration and migration scripts |
+| `scripts/demo/` | Demo preflight and drift scripts |
+
+## Validate the repository
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install PyYAML==6.0.2
+python scripts/validate_idp.py
+```
+
+## Documentation
+
+Start with:
+
+- `docs/IDP-MIGRATION-RUNBOOK.md`
+- `docs/demo-runbook.md`
+- `docs/architecture.md`
+- `platform-services/backstage/CAPABILITY-MATRIX.md`
+
+## Security
+
+No secret values belong in this repository. Runtime Secrets must be created with the included scripts or synchronized from an approved external secret store.
