@@ -59,7 +59,7 @@ YARN_ENABLE_IMMUTABLE_INSTALLS=false \
   yarn --cwd packages/app add \
     @backstage/app-defaults \
     @backstage/plugin-kubernetes \
-    @backstage/plugin-github-actions \
+    @backstage-community/plugin-github-actions \
     @roadiehq/backstage-plugin-argo-cd
 
 echo "Installing TuskerBlueprint backend plugins"

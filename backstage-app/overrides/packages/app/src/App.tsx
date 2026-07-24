@@ -48,6 +48,8 @@ import {
   SignInPage,
 } from '@backstage/core-components';
 
+import { githubAuthApiRef } from '@backstage/core-plugin-api';
+
 import { entityPage } from './components/catalog/EntityPage';
 
 const app = createApp({
@@ -80,8 +82,14 @@ const app = createApp({
     SignInPage: props => (
       <SignInPage
         {...props}
-        auto
-        providers={['github']}
+        providers={[
+          {
+            id: 'github-auth-provider',
+            title: 'GitHub',
+            message: 'Sign in using GitHub',
+            apiRef: githubAuthApiRef,
+          },
+        ]}
       />
     ),
   },
@@ -148,7 +156,7 @@ const routes = (
   </FlatRoutes>
 );
 
-export default app.createRoot(
+const App = app.createRoot(
   <>
     <AlertDisplay transientTimeoutMs={2500} />
     <OAuthRequestDialog />
@@ -158,3 +166,5 @@ export default app.createRoot(
     </AppRouter>
   </>,
 );
+
+export default App;
