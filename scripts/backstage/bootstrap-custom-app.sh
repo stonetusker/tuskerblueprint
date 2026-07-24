@@ -17,12 +17,14 @@ APP_NAME="${BACKSTAGE_APP_NAME:-tuskerblueprint-backstage}"
 echo "Creating official Backstage application skeleton in ${APP_DIR}"
 echo "Application name: ${APP_NAME}"
 
-# Backstage create-app asks for the application name interactively.
-# GitHub Actions has no interactive terminal, so provide the answer through stdin.
+# create-app needs to update its generated yarn.lock.
+# GitHub Actions sets CI=true, which makes Yarn installs immutable by default.
 printf '%s\n' "${APP_NAME}" |
-  npx --yes @backstage/create-app@latest \
-    --path "${APP_DIR}"
-
+  env -u CI \
+    YARN_ENABLE_IMMUTABLE_INSTALLS=false \
+    COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
+    npx --yes @backstage/create-app@latest \
+      --path "${APP_DIR}"
 
 
 pushd "${APP_DIR}" >/dev/null
