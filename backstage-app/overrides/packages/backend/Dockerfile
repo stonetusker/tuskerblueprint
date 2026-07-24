@@ -1,7 +1,10 @@
 # syntax=docker/dockerfile:1.7
 
 #
-# Stage 1: Install production dependencies and compile native modules.
+# Dependency stage
+#
+# Native Node.js dependencies are built here. Compiler packages are not copied
+# into the final runtime image.
 #
 FROM node:20-bookworm-slim AS dependencies
 
@@ -9,6 +12,7 @@ ENV NODE_ENV=production \
     NODE_OPTIONS=--no-node-snapshot \
     PYTHON=/usr/bin/python3 \
     npm_config_python=/usr/bin/python3 \
+    npm_config_build_from_source=true \
     COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
     YARN_ENABLE_IMMUTABLE_INSTALLS=true \
     YARN_ENABLE_INLINE_BUILDS=1
@@ -19,49 +23,40 @@ RUN apt-get update && \
     apt-get install --yes --no-install-recommends \
       build-essential \
       ca-certificates \
+      cmake \
       g++ \
+      git \
+      libsecret-1-dev \
+      libsqlite3-dev \
+      libssl-dev \
       make \
+      ninja-build \
       pkg-config \
       python3 \
-      libsecret-1-dev \
-      libsqlite3-dev && \
+      python3-setuptools && \
     rm -rf /var/lib/apt/lists/*
 
-#
-# Prepare the exact Yarn version used by the generated Backstage project.
-# Running this as root avoids Corepack cache permission errors.
-#
-RUN corepack enable && \
-    corepack prepare yarn@4.13.0 --activate && \
-    yarn --version
+RUN corepack enable
 
 WORKDIR /app
 
-#
-# Copy Yarn and workspace metadata first so Docker can cache the dependency
-# installation layer independently of application source changes.
-#
 COPY package.json yarn.lock backstage.json .yarnrc.yml ./
 COPY .yarn/ ./.yarn/
 
-#
-# The Backstage backend build creates skeleton.tar.gz containing the
-# package.json files required for a production dependency installation.
-#
 COPY packages/backend/dist/skeleton.tar.gz ./
 
 RUN tar xzf skeleton.tar.gz && \
     rm skeleton.tar.gz
 
 #
-# Install only production dependencies.
-# Native modules such as better-sqlite3 are compiled here with the required
-# Debian build toolchain.
+# Build native modules here as root. YARN_ENABLE_INLINE_BUILDS ensures that
+# compiler errors are printed directly in GitHub Actions and Docker logs.
 #
-RUN yarn workspaces focus --all --production
+RUN corepack yarn --version && \
+    corepack yarn workspaces focus --all --production
 
 #
-# Stage 2: Minimal runtime image.
+# Runtime stage
 #
 FROM node:20-bookworm-slim AS runtime
 
@@ -75,19 +70,14 @@ RUN apt-get update && \
       ca-certificates \
       libsecret-1-0 \
       libsqlite3-0 \
+      libstdc++6 \
       tini && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-#
-# Copy the production dependency tree from the build stage.
-#
 COPY --from=dependencies /app /app
 
-#
-# Copy the compiled Backstage backend bundle and configuration.
-#
 COPY packages/backend/dist/bundle.tar.gz ./
 COPY app-config*.yaml ./
 

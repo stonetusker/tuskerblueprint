@@ -7,79 +7,45 @@ RELEASE_FILE="${ROOT_DIR}/backstage-app/backstage-release.txt"
 OVERRIDES_DIR="${ROOT_DIR}/backstage-app/overrides"
 APP_NAME="${BACKSTAGE_APP_NAME:-tuskerblueprint-backstage}"
 
+for command_name in node npx corepack rsync; do
+  command -v "${command_name}" >/dev/null 2>&1 || {
+    echo "Required command not found: ${command_name}" >&2
+    exit 1
+  }
+done
+
 if [[ ! -f "${RELEASE_FILE}" ]]; then
   echo "Backstage release file not found: ${RELEASE_FILE}" >&2
   exit 1
 fi
 
-RELEASE="$(tr -d '[:space:]' < "${RELEASE_FILE}")"
-
-command -v node >/dev/null 2>&1 || {
-  echo "Node.js is required" >&2
-  exit 1
-}
-
-command -v npx >/dev/null 2>&1 || {
-  echo "npx is required" >&2
-  exit 1
-}
-
-command -v yarn >/dev/null 2>&1 || {
-  echo "Yarn is required" >&2
-  exit 1
-}
-
-command -v rsync >/dev/null 2>&1 || {
-  echo "rsync is required" >&2
-  exit 1
-}
-
-NODE_MAJOR="$(node -p "process.versions.node.split('.')[0]")"
-NODE_ARCH="$(node -p "process.arch")"
-
-if [[ "${NODE_MAJOR}" != "20" ]]; then
-  echo "Unsupported Node.js version: $(node --version)" >&2
-  echo "TuskerBlueprint Backstage currently requires Node.js 20 LTS." >&2
-  echo "Run: nvm use 20" >&2
+if [[ ! -d "${OVERRIDES_DIR}" ]]; then
+  echo "Backstage overrides directory not found: ${OVERRIDES_DIR}" >&2
   exit 1
 fi
 
-if [[ "$(uname -s)" == "Darwin" && "$(uname -m)" == "arm64" && "${NODE_ARCH}" != "arm64" ]]; then
-  echo "Node.js is running as ${NODE_ARCH} on an Apple Silicon Mac." >&2
-  echo "Install and use an ARM64 Node.js 20 build instead of a Rosetta/x64 build." >&2
+RELEASE="$(tr -d '[:space:]' < "${RELEASE_FILE}")"
+NODE_MAJOR="$(node -p "process.versions.node.split('.')[0]")"
+
+if [[ "${NODE_MAJOR}" != "20" ]]; then
+  echo "Node.js 20 is required; found $(node --version)" >&2
   exit 1
 fi
 
 export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 export YARN_ENABLE_IMMUTABLE_INSTALLS=false
+export YARN_ENABLE_SCRIPTS=false
 
-echo "Removing previous generated application"
 rm -rf "${APP_DIR}"
 mkdir -p "$(dirname "${APP_DIR}")"
 
-echo
-echo "Creating official Backstage application skeleton"
-echo "Application directory: ${APP_DIR}"
-echo "Application name: ${APP_NAME}"
-echo "Backstage release: ${RELEASE}"
-echo "Node.js version: $(node --version)"
-echo "Node.js architecture: ${NODE_ARCH}"
-echo
+echo "Creating Backstage application skeleton in ${APP_DIR}"
 
-#
-# create-app performs yarn install automatically.
-#
-# At this stage it resolves the newest Backstage dependency tree, including
-# native packages such as better-sqlite3, isolated-vm and cpu-features.
-#
-# We only need the generated source tree and lockfile seed. Native lifecycle
-# scripts are therefore disabled during this temporary latest-version install.
-#
 printf '%s\n' "${APP_NAME}" |
   env -u CI \
+    COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
     YARN_ENABLE_IMMUTABLE_INSTALLS=false \
     YARN_ENABLE_SCRIPTS=false \
-    COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
     npx --yes @backstage/create-app@latest \
       --path "${APP_DIR}"
 
@@ -87,100 +53,78 @@ pushd "${APP_DIR}" >/dev/null
 
 corepack enable
 
-echo
-echo "Aligning generated Backstage packages to release ${RELEASE}"
-echo
+echo "Node version: $(node --version)"
+echo "Yarn version: $(corepack yarn --version)"
+echo "Target Backstage release: ${RELEASE}"
 
-YARN_ENABLE_IMMUTABLE_INSTALLS=false \
-YARN_ENABLE_SCRIPTS=false \
-  yarn backstage-cli versions:bump \
-    --release "${RELEASE}"
+echo "Aligning generated Backstage packages"
 
-echo
+corepack yarn backstage-cli versions:bump \
+  --release "${RELEASE}"
+
 echo "Installing TuskerBlueprint frontend plugins"
-echo
 
-YARN_ENABLE_IMMUTABLE_INSTALLS=false \
-YARN_ENABLE_SCRIPTS=false \
-  yarn --cwd packages/app add \
-    @backstage/app-defaults \
-    @backstage/plugin-kubernetes \
-    @backstage-community/plugin-github-actions \
-    @roadiehq/backstage-plugin-argo-cd
+corepack yarn --cwd packages/app add \
+  @backstage/app-defaults \
+  @backstage/plugin-kubernetes \
+  @backstage-community/plugin-github-actions \
+  @roadiehq/backstage-plugin-argo-cd
 
-echo
 echo "Installing TuskerBlueprint backend plugins"
-echo
 
-YARN_ENABLE_IMMUTABLE_INSTALLS=false \
-YARN_ENABLE_SCRIPTS=false \
-  yarn --cwd packages/backend add \
-    @backstage/plugin-kubernetes-backend \
-    @backstage/plugin-permission-common \
-    @backstage/plugin-permission-node \
-    @roadiehq/backstage-plugin-argo-cd-backend
+corepack yarn --cwd packages/backend add \
+  @backstage/plugin-kubernetes-backend \
+  @backstage/plugin-permission-common \
+  @backstage/plugin-permission-node \
+  @roadiehq/backstage-plugin-argo-cd-backend
 
-echo
-echo "Re-aligning all Backstage packages to release ${RELEASE}"
-echo
+echo "Re-aligning Backstage-owned packages after plugin installation"
 
-YARN_ENABLE_IMMUTABLE_INSTALLS=false \
-YARN_ENABLE_SCRIPTS=false \
-  yarn backstage-cli versions:bump \
-    --release "${RELEASE}"
+corepack yarn backstage-cli versions:bump \
+  --release "${RELEASE}"
 
-#
-# Recent create-app releases generate new frontend navigation modules.
-# The TuskerBlueprint overrides use the stable frontend API compatible with
-# the selected Backstage release.
-#
+# The TuskerBlueprint frontend overrides use the stable frontend API.
+# Remove navigation modules generated by newer create-app templates.
 rm -rf packages/app/src/modules/nav
 
-echo
 echo "Applying TuskerBlueprint application overrides"
-echo
-
-if [[ ! -d "${OVERRIDES_DIR}" ]]; then
-  echo "Overrides directory not found: ${OVERRIDES_DIR}" >&2
-  exit 1
-fi
 
 rsync -a \
   "${OVERRIDES_DIR}/" \
   "${APP_DIR}/"
 
+echo "Updating the lockfile without running native lifecycle builds"
 
-echo
-echo "Installing the aligned dependency tree without native lifecycle builds"
-echo
+corepack yarn install \
+  --mode=skip-build
 
-#
-# TypeScript checks, frontend tests and backend bundling do not require native
-# modules such as better-sqlite3 to be compiled during repository bootstrap.
-#
-# Native production dependencies are compiled later inside the Backstage
-# container image, where the OS and toolchain are controlled.
-#
-YARN_ENABLE_IMMUTABLE_INSTALLS=false \
-YARN_ENABLE_SCRIPTS=false \
-  corepack yarn install --mode=skip-build
-
-echo
-echo "Confirming that the generated lockfile is stable"
-echo
+echo "Confirming that the generated lockfile is immutable"
 
 YARN_ENABLE_IMMUTABLE_INSTALLS=true \
-YARN_ENABLE_SCRIPTS=false \
-  corepack yarn install --immutable --mode=skip-build
+  corepack yarn install \
+    --immutable \
+    --mode=skip-build
+
+for required_file in \
+  package.json \
+  yarn.lock \
+  .yarnrc.yml \
+  packages/app/package.json \
+  packages/backend/package.json \
+  packages/backend/Dockerfile; do
+
+  if [[ ! -f "${required_file}" ]]; then
+    echo "Generated file is missing: ${APP_DIR}/${required_file}" >&2
+    exit 1
+  fi
+done
 
 popd >/dev/null
 
+echo "Custom Backstage source generated successfully: ${APP_DIR}"
 echo
-echo "Custom Backstage source generated successfully"
-echo "Path: ${APP_DIR}"
-echo
-echo "Run validation with:"
+echo "Validation commands:"
 echo "  cd ${APP_DIR}"
-echo "  yarn tsc"
-echo "  yarn test --ci"
-echo "  yarn build:backend"
+echo "  corepack yarn tsc"
+echo "  corepack yarn workspace app test --ci --runInBand --passWithNoTests"
+echo "  corepack yarn workspace backend build"
