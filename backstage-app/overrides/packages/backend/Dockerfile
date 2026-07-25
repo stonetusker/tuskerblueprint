@@ -1,10 +1,7 @@
 # syntax=docker/dockerfile:1.7
 
 #
-# Dependency stage
-#
-# Native Node.js dependencies are built here. Compiler packages are not copied
-# into the final runtime image.
+# Dependency build stage
 #
 FROM node:20-bookworm-slim AS dependencies
 
@@ -12,7 +9,6 @@ ENV NODE_ENV=production \
     NODE_OPTIONS=--no-node-snapshot \
     PYTHON=/usr/bin/python3 \
     npm_config_python=/usr/bin/python3 \
-    npm_config_build_from_source=true \
     COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
     YARN_ENABLE_IMMUTABLE_INSTALLS=true \
     YARN_ENABLE_INLINE_BUILDS=1
@@ -40,17 +36,29 @@ RUN corepack enable
 
 WORKDIR /app
 
+#
+# Copy the Yarn configuration and workspace metadata.
+#
 COPY package.json yarn.lock backstage.json .yarnrc.yml ./
 COPY .yarn/ ./.yarn/
 
+#
+# The Backstage backend build creates this archive. It contains the root and
+# workspace package.json files required for the production dependency install.
+#
 COPY packages/backend/dist/skeleton.tar.gz ./
 
 RUN tar xzf skeleton.tar.gz && \
     rm skeleton.tar.gz
 
 #
-# Build native modules here as root. YARN_ENABLE_INLINE_BUILDS ensures that
-# compiler errors are printed directly in GitHub Actions and Docker logs.
+# Install production dependencies.
+#
+# Do not set npm_config_build_from_source=true. Native packages should use
+# compatible prebuilt binaries when available and compile only when required.
+#
+# node-gyp is provided by the root production dependency added during
+# bootstrap-custom-app.sh.
 #
 RUN corepack yarn --version && \
     corepack yarn workspaces focus --all --production
@@ -92,3 +100,4 @@ EXPOSE 7007
 ENTRYPOINT ["/usr/bin/tini", "--"]
 
 CMD ["node", "packages/backend", "--config", "app-config.yaml", "--config", "app-config.production.yaml"]
+
