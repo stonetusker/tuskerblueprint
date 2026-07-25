@@ -1,0 +1,15 @@
+node_modules
+packages/*/node_modules
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+.git
+.github
+.generated
+
+coverage
+reports
+*.log
+
+.DS_Store

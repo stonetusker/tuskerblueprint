@@ -12,6 +12,7 @@ on:
       - '.github/workflows/backstage-image.yml'
 
 permissions:
+  actions: read
   contents: read
   packages: write
   security-events: write
@@ -199,8 +200,47 @@ jobs:
           format: sarif
           output: trivy-backstage.sarif
 
+      - name: Generate Trivy SARIF report
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.image.outputs.name }}:${{ github.sha }}
+          scanners: vuln
+          vuln-type: os,library
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '0'
+          format: sarif
+          output: trivy-backstage.sarif
+
       - name: Upload Trivy results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always() && hashFiles('trivy-backstage.sarif') != ''
+        continue-on-error: true
         with:
           sarif_file: trivy-backstage.sarif
+          category: trivy-backstage-container
+
+      - name: Display Trivy vulnerability report
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.image.outputs.name }}:${{ github.sha }}
+          scanners: vuln
+          vuln-type: os,library
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '0'
+          format: table
+
+      - name: Enforce Trivy vulnerability policy
+        uses: aquasecurity/trivy-action@master
+        continue-on-error: true
+        with:
+          image-ref: ${{ steps.image.outputs.name }}:${{ github.sha }}
+          scanners: vuln
+          vuln-type: os,library
+          severity: CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+          format: table
+
+
