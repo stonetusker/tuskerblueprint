@@ -34,14 +34,11 @@ import {
 const overviewContent = (
   <Grid container spacing={3} alignItems="stretch">
     <Grid item md={6} xs={12}>
-      <EntityAboutCard variant="gridItem" />
+      <EntityAboutCard />
     </Grid>
 
     <Grid item md={6} xs={12}>
-      <EntityCatalogGraphCard
-        variant="gridItem"
-        height={400}
-      />
+      <EntityCatalogGraphCard height={400} />
     </Grid>
 
     <Grid item md={6} xs={12}>
@@ -49,11 +46,11 @@ const overviewContent = (
     </Grid>
 
     <Grid item md={6} xs={12}>
-      <EntityDependsOnComponentsCard variant="gridItem" />
+      <EntityDependsOnComponentsCard />
     </Grid>
 
     <Grid item md={6} xs={12}>
-      <EntityDependsOnResourcesCard variant="gridItem" />
+      <EntityDependsOnResourcesCard />
     </Grid>
 
     <EntitySwitch>

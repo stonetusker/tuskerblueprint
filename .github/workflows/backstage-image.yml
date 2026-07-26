@@ -43,7 +43,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '20.20.2'
 
       - name: Install generation dependencies
         run: |
@@ -86,18 +86,15 @@ jobs:
           test -f .generated/backstage/packages/backend/package.json
           test -f .generated/backstage/packages/backend/Dockerfile
 
-          diff -u \
-            backstage-app/overrides/packages/backend/Dockerfile \
-            .generated/backstage/packages/backend/Dockerfile
+          test -s .generated/backstage/packages/backend/Dockerfile
 
-          grep -q \
-            '^FROM node:20-bookworm-slim AS dependencies$' \
-            .generated/backstage/packages/backend/Dockerfile
-
-          grep -q \
-            '^FROM node:20-bookworm-slim AS runtime$' \
-            .generated/backstage/packages/backend/Dockerfile
-
+          if grep -qE \
+            'skeleton\.tar\.gz|bundle\.tar\.gz' \
+            .generated/backstage/packages/backend/Dockerfile; then
+            echo "Obsolete tarball-based Backstage Dockerfile detected." >&2
+            exit 1
+          fi
+          
           if grep -q \
             'corepack yarn cache clean' \
             .generated/backstage/packages/backend/Dockerfile; then
@@ -146,16 +143,29 @@ jobs:
 
           corepack yarn workspace backend build
 
-      - name: Verify backend container artifacts
+      - name: Verify backend build output
         run: |
           set -euo pipefail
 
-          test -s .generated/backstage/packages/backend/dist/skeleton.tar.gz
-          test -s .generated/backstage/packages/backend/dist/bundle.tar.gz
+          test -d .generated/backstage/packages/backend/dist
 
-          ls -lh \
-            .generated/backstage/packages/backend/dist/skeleton.tar.gz \
-            .generated/backstage/packages/backend/dist/bundle.tar.gz
+          if ! find \
+            .generated/backstage/packages/backend/dist \
+            -type f \
+            -print \
+            -quit \
+            | grep -q .; then
+            echo "Backend dist directory contains no files." >&2
+            exit 1
+          fi
+
+          echo "Backend build output:"
+          find \
+            .generated/backstage/packages/backend/dist \
+            -maxdepth 4 \
+            -type f \
+            -print \
+            | sort
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

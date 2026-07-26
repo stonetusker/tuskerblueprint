@@ -17,7 +17,7 @@ backend.add(
   import('@backstage/plugin-auth-backend-module-github-provider'),
 );
 
-backend.add(import('@backstage/plugin-catalog-backend/alpha'));
+backend.add(import('@backstage/plugin-catalog-backend'));
 
 backend.add(import('@backstage/plugin-permission-backend/alpha'));
 backend.add(import('./modules/permissionPolicy'));
