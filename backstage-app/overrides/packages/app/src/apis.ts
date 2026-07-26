@@ -1,0 +1,20 @@
+import {
+  configApiRef,
+  createApiFactory,
+} from '@backstage/core-plugin-api';
+
+import {
+  ScmIntegrationsApi,
+  scmIntegrationsApiRef,
+} from '@backstage/integration-react';
+
+export const apis = [
+  createApiFactory({
+    api: scmIntegrationsApiRef,
+    deps: {
+      configApi: configApiRef,
+    },
+    factory: ({ configApi }) =>
+      ScmIntegrationsApi.fromConfig(configApi),
+  }),
+];

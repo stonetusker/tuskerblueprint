@@ -132,9 +132,11 @@ echo "Installing TuskerBlueprint frontend plugins"
 
 corepack yarn --cwd packages/app add \
   @backstage/app-defaults \
+  @backstage/integration-react \
   @backstage/plugin-kubernetes \
   @backstage-community/plugin-github-actions \
   @roadiehq/backstage-plugin-argo-cd
+
 
 echo "Installing TuskerBlueprint backend plugins"
 

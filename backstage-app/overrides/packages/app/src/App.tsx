@@ -1,6 +1,9 @@
 import { Navigate, Route } from 'react-router-dom';
 
-import { apiDocsPlugin, ApiExplorerPage } from '@backstage/plugin-api-docs';
+import {
+  apiDocsPlugin,
+  ApiExplorerPage,
+} from '@backstage/plugin-api-docs';
 
 import {
   CatalogEntityPage,
@@ -50,9 +53,12 @@ import {
 
 import { githubAuthApiRef } from '@backstage/core-plugin-api';
 
+import { apis } from './apis';
 import { entityPage } from './components/catalog/EntityPage';
 
 const app = createApp({
+  apis,
+
   bindRoutes({ bind }) {
     bind(catalogPlugin.externalRoutes, {
       createComponent: scaffolderPlugin.routes.root,
