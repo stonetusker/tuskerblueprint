@@ -81,30 +81,40 @@ jobs:
 
           test -f .generated/backstage/package.json
           test -f .generated/backstage/yarn.lock
+          test -f .generated/backstage/backstage.json
           test -f .generated/backstage/.yarnrc.yml
           test -f .generated/backstage/packages/app/package.json
           test -f .generated/backstage/packages/backend/package.json
-          test -f .generated/backstage/packages/backend/Dockerfile
-
           test -s .generated/backstage/packages/backend/Dockerfile
 
-          if grep -qE \
-            'skeleton\.tar\.gz|bundle\.tar\.gz' \
-            .generated/backstage/packages/backend/Dockerfile; then
-            echo "Obsolete tarball-based Backstage Dockerfile detected." >&2
-            exit 1
-          fi
-          
-          if grep -q \
-            'corepack yarn cache clean' \
-            .generated/backstage/packages/backend/Dockerfile; then
-            echo "Obsolete Dockerfile content detected." >&2
-            exit 1
-          fi
+          echo "Generated Backstage release: $(
+            node -p "require('./.generated/backstage/backstage.json').version"
+          )"
 
           echo "Generated package manager: $(
             node -p "require('./.generated/backstage/package.json').packageManager"
           )"
+
+          if grep -q \
+            'corepack yarn cache clean' \
+            .generated/backstage/packages/backend/Dockerfile; then
+            echo "Unsupported Dockerfile cache-clean command detected." >&2
+            exit 1
+          fi
+
+          echo "Generated Dockerfile artifact references:"
+
+          grep -nE \
+            'skeleton\.tar\.gz|bundle\.tar\.gz' \
+            .generated/backstage/packages/backend/Dockerfile
+
+          grep -q \
+            'packages/backend/dist/skeleton.tar.gz' \
+            .generated/backstage/packages/backend/Dockerfile
+
+          grep -q \
+            'packages/backend/dist/bundle.tar.gz' \
+            .generated/backstage/packages/backend/Dockerfile
 
           (
             cd .generated/backstage
@@ -131,6 +141,7 @@ jobs:
 
           corepack yarn workspace app test \
             --ci \
+            --watchAll=false \
             --runInBand \
             --passWithNoTests
 
@@ -143,29 +154,24 @@ jobs:
 
           corepack yarn workspace backend build
 
-      - name: Verify backend build output
+      - name: Verify backend container artifacts
         run: |
           set -euo pipefail
 
-          test -d .generated/backstage/packages/backend/dist
+          SKELETON_ARCHIVE=".generated/backstage/packages/backend/dist/skeleton.tar.gz"
+          BUNDLE_ARCHIVE=".generated/backstage/packages/backend/dist/bundle.tar.gz"
 
-          if ! find \
-            .generated/backstage/packages/backend/dist \
-            -type f \
-            -print \
-            -quit \
-            | grep -q .; then
-            echo "Backend dist directory contains no files." >&2
-            exit 1
-          fi
+          test -s "${SKELETON_ARCHIVE}"
+          test -s "${BUNDLE_ARCHIVE}"
 
-          echo "Backend build output:"
-          find \
-            .generated/backstage/packages/backend/dist \
-            -maxdepth 4 \
-            -type f \
-            -print \
-            | sort
+          tar -tzf "${SKELETON_ARCHIVE}" >/dev/null
+          tar -tzf "${BUNDLE_ARCHIVE}" >/dev/null
+
+          ls -lh \
+            "${SKELETON_ARCHIVE}" \
+            "${BUNDLE_ARCHIVE}"
+
+          echo "Backstage backend container artifacts are valid."
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -188,7 +194,9 @@ jobs:
           echo "name=${IMAGE_NAME}" >> "$GITHUB_OUTPUT"
           echo "Image name: ${IMAGE_NAME}"
 
-      - name: Build and push Backstage image
+      # Publish only the immutable SHA initially. The main tag is promoted
+      # after runtime and security validation.
+      - name: Build and push Backstage SHA image
         uses: docker/build-push-action@v6
         with:
           context: .generated/backstage
@@ -196,13 +204,102 @@ jobs:
           push: true
           tags: |
             ${{ steps.image.outputs.name }}:${{ github.sha }}
-            ${{ steps.image.outputs.name }}:main
           cache-from: type=gha
           cache-to: type=gha,mode=max
           provenance: true
           sbom: true
 
-      # Pin the Trivy setup action instead of using trivy-action@master.
+      # This catches runtime dependency and plugin-wiring failures that
+      # TypeScript compilation and the Docker build cannot detect.
+      - name: Smoke test Backstage runtime
+        env:
+          IMAGE_REF: ${{ steps.image.outputs.name }}:${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          CONTAINER_NAME="backstage-smoke"
+          SMOKE_URL="http://127.0.0.1:17007"
+          BACKEND_SECRET_VALUE="$(openssl rand -hex 32)"
+          HEALTHY='false'
+
+          cleanup() {
+            docker rm -f "${CONTAINER_NAME}" >/dev/null 2>&1 || true
+          }
+
+          trap cleanup EXIT
+
+          docker rm -f "${CONTAINER_NAME}" >/dev/null 2>&1 || true
+          docker pull "${IMAGE_REF}"
+
+          docker run --detach \
+            --name "${CONTAINER_NAME}" \
+            --publish 17007:7007 \
+            --env BACKSTAGE_BASE_URL="${SMOKE_URL}" \
+            --env BACKSTAGE_BACKEND_URL="${SMOKE_URL}" \
+            --env AUTH_GITHUB_CLIENT_ID="smoke-test-client" \
+            --env AUTH_GITHUB_CLIENT_SECRET="smoke-test-secret" \
+            --env BACKEND_SECRET="${BACKEND_SECRET_VALUE}" \
+            --env GITHUB_TOKEN="smoke-test-token" \
+            --env ARGOCD_AUTH_TOKEN="smoke-test-token" \
+            "${IMAGE_REF}"
+
+          for attempt in $(seq 1 40); do
+            if curl --fail --silent --show-error \
+              "${SMOKE_URL}/api/catalog/health" \
+              >/dev/null; then
+              HEALTHY='true'
+              echo "Catalog health endpoint is ready."
+              break
+            fi
+
+            RUNNING="$(
+              docker inspect \
+                --format '{{.State.Running}}' \
+                "${CONTAINER_NAME}" \
+                2>/dev/null || echo 'false'
+            )"
+
+            if [[ "${RUNNING}" != 'true' ]]; then
+              echo "Backstage smoke-test container stopped unexpectedly." >&2
+              docker logs "${CONTAINER_NAME}" 2>&1 \
+                | tee backstage-smoke.log
+              exit 1
+            fi
+
+            echo "Waiting for Backstage startup: attempt ${attempt}/40"
+            sleep 3
+          done
+
+          docker logs "${CONTAINER_NAME}" 2>&1 \
+            | tee backstage-smoke.log
+
+          if [[ "${HEALTHY}" != 'true' ]]; then
+            echo "Catalog health endpoint did not become ready." >&2
+            exit 1
+          fi
+
+          if grep -Eiq \
+            'BackendStartupError|core\.auditor|core\.permissionsRegistry|startup failed|unhandled rejection|fatal' \
+            backstage-smoke.log; then
+            echo "Backstage runtime startup errors were detected." >&2
+            exit 1
+          fi
+
+          curl --fail --silent --show-error \
+            "${SMOKE_URL}/" \
+            >/dev/null
+
+          echo "Backstage runtime smoke test passed."
+
+      - name: Upload Backstage smoke-test logs
+        uses: actions/upload-artifact@v4
+        if: always() && hashFiles('backstage-smoke.log') != ''
+        with:
+          name: backstage-smoke-test-log
+          path: backstage-smoke.log
+          if-no-files-found: warn
+          retention-days: 14
+
       - name: Set up Trivy
         uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567
         with:
@@ -250,11 +347,12 @@ jobs:
             --output trivy-backstage.txt \
             "${IMAGE_REF}"
 
+          test -s trivy-backstage.txt
           cat trivy-backstage.txt
 
       - name: Upload Trivy reports as workflow artifacts
         uses: actions/upload-artifact@v4
-        if: always() && hashFiles('trivy-backstage.sarif') != ''
+        if: always()
         with:
           name: trivy-backstage-reports
           path: |
@@ -263,8 +361,8 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
-      # Advisory initially. The step will show a warning for unfixed CRITICAL
-      # findings but will not fail the complete image workflow.
+      # Advisory initially. This step produces a warning when unfixed
+      # CRITICAL findings exist, but does not fail the complete workflow.
       - name: Check critical vulnerability policy
         continue-on-error: true
         env:
@@ -280,3 +378,19 @@ jobs:
             --exit-code 1 \
             --format table \
             "${IMAGE_REF}"
+
+      # Promote main only after generation, compilation, tests, packaging,
+      # runtime startup, and vulnerability reporting have completed.
+      - name: Promote validated image to main
+        if: github.ref == 'refs/heads/main'
+        env:
+          IMAGE_NAME: ${{ steps.image.outputs.name }}
+        run: |
+          set -euo pipefail
+
+          docker buildx imagetools create \
+            --tag "${IMAGE_NAME}:main" \
+            "${IMAGE_NAME}:${GITHUB_SHA}"
+
+          echo "Promoted ${IMAGE_NAME}:${GITHUB_SHA} to ${IMAGE_NAME}:main"
+          
