@@ -22,7 +22,7 @@ spec:
       helm:
         releaseName: backstage
         valueFiles:
-          - $values/platform-services/backstage/values/development.yaml
+          - $values/platform-services/backstage/values/development-idp.yaml
     - repoURL: git@github.com:stonetusker/tuskerblueprint.git
       targetRevision: main
       ref: values
