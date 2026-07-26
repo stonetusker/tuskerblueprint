@@ -220,7 +220,7 @@ jobs:
           CONTAINER_NAME="backstage-smoke"
           SMOKE_URL="http://127.0.0.1:17007"
           BACKEND_SECRET_VALUE="$(openssl rand -hex 32)"
-          HEALTHY='false'
+          HEALTHY="false"
 
           cleanup() {
             docker rm -f "${CONTAINER_NAME}" >/dev/null 2>&1 || true
@@ -244,26 +244,51 @@ jobs:
             "${IMAGE_REF}"
 
           for attempt in $(seq 1 40); do
-            if curl --fail --silent --show-error \
-              "${SMOKE_URL}/api/catalog/health" \
-              >/dev/null; then
-              HEALTHY='true'
-              echo "Catalog health endpoint is ready."
-              break
-            fi
-
             RUNNING="$(
               docker inspect \
                 --format '{{.State.Running}}' \
                 "${CONTAINER_NAME}" \
-                2>/dev/null || echo 'false'
+                2>/dev/null || echo "false"
             )"
 
-            if [[ "${RUNNING}" != 'true' ]]; then
+            if [[ "${RUNNING}" != "true" ]]; then
               echo "Backstage smoke-test container stopped unexpectedly." >&2
+
               docker logs "${CONTAINER_NAME}" 2>&1 \
                 | tee backstage-smoke.log
+
               exit 1
+            fi
+
+            docker logs "${CONTAINER_NAME}" \
+              > backstage-smoke.log \
+              2>&1 || true
+
+            if grep -Eiq \
+              'BackendStartupError|core\.auditor|core\.permissionsRegistry|startup failed|unhandled rejection|fatal' \
+              backstage-smoke.log; then
+              echo "Backstage runtime startup errors were detected." >&2
+              cat backstage-smoke.log
+              exit 1
+            fi
+
+            ROOT_STATUS="$(
+              curl \
+                --silent \
+                --show-error \
+                --output /dev/null \
+                --write-out '%{http_code}' \
+                "${SMOKE_URL}/" \
+                2>/dev/null || true
+            )"
+
+            if [[ "${ROOT_STATUS}" == "200" ]] &&
+              grep -q \
+                'Plugin initialization complete' \
+                backstage-smoke.log; then
+              HEALTHY="true"
+              echo "Backstage frontend and backend plugins are ready."
+              break
             fi
 
             echo "Waiting for Backstage startup: attempt ${attempt}/40"
@@ -273,21 +298,40 @@ jobs:
           docker logs "${CONTAINER_NAME}" 2>&1 \
             | tee backstage-smoke.log
 
-          if [[ "${HEALTHY}" != 'true' ]]; then
-            echo "Catalog health endpoint did not become ready." >&2
+          if [[ "${HEALTHY}" != "true" ]]; then
+            echo "Backstage did not complete plugin initialization." >&2
             exit 1
           fi
 
-          if grep -Eiq \
-            'BackendStartupError|core\.auditor|core\.permissionsRegistry|startup failed|unhandled rejection|fatal' \
+          CATALOG_STATUS="$(
+            curl \
+              --silent \
+              --show-error \
+              --output /dev/null \
+              --write-out '%{http_code}' \
+              "${SMOKE_URL}/api/catalog/health" \
+              2>/dev/null || true
+          )"
+
+          case "${CATALOG_STATUS}" in
+            200)
+              echo "Catalog health endpoint returned HTTP 200."
+              ;;
+            401)
+              echo "Catalog health endpoint returned HTTP 401 as expected for an authenticated endpoint."
+              ;;
+            *)
+              echo "Unexpected Catalog health status: ${CATALOG_STATUS}" >&2
+              exit 1
+              ;;
+          esac
+
+          if ! grep -q \
+            "'catalog'.*'scaffolder'\|'scaffolder'.*'catalog'" \
             backstage-smoke.log; then
-            echo "Backstage runtime startup errors were detected." >&2
+            echo "Catalog and Scaffolder initialization was not confirmed." >&2
             exit 1
           fi
-
-          curl --fail --silent --show-error \
-            "${SMOKE_URL}/" \
-            >/dev/null
 
           echo "Backstage runtime smoke test passed."
 
@@ -393,4 +437,3 @@ jobs:
             "${IMAGE_NAME}:${GITHUB_SHA}"
 
           echo "Promoted ${IMAGE_NAME}:${GITHUB_SHA} to ${IMAGE_NAME}:main"
-          
