@@ -25,4 +25,4 @@ commonLabels:
   app.kubernetes.io/environment: development
 
 commonAnnotations:
-  tuskerblueprint.io/release-sha: main
+  tuskerblueprint.io/release-sha: bd7fc052681f454fa3ec38e081786e50bbea49ef
