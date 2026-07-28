@@ -308,7 +308,8 @@ def validate_workflows() -> None:
             "--cov=app",
             "zricethezav/gitleaks:v8.24.3",
             "gitleaks-demo-service.sarif",
-            "semgrep scan",
+            "semgrep/semgrep:1.100.0",
+            "--entrypoint semgrep",
             "trivy fs",
             "trivy image",
             "--format spdx-json",
@@ -321,6 +322,10 @@ def validate_workflows() -> None:
         check(
             "gitleaks/gitleaks-action" not in text,
             "Demo workflow uses the licensed Gitleaks GitHub Action instead of the OSS CLI",
+        )
+        check(
+            "python -m pip install semgrep" not in text,
+            "Demo workflow installs Semgrep into runner Python instead of using the pinned container",
         )
 
     template_workflow = (
@@ -344,6 +349,18 @@ def validate_workflows() -> None:
         check(
             "gitleaks/gitleaks-action" not in text,
             "Generated-service workflow uses the licensed Gitleaks GitHub Action",
+        )
+        check(
+            "semgrep/semgrep:1.100.0" in text,
+            "Generated-service workflow does not use the pinned Semgrep container",
+        )
+        check(
+            "--entrypoint semgrep" in text,
+            "Generated-service workflow does not invoke the Semgrep container explicitly",
+        )
+        check(
+            "python -m pip install semgrep" not in text,
+            "Generated-service workflow installs Semgrep into runner Python",
         )
 
     demo_requirements = (

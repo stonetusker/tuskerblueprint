@@ -40,6 +40,7 @@ concurrency:
 env:
   PYTHON_VERSION: '3.12'
   TRIVY_NO_PROGRESS: 'true'
+  SEMGREP_IMAGE: semgrep/semgrep:1.100.0
 
 jobs:
   validate-build-release:
@@ -67,7 +68,6 @@ jobs:
           set -euo pipefail
           python -m pip install --upgrade pip
           python -m pip install -r requirements-dev.txt
-          python -m pip install semgrep==1.100.0
 
       - name: Format, lint, and type-check
         run: |
@@ -113,15 +113,25 @@ jobs:
 
           test -s gitleaks.sarif
 
-      - name: Run Semgrep SAST
+      # Keep Semgrep isolated from GitHub runner Python packaging changes.
+      - name: Run Semgrep SAST with pinned container
         run: |
           set -euo pipefail
-          semgrep scan \
+
+          docker pull "${SEMGREP_IMAGE}"
+
+          docker run --rm \
+            --volume "${GITHUB_WORKSPACE}:/src" \
+            --workdir /src \
+            --entrypoint semgrep \
+            "${SEMGREP_IMAGE}" \
+            scan \
             --config .semgrep.yml \
             --error \
             --sarif \
-            --output semgrep.sarif \
+            --output /src/semgrep.sarif \
             src
+
           test -s semgrep.sarif
 
       - name: Prepare image reference
