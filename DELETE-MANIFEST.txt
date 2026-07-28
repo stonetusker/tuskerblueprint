@@ -1,0 +1,8 @@
+Remove these obsolete files after extracting the patch:
+
+workloads/demo-service/base/content/healthz
+workloads/demo-service/base/content/index.html
+
+The included script performs this safely:
+
+./scripts/demo/cleanup-demo-source.sh

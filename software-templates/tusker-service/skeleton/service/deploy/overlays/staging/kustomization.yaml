@@ -3,8 +3,14 @@ kind: Kustomization
 namespace: ${{ values.name }}-staging
 resources:
   - ../../base
+images:
+  - name: ghcr.io/${{ values.repoUrl | parseRepoUrl | pick('owner') }}/${{ values.repoUrl | parseRepoUrl | pick('repo') }}
+    newName: ghcr.io/${{ values.repoUrl | parseRepoUrl | pick('owner') }}/${{ values.repoUrl | parseRepoUrl | pick('repo') }}
+    newTag: main
 replicas:
   - name: ${{ values.name }}
     count: 2
 commonLabels:
   app.kubernetes.io/environment: staging
+commonAnnotations:
+  tuskerblueprint.io/release-sha: main

@@ -1,0 +1,15 @@
+title = "TuskerBlueprint demo-service Gitleaks configuration"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Allow documentation-only placeholders and reserved invalid domains"
+paths = [
+  '''docs/.*''',
+  '''tests/.*'''
+]
+regexes = [
+  '''example\.invalid''',
+  '''CHANGE_ME'''
+]

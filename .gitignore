@@ -1,34 +1,30 @@
-# Terraform
-.terraform/
-*.tfstate
-*.tfstate.*
-*.tfvars
+# Generated Backstage application and JavaScript dependencies
+.generated/
+node_modules/
+.yarn/cache/
+.yarn/unplugged/
+.yarn/install-state.gz
 
-# Ansible
-*.retry
-
-# Python
+# Python virtual environments and caches
+.venv/
+venv/
 __pycache__/
-*.pyc
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
 
-# VSCode
-.vscode/
-
-# IntelliJ
-.idea/
-
-# macOS
-.DS_Store
-
-# Linux
-*~
-
-# Logs
+# Build and runtime artifacts
+dist/
+build/
+reports/
 *.log
 
-# Secrets
-.env
-.env.*
-secrets.yaml
-
-.generated/
+# Editors and operating systems
+.DS_Store
+.idea/
+.vscode/
+__MACOSX/

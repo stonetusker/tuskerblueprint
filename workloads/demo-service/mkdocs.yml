@@ -1,11 +1,17 @@
-site_name: TuskerBlueprint Demo Service
-site_description: Operational documentation for the TuskerBlueprint reference workload
-
+site_name: StoneTusker Customer Notification API
+site_description: Delivery, operations, security, and recovery documentation for the buyer demo service
 repo_url: https://github.com/stonetusker/tuskerblueprint
 edit_uri: edit/main/workloads/demo-service/docs/
 
+docs_dir: docs
 nav:
-  - Overview: docs/index.md
+  - Overview: index.md
+  - Architecture: architecture.md
+  - Delivery: deployment.md
+  - Operations: runbook.md
+  - Rollback: rollback.md
+  - Security: security.md
+  - SLO: slo.md
 
 plugins:
   - techdocs-core

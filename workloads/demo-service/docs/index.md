@@ -1,29 +1,50 @@
-# TuskerBlueprint Demo Service
+# Customer Notification API
 
-The demo service is a deliberately small HTTP workload used to show Git-driven
-release, Argo CD reconciliation, Kubernetes health, drift correction, Backstage
-ownership, and security controls.
+The Customer Notification API is the reference workload used in the StoneTusker
+buyer-facing delivery-platform demonstration. It accepts fictional notification
+requests and records them in memory. It never sends real email, SMS, or webhooks.
+
+## What the service demonstrates
+
+- Pull-request validation and security controls
+- Immutable container images identified by Git SHA
+- GitOps deployment through Argo CD
+- Kubernetes startup, readiness, and liveness checks
+- Prometheus metrics and structured JSON logs
+- Correlation IDs for request investigation
+- Deterministic readiness, error, and latency failure modes
+- Git-driven rollback
+- Backstage ownership, API documentation, TechDocs, CI/CD, Argo CD, and Kubernetes views
 
 ## Ownership
 
-- Owner: Stonetusker Platform Engineering
+- Owner: StoneTusker Platform Engineering
 - System: TuskerBlueprint
 - Lifecycle: Experimental reference workload
 
-## Release
-
-Edit `base/content/index.html` in a branch, open a pull request, pass validation,
-and merge. Argo CD detects the new Git revision and rolls the Deployment.
-
-## Runtime
+## Local run
 
 ```bash
-kubectl -n demo-service-development get deployment,pod,service \
-  -l app.kubernetes.io/name=demo-service
-kubectl -n demo-service-development port-forward service/demo-service 8080:80
+cd workloads/demo-service
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements-dev.txt
+uvicorn app.main:app --reload --port 8000
 ```
 
-## Rollback
+Open `http://localhost:8000/docs` for the generated API interface.
 
-Revert the release commit in Git. Do not make the rollback permanent through a
-manual `kubectl` image change.
+## Safe demo request
+
+```bash
+curl -sS http://localhost:8000/api/v1/notifications \
+  -H 'Content-Type: application/json' \
+  -H 'X-Demo-Request: buyer-demo' \
+  -d '{
+    "channel": "email",
+    "recipient": "buyer@example.invalid",
+    "message": "StoneTusker delivery-platform demonstration"
+  }'
+```
+
+Only fictional `.invalid` addresses and non-sensitive data should be used.

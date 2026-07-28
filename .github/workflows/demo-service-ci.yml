@@ -1,0 +1,303 @@
+name: Demo Service CI and Release
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'workloads/demo-service/app/**'
+      - 'workloads/demo-service/tests/**'
+      - 'workloads/demo-service/Dockerfile'
+      - 'workloads/demo-service/.dockerignore'
+      - 'workloads/demo-service/.gitleaks.toml'
+      - 'workloads/demo-service/.semgrep.yml'
+      - 'workloads/demo-service/requirements*.txt'
+      - 'workloads/demo-service/pyproject.toml'
+      - '.github/workflows/demo-service-ci.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'workloads/demo-service/app/**'
+      - 'workloads/demo-service/tests/**'
+      - 'workloads/demo-service/Dockerfile'
+      - 'workloads/demo-service/.dockerignore'
+      - 'workloads/demo-service/.gitleaks.toml'
+      - 'workloads/demo-service/.semgrep.yml'
+      - 'workloads/demo-service/requirements*.txt'
+      - 'workloads/demo-service/pyproject.toml'
+      - '.github/workflows/demo-service-ci.yml'
+
+permissions:
+  contents: write
+  packages: write
+  pull-requests: write
+  security-events: write
+
+concurrency:
+  group: demo-service-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: '3.12'
+  TRIVY_NO_PROGRESS: 'true'
+  SERVICE_DIRECTORY: workloads/demo-service
+
+jobs:
+  validate-build-release:
+    name: Validate, scan, build, and release
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: |
+            workloads/demo-service/requirements.txt
+            workloads/demo-service/requirements-dev.txt
+
+      - name: Install application and validation dependencies
+        working-directory: ${{ env.SERVICE_DIRECTORY }}
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+          python -m pip install semgrep==1.100.0
+
+      - name: Format, lint, and type-check
+        working-directory: ${{ env.SERVICE_DIRECTORY }}
+        run: |
+          set -euo pipefail
+          ruff format --check app tests
+          ruff check app tests
+          mypy app
+
+      - name: Run unit tests and coverage gate
+        working-directory: ${{ env.SERVICE_DIRECTORY }}
+        run: |
+          set -euo pipefail
+          pytest \
+            --cov=app \
+            --cov-branch \
+            --cov-report=term-missing \
+            --cov-report=xml \
+            --cov-fail-under=85
+
+      - name: Scan demo service for secrets
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: workloads/demo-service/.gitleaks.toml
+
+      - name: Run Semgrep SAST
+        run: |
+          set -euo pipefail
+          semgrep scan \
+            --config workloads/demo-service/.semgrep.yml \
+            --error \
+            --sarif \
+            --output semgrep-demo-service.sarif \
+            workloads/demo-service/app
+          test -s semgrep-demo-service.sarif
+
+      - name: Prepare image reference
+        id: image
+        shell: bash
+        run: |
+          set -euo pipefail
+          IMAGE_NAME="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/tuskerblueprint-demo-service"
+          echo "name=${IMAGE_NAME}" >> "$GITHUB_OUTPUT"
+          echo "local=local/tuskerblueprint-demo-service:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Build local immutable image
+        env:
+          LOCAL_IMAGE: ${{ steps.image.outputs.local }}
+        run: |
+          set -euo pipefail
+          docker build \
+            --build-arg VCS_REF="${GITHUB_SHA}" \
+            --build-arg BUILD_DATE="$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
+            --tag "${LOCAL_IMAGE}" \
+            workloads/demo-service
+
+      - name: Set up Trivy
+        uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567
+        with:
+          version: v0.72.0
+
+      - name: Scan source and dependencies
+        run: |
+          set -euo pipefail
+          trivy fs \
+            --scanners vuln,secret,misconfig \
+            --severity HIGH,CRITICAL \
+            --ignore-unfixed \
+            --exit-code 0 \
+            --format sarif \
+            --output trivy-demo-service-fs.sarif \
+            workloads/demo-service
+
+          trivy fs \
+            --scanners vuln,secret,misconfig \
+            --severity CRITICAL \
+            --ignore-unfixed \
+            --exit-code 1 \
+            workloads/demo-service
+
+      - name: Scan container image
+        env:
+          LOCAL_IMAGE: ${{ steps.image.outputs.local }}
+        run: |
+          set -euo pipefail
+          trivy image \
+            --scanners vuln \
+            --vuln-type os,library \
+            --severity HIGH,CRITICAL \
+            --ignore-unfixed \
+            --exit-code 0 \
+            --format sarif \
+            --output trivy-demo-service-image.sarif \
+            "${LOCAL_IMAGE}"
+
+          trivy image \
+            --scanners vuln \
+            --vuln-type os,library \
+            --severity CRITICAL \
+            --ignore-unfixed \
+            --exit-code 1 \
+            "${LOCAL_IMAGE}"
+
+      - name: Generate SPDX SBOM
+        env:
+          LOCAL_IMAGE: ${{ steps.image.outputs.local }}
+        run: |
+          set -euo pipefail
+          trivy image \
+            --format spdx-json \
+            --output demo-service-sbom.spdx.json \
+            "${LOCAL_IMAGE}"
+          test -s demo-service-sbom.spdx.json
+
+      - name: Upload Semgrep SARIF
+        uses: github/codeql-action/upload-sarif@v4
+        if: always() && hashFiles('semgrep-demo-service.sarif') != ''
+        continue-on-error: true
+        with:
+          sarif_file: semgrep-demo-service.sarif
+          category: semgrep-demo-service
+
+      - name: Upload Trivy filesystem SARIF
+        uses: github/codeql-action/upload-sarif@v4
+        if: always() && hashFiles('trivy-demo-service-fs.sarif') != ''
+        continue-on-error: true
+        with:
+          sarif_file: trivy-demo-service-fs.sarif
+          category: trivy-demo-service-filesystem
+
+      - name: Upload Trivy image SARIF
+        uses: github/codeql-action/upload-sarif@v4
+        if: always() && hashFiles('trivy-demo-service-image.sarif') != ''
+        continue-on-error: true
+        with:
+          sarif_file: trivy-demo-service-image.sarif
+          category: trivy-demo-service-image
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push immutable and bootstrap tags
+        id: publish
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          IMAGE_NAME: ${{ steps.image.outputs.name }}
+          LOCAL_IMAGE: ${{ steps.image.outputs.local }}
+        run: |
+          set -euo pipefail
+          SHA_IMAGE="${IMAGE_NAME}:${GITHUB_SHA}"
+          MAIN_IMAGE="${IMAGE_NAME}:main"
+
+          docker tag "${LOCAL_IMAGE}" "${SHA_IMAGE}"
+          docker tag "${LOCAL_IMAGE}" "${MAIN_IMAGE}"
+          docker push "${SHA_IMAGE}"
+          docker push "${MAIN_IMAGE}"
+
+          docker pull "${SHA_IMAGE}" >/dev/null
+          IMAGE_DIGEST="$(
+            docker inspect \
+              --format='{{index .RepoDigests 0}}' \
+              "${SHA_IMAGE}"
+          )"
+
+          if [[ -z "${IMAGE_DIGEST}" || "${IMAGE_DIGEST}" != *@sha256:* ]]; then
+            echo "Could not determine the pushed image digest." >&2
+            exit 1
+          fi
+
+          echo "digest=${IMAGE_DIGEST}" >> "${GITHUB_OUTPUT}"
+
+          cat > demo-service-release-metadata.txt <<META
+          source_commit=${GITHUB_SHA}
+          immutable_image=${SHA_IMAGE}
+          immutable_image_digest=${IMAGE_DIGEST}
+          bootstrap_image=${MAIN_IMAGE}
+          workflow_run=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
+          META
+
+      - name: Prepare development GitOps release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          set -euo pipefail
+          python scripts/demo/set-demo-release.py \
+            --environment development \
+            --release "${GITHUB_SHA}"
+          git diff --check
+          git diff -- workloads/demo-service/overlays/development/kustomization.yaml
+
+      - name: Open immutable development release pull request
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'release(demo-service): deploy ${{ github.sha }} to development'
+          branch: release/demo-service-${{ github.sha }}
+          delete-branch: true
+          title: 'release(demo-service): deploy ${{ github.sha }} to development'
+          body: |
+            Deploys the validated immutable demo-service image to development.
+
+            - Source commit: `${{ github.sha }}`
+            - Image: `${{ steps.image.outputs.name }}:${{ github.sha }}`
+            - Digest: `${{ steps.publish.outputs.digest }}`
+            - CI evidence: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            - SBOM and SARIF reports: attached to the CI workflow run
+
+            Review the image SHA and CI evidence before merging. Argo CD will reconcile the development environment after merge.
+          add-paths: |
+            workloads/demo-service/overlays/development/kustomization.yaml
+
+      - name: Upload delivery evidence
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: demo-service-delivery-evidence-${{ github.sha }}
+          path: |
+            workloads/demo-service/coverage.xml
+            semgrep-demo-service.sarif
+            trivy-demo-service-fs.sarif
+            trivy-demo-service-image.sarif
+            demo-service-sbom.spdx.json
+            demo-service-release-metadata.txt
+          if-no-files-found: warn
+          retention-days: 30

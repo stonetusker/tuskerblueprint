@@ -1,41 +1,296 @@
-name: Service CI
+name: Service CI and Release
 
 on:
+  workflow_dispatch:
   pull_request:
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'Dockerfile'
+      - '.dockerignore'
+      - '.gitleaks.toml'
+      - '.semgrep.yml'
+      - 'requirements*.txt'
+      - 'pyproject.toml'
+      - '.github/workflows/ci.yml'
   push:
-    branches: [main]
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'Dockerfile'
+      - '.dockerignore'
+      - '.gitleaks.toml'
+      - '.semgrep.yml'
+      - 'requirements*.txt'
+      - 'pyproject.toml'
+      - '.github/workflows/ci.yml'
 
 permissions:
-  contents: read
+  contents: write
   packages: write
+  pull-requests: write
   security-events: write
 
+concurrency:
+  group: service-${{ '${{ github.ref }}' }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: '3.12'
+  TRIVY_NO_PROGRESS: 'true'
+
 jobs:
-  test-and-build:
+  validate-build-release:
+    name: Validate, scan, build, and release
     runs-on: ubuntu-latest
+    timeout-minutes: 40
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Check out repository
+        uses: actions/checkout@v4
         with:
-          python-version: '3.12'
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ '${{ env.PYTHON_VERSION }}' }}
           cache: pip
-      - run: pip install -r requirements.txt
-      - run: pytest -q
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/login-action@v3
-        if: github.event_name == 'push'
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - name: Install dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+          python -m pip install semgrep==1.100.0
+
+      - name: Format, lint, and type-check
+        run: |
+          set -euo pipefail
+          ruff format --check src tests
+          ruff check src tests
+          mypy src
+
+      - name: Run tests and coverage gate
+        run: |
+          set -euo pipefail
+          pytest \
+            --cov=src \
+            --cov-branch \
+            --cov-report=term-missing \
+            --cov-report=xml \
+            --cov-fail-under=80
+
+      - name: Scan secrets
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ '${{ secrets.GITHUB_TOKEN }}' }}
+          GITLEAKS_CONFIG: .gitleaks.toml
+
+      - name: Run Semgrep SAST
+        run: |
+          set -euo pipefail
+          semgrep scan \
+            --config .semgrep.yml \
+            --error \
+            --sarif \
+            --output semgrep.sarif \
+            src
+          test -s semgrep.sarif
+
+      - name: Prepare image reference
+        id: image
+        shell: bash
+        run: |
+          set -euo pipefail
+          IMAGE_NAME="ghcr.io/${GITHUB_REPOSITORY,,}"
+          REPOSITORY_NAME="${GITHUB_REPOSITORY#*/}"
+          LOCAL_REPOSITORY="${REPOSITORY_NAME,,}"
+          echo "name=${IMAGE_NAME}" >> "${GITHUB_OUTPUT}"
+          echo "local=local/${LOCAL_REPOSITORY}:${GITHUB_SHA}" >> "${GITHUB_OUTPUT}"
+
+      - name: Build local immutable image
+        env:
+          LOCAL_IMAGE: ${{ '${{ steps.image.outputs.local }}' }}
+        run: |
+          set -euo pipefail
+          docker build \
+            --build-arg VCS_REF="${GITHUB_SHA}" \
+            --build-arg BUILD_DATE="$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
+            --tag "${LOCAL_IMAGE}" \
+            .
+
+      - name: Set up Trivy
+        uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567
+        with:
+          version: v0.72.0
+
+      - name: Scan source and dependencies
+        run: |
+          set -euo pipefail
+          trivy fs \
+            --scanners vuln,secret,misconfig \
+            --severity HIGH,CRITICAL \
+            --ignore-unfixed \
+            --exit-code 0 \
+            --format sarif \
+            --output trivy-filesystem.sarif \
+            .
+
+          trivy fs \
+            --scanners vuln,secret,misconfig \
+            --severity CRITICAL \
+            --ignore-unfixed \
+            --exit-code 1 \
+            .
+
+      - name: Scan container image
+        env:
+          LOCAL_IMAGE: ${{ '${{ steps.image.outputs.local }}' }}
+        run: |
+          set -euo pipefail
+          trivy image \
+            --scanners vuln \
+            --vuln-type os,library \
+            --severity HIGH,CRITICAL \
+            --ignore-unfixed \
+            --exit-code 0 \
+            --format sarif \
+            --output trivy-image.sarif \
+            "${LOCAL_IMAGE}"
+
+          trivy image \
+            --scanners vuln \
+            --vuln-type os,library \
+            --severity CRITICAL \
+            --ignore-unfixed \
+            --exit-code 1 \
+            "${LOCAL_IMAGE}"
+
+      - name: Generate SPDX SBOM
+        env:
+          LOCAL_IMAGE: ${{ '${{ steps.image.outputs.local }}' }}
+        run: |
+          set -euo pipefail
+          trivy image \
+            --format spdx-json \
+            --output sbom.spdx.json \
+            "${LOCAL_IMAGE}"
+          test -s sbom.spdx.json
+
+      - name: Upload Semgrep SARIF
+        uses: github/codeql-action/upload-sarif@v4
+        if: always() && hashFiles('semgrep.sarif') != ''
+        continue-on-error: true
+        with:
+          sarif_file: semgrep.sarif
+          category: semgrep
+
+      - name: Upload Trivy filesystem SARIF
+        uses: github/codeql-action/upload-sarif@v4
+        if: always() && hashFiles('trivy-filesystem.sarif') != ''
+        continue-on-error: true
+        with:
+          sarif_file: trivy-filesystem.sarif
+          category: trivy-filesystem
+
+      - name: Upload Trivy image SARIF
+        uses: github/codeql-action/upload-sarif@v4
+        if: always() && hashFiles('trivy-image.sarif') != ''
+        continue-on-error: true
+        with:
+          sarif_file: trivy-image.sarif
+          category: trivy-image
+
+      - name: Log in to GHCR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ '${{ github.actor }}' }}
           password: ${{ '${{ secrets.GITHUB_TOKEN }}' }}
-      - uses: docker/build-push-action@v6
+
+      - name: Push immutable and bootstrap tags
+        id: publish
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          IMAGE_NAME: ${{ '${{ steps.image.outputs.name }}' }}
+          LOCAL_IMAGE: ${{ '${{ steps.image.outputs.local }}' }}
+        run: |
+          set -euo pipefail
+          SHA_IMAGE="${IMAGE_NAME}:${GITHUB_SHA}"
+          MAIN_IMAGE="${IMAGE_NAME}:main"
+
+          docker tag "${LOCAL_IMAGE}" "${SHA_IMAGE}"
+          docker tag "${LOCAL_IMAGE}" "${MAIN_IMAGE}"
+          docker push "${SHA_IMAGE}"
+          docker push "${MAIN_IMAGE}"
+
+          docker pull "${SHA_IMAGE}" >/dev/null
+          IMAGE_DIGEST="$(
+            docker inspect \
+              --format='{{index .RepoDigests 0}}' \
+              "${SHA_IMAGE}"
+          )"
+
+          if [[ -z "${IMAGE_DIGEST}" || "${IMAGE_DIGEST}" != *@sha256:* ]]; then
+            echo "Could not determine the pushed image digest." >&2
+            exit 1
+          fi
+
+          echo "digest=${IMAGE_DIGEST}" >> "${GITHUB_OUTPUT}"
+
+          cat > release-metadata.txt <<META
+          source_commit=${GITHUB_SHA}
+          immutable_image=${SHA_IMAGE}
+          immutable_image_digest=${IMAGE_DIGEST}
+          bootstrap_image=${MAIN_IMAGE}
+          workflow_run=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
+          META
+
+      - name: Prepare GitOps release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          set -euo pipefail
+          python scripts/set-release.py "${GITHUB_SHA}"
+          git diff --check
+          git diff -- deploy/overlays/development/kustomization.yaml
+
+      - name: Open development release pull request
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: peter-evans/create-pull-request@v7
         with:
-          context: .
-          push: ${{ '${{ github.event_name == \'push\' }}' }}
-          tags: ghcr.io/${{ values.repoUrl | parseRepoUrl | pick('owner') }}/${{ values.name }}:${{ '${{ github.sha }}' }}
-      - uses: aquasecurity/trivy-action@master
+          token: ${{ '${{ secrets.GITHUB_TOKEN }}' }}
+          commit-message: "release: deploy ${{ '${{ github.sha }}' }} to development"
+          branch: release/development-${{ '${{ github.sha }}' }}
+          delete-branch: true
+          title: "release: deploy ${{ '${{ github.sha }}' }} to development"
+          body: |
+            Deploys the validated immutable image `${{ '${{ steps.image.outputs.name }}' }}:${{ '${{ github.sha }}' }}`.
+
+            - Digest: `${{ '${{ steps.publish.outputs.digest }}' }}`
+            - CI evidence: ${{ '${{ github.server_url }}' }}/${{ '${{ github.repository }}' }}/actions/runs/${{ '${{ github.run_id }}' }}
+            - SBOM and SARIF reports: attached to the CI workflow run
+
+            Review the test and security evidence before merging.
+          add-paths: deploy/overlays/development/kustomization.yaml
+
+      - name: Upload delivery evidence
+        uses: actions/upload-artifact@v4
+        if: always()
         with:
-          scan-type: fs
-          scan-ref: .
-          severity: HIGH,CRITICAL
-          exit-code: '1'
+          name: delivery-evidence-${{ '${{ github.sha }}' }}
+          path: |
+            coverage.xml
+            semgrep.sarif
+            trivy-filesystem.sarif
+            trivy-image.sarif
+            sbom.spdx.json
+            release-metadata.txt
+          if-no-files-found: warn
+          retention-days: 30

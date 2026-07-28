@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: demo-service-production
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: demo-service
+    app.kubernetes.io/component: workload
+    app.kubernetes.io/part-of: tuskerblueprint
+    app.kubernetes.io/environment: production
+  annotations:
+    argocd.argoproj.io/sync-wave: "82"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: workloads
+  source:
+    repoURL: git@github.com:stonetusker/tuskerblueprint.git
+    targetRevision: main
+    path: workloads/demo-service/overlays/production
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: demo-service-production
+  revisionHistoryLimit: 10
+  syncPolicy:
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true
+      - PrunePropagationPolicy=foreground

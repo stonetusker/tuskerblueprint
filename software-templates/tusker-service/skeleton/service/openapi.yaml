@@ -1,12 +1,12 @@
 openapi: 3.0.3
 info:
   title: ${{ values.name }} API
-  version: 0.1.0
+  version: 1.0.0
   description: ${{ values.description }}
 paths:
   /:
     get:
-      summary: Service metadata
+      summary: Service and release metadata
       responses:
         '200':
           description: Service metadata
@@ -22,3 +22,11 @@ paths:
       responses:
         '200':
           description: Service is ready
+        '503':
+          description: Service is not ready
+  /api/v1/example:
+    get:
+      summary: Example product endpoint
+      responses:
+        '200':
+          description: Example response

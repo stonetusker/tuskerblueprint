@@ -18,3 +18,12 @@
 - Corrected duplicate development Kustomize composition.
 - Replaced the directly rendered reference workload with a proper Argo CD Application.
 - Updated AppProject source repositories and workload restrictions.
+
+## Delivery platform buyer-demo milestone
+
+- Replaced the static demo workload with a tested FastAPI reference API.
+- Added quality, security, image, SBOM, and immutable GitOps release automation.
+- Added TechDocs, OpenAPI, metrics, correlation IDs, and failure-mode controls.
+- Added a Grafana delivery dashboard and optional Alloy log collector.
+- Enhanced the Tusker Service golden path with immutable release promotion.
+- Added offline validation, preflight, reset, traffic, failure, and recovery scripts.

@@ -1,7 +1,10 @@
 site_name: ${{ values.name }}
 site_description: ${{ values.description }}
+repo_url: https://github.com/${{ values.repoUrl | parseRepoUrl | pick('owner') }}/${{ values.repoUrl | parseRepoUrl | pick('repo') }}
+edit_uri: edit/main/docs/
+docs_dir: docs
 nav:
-  - Overview: docs/index.md
-  - Operations: docs/runbook.md
+  - Overview: index.md
+  - Operations: runbook.md
 plugins:
   - techdocs-core

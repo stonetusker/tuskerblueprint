@@ -13,8 +13,14 @@ metadata:
     backstage.io/kubernetes-namespace: ${{ values.name }}-development
   tags:
     - fastapi
+    - devsecops
     - kubernetes
     - gitops
+    - techdocs
+  links:
+    - url: https://github.com/${{ values.repoUrl | parseRepoUrl | pick('owner') }}/${{ values.repoUrl | parseRepoUrl | pick('repo') }}/actions
+      title: Delivery workflow
+      icon: github
 spec:
   type: service
   lifecycle: experimental

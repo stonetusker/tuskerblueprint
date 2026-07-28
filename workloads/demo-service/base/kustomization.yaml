@@ -9,10 +9,11 @@ resources:
   - network-policy.yaml
 
 configMapGenerator:
-  - name: demo-service-content
-    files:
-      - index.html=content/index.html
-      - healthz=content/healthz
+  - name: demo-service-config
+    literals:
+      - SERVICE_NAME=demo-service
+      - DEMO_FAILURE_MODE=none
+      - FAILURE_DELAY_MS=2500
 
 generatorOptions:
   labels:

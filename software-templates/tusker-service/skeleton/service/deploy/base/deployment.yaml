@@ -4,7 +4,7 @@ metadata:
   name: ${{ values.name }}
 spec:
   replicas: 2
-  revisionHistoryLimit: 5
+  revisionHistoryLimit: 10
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -17,10 +17,20 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: ${{ values.name }}
+        app.kubernetes.io/component: api
         backstage.io/kubernetes-id: ${{ values.name }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: /metrics
+        prometheus.io/port: "${{ values.port }}"
+        tuskerblueprint.io/release-sha: main
     spec:
       serviceAccountName: ${{ values.name }}
       automountServiceAccountToken: false
+{% if values.repoVisibility != 'public' %}
+      imagePullSecrets:
+        - name: ghcr-pull-secret
+{% endif %}
       securityContext:
         runAsNonRoot: true
         runAsUser: 10001
@@ -30,20 +40,34 @@ spec:
           type: RuntimeDefault
       containers:
         - name: app
-          image: ghcr.io/${{ values.repoUrl | parseRepoUrl | pick('owner') }}/${{ values.name }}:main
+          image: ghcr.io/${{ values.repoUrl | parseRepoUrl | pick('owner') }}/${{ values.repoUrl | parseRepoUrl | pick('repo') }}:main
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
               containerPort: ${{ values.port }}
+          env:
+            - name: SERVICE_NAME
+              value: ${{ values.name }}
+            - name: APP_VERSION
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['tuskerblueprint.io/release-sha']
+            - name: APP_ENV
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['app.kubernetes.io/environment']
+            - name: DEMO_FAILURE_MODE
+              value: none
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             capabilities:
-              drop: [ALL]
+              drop:
+                - ALL
           resources:
             requests:
               cpu: 50m
-              memory: 64Mi
+              memory: 96Mi
             limits:
               cpu: 500m
               memory: 256Mi
@@ -69,4 +93,4 @@ spec:
       volumes:
         - name: tmp
           emptyDir:
-            sizeLimit: 32Mi
+            sizeLimit: 64Mi

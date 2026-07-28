@@ -10,14 +10,42 @@ from typing import Any
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
-SKIP_PARTS = {'.git', '.venv', 'node_modules', '.generated', '__MACOSX'}
+SKIP_PARTS = {
+    '.git',
+    '.generated',
+    '.venv',
+    '.yarn',
+    '__MACOSX',
+    '__pycache__',
+    '.pytest_cache',
+    '.mypy_cache',
+    '.ruff_cache',
+    'build',
+    'dist',
+    'node_modules',
+    'venv',
+}
+HYGIENE_TRAVERSAL_SKIP_PARTS = {
+    '.git',
+    '.generated',
+    '.venv',
+    '.yarn',
+    'build',
+    'dist',
+    'node_modules',
+    'venv',
+}
 
 
 class UniqueKeyLoader(yaml.SafeLoader):
     """YAML loader that rejects duplicate mapping keys."""
 
 
-def _construct_mapping(loader: UniqueKeyLoader, node: yaml.MappingNode, deep: bool = False) -> dict[Any, Any]:
+def _construct_mapping(
+    loader: UniqueKeyLoader,
+    node: yaml.MappingNode,
+    deep: bool = False,
+) -> dict[Any, Any]:
     mapping: dict[Any, Any] = {}
     for key_node, value_node in node.value:
         key = loader.construct_object(key_node, deep=deep)
@@ -45,18 +73,34 @@ def files(pattern: str):
 
 
 def load_yaml(path: Path) -> list[Any]:
-    return list(yaml.load_all(path.read_text(encoding='utf-8'), Loader=UniqueKeyLoader))
+    return list(
+        yaml.load_all(
+            path.read_text(encoding='utf-8'),
+            Loader=UniqueKeyLoader,
+        )
+    )
+
+
+def is_jinja_template(path: Path) -> bool:
+    return '{%' in path.read_text(encoding='utf-8', errors='replace')
 
 
 def validate_yaml() -> None:
     count = 0
+    skipped_templates = 0
     for path in list(files('*.yaml')) + list(files('*.yml')):
+        if is_jinja_template(path):
+            skipped_templates += 1
+            continue
         try:
             load_yaml(path)
         except Exception as exc:
             raise RuntimeError(f'Invalid YAML: {path.relative_to(ROOT)}: {exc}') from exc
         count += 1
-    print(f'YAML parsed with duplicate-key protection: {count} files')
+    print(
+        f'YAML parsed with duplicate-key protection: {count} files; '
+        f'{skipped_templates} raw Jinja templates deferred to rendered validation'
+    )
 
 
 def validate_required_files() -> None:
@@ -106,7 +150,11 @@ def validate_catalog_relations() -> None:
             kind = str(document.get('kind', '')).lower()
             metadata = document.get('metadata') or {}
             name = metadata.get('name') if isinstance(metadata, dict) else None
-            namespace = metadata.get('namespace', 'default') if isinstance(metadata, dict) else 'default'
+            namespace = (
+                metadata.get('namespace', 'default')
+                if isinstance(metadata, dict)
+                else 'default'
+            )
             if kind and name:
                 entities[f'{kind}:{namespace}/{name}'] = (path, document)
 
@@ -141,16 +189,28 @@ def validate_catalog_relations() -> None:
         raise RuntimeError('Unresolved catalog relations:\n' + '\n'.join(unresolved))
     print(f'Catalog relations: {len(entities)} entities resolved')
 
+
+
 def validate_no_committed_secrets() -> None:
     patterns = [
         re.compile(r'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----'),
         re.compile(r'gh[pousr]_[A-Za-z0-9_]{20,}'),
-        re.compile(r'(?i)(?:password|clientSecret|token):\s*["\']?(?!\$\{|REPLACE_|<)[A-Za-z0-9+/=_-]{16,}'),
+        re.compile(
+            r'(?i)(?:password|clientSecret|token):\s*["\']?'
+            r'(?!\$\{|REPLACE_|<)[A-Za-z0-9+/=_-]{16,}'
+        ),
     ]
     findings = []
     secret_manifests = []
     for path in files('*'):
-        if not path.is_file() or path.suffix.lower() in {'.zip', '.png', '.jpg', '.jpeg', '.gif', '.pdf'}:
+        if not path.is_file() or path.suffix.lower() in {
+            '.zip',
+            '.png',
+            '.jpg',
+            '.jpeg',
+            '.gif',
+            '.pdf',
+        }:
             continue
         try:
             text = path.read_text(encoding='utf-8')
@@ -160,7 +220,7 @@ def validate_no_committed_secrets() -> None:
             if pattern.search(text):
                 findings.append(str(path.relative_to(ROOT)))
                 break
-        if path.suffix in {'.yaml', '.yml'}:
+        if path.suffix in {'.yaml', '.yml'} and not is_jinja_template(path):
             for document in load_yaml(path):
                 if isinstance(document, dict) and document.get('kind') == 'Secret':
                     secret_manifests.append(str(path.relative_to(ROOT)))
@@ -181,7 +241,9 @@ def validate_kustomize_references() -> None:
                 continue
             target = (path.parent / item).resolve()
             if target.is_dir():
-                if not (target / 'kustomization.yaml').is_file() and not (target / 'kustomization.yml').is_file():
+                if not (target / 'kustomization.yaml').is_file() and not (
+                    target / 'kustomization.yml'
+                ).is_file():
                     missing.append(f'{path.relative_to(ROOT)} -> {item} (directory has no kustomization)')
             elif not target.exists():
                 missing.append(f'{path.relative_to(ROOT)} -> {item} (missing)')
@@ -192,7 +254,13 @@ def validate_kustomize_references() -> None:
 
 
 def validate_kustomize_render() -> None:
-    if subprocess.run(['bash', '-lc', 'command -v kubectl >/dev/null'], capture_output=True).returncode != 0:
+    if (
+        subprocess.run(
+            ['bash', '-lc', 'command -v kubectl >/dev/null'],
+            capture_output=True,
+        ).returncode
+        != 0
+    ):
         print('kubectl not installed; skipped executable Kustomize render checks')
         return
     paths = [
@@ -201,17 +269,49 @@ def validate_kustomize_render() -> None:
         'workloads/demo-service/overlays/development',
     ]
     for item in paths:
-        subprocess.run(['kubectl', 'kustomize', str(ROOT / item)], check=True, stdout=subprocess.DEVNULL)
+        subprocess.run(
+            ['kubectl', 'kustomize', str(ROOT / item)],
+            check=True,
+            stdout=subprocess.DEVNULL,
+        )
     print(f'Kustomize rendered: {len(paths)} paths')
 
 
 def validate_hygiene() -> None:
+    """Reject committed artifacts without failing on ignored local build trees."""
+
     forbidden = []
-    for path in ROOT.rglob('*'):
-        if any(part in {'__MACOSX', '.git', '.venv', '__pycache__', 'node_modules'} for part in path.parts):
-            forbidden.append(str(path.relative_to(ROOT)))
-        if path.is_file() and (path.name == '.DS_Store' or path.suffix == '.pyc'):
-            forbidden.append(str(path.relative_to(ROOT)))
+    maintained_roots = [
+        ROOT / 'workloads',
+        ROOT / 'software-templates',
+        ROOT / 'scripts',
+        ROOT / 'catalog',
+        ROOT / 'gitops',
+        ROOT / 'platform-services',
+    ]
+    forbidden_dirs = {
+        '__MACOSX',
+        '__pycache__',
+        '.pytest_cache',
+        '.mypy_cache',
+        '.ruff_cache',
+    }
+    forbidden_names = {'.DS_Store', '.coverage', 'coverage.xml'}
+
+    for maintained_root in maintained_roots:
+        if not maintained_root.exists():
+            continue
+        for path in maintained_root.rglob('*'):
+            if any(
+                part in HYGIENE_TRAVERSAL_SKIP_PARTS
+                for part in path.relative_to(ROOT).parts
+            ):
+                continue
+            if path.is_dir() and path.name in forbidden_dirs:
+                forbidden.append(str(path.relative_to(ROOT)))
+            elif path.is_file() and (path.name in forbidden_names or path.suffix == '.pyc'):
+                forbidden.append(str(path.relative_to(ROOT)))
+
     if forbidden:
         raise RuntimeError(f'Forbidden generated files: {forbidden[:20]}')
     print('Repository hygiene: passed')

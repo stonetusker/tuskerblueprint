@@ -2,11 +2,12 @@ apiVersion: backstage.io/v1alpha1
 kind: API
 metadata:
   name: demo-service-api
-  title: Demo Service API
-  description: Health and metadata API exposed by the TuskerBlueprint demo workload
+  title: StoneTusker Customer Notification API
+  description: Fictional notification API used to demonstrate secure delivery, GitOps, observability, and rollback
   tags:
     - openapi
-    - demo
+    - buyer-demo
+    - fastapi
 spec:
   type: openapi
   lifecycle: experimental

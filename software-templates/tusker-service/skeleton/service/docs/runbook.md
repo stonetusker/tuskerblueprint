@@ -2,16 +2,19 @@
 
 ## Health
 
-- Liveness: `/healthz`
-- Readiness: `/readyz`
+```bash
+curl http://localhost:${{ values.port }}/healthz
+curl http://localhost:${{ values.port }}/readyz
+```
 
-## Kubernetes
+## Runtime
 
 ```bash
-kubectl -n ${{ values.name }}-development get deploy,pod,service
-kubectl -n ${{ values.name }}-development logs deployment/${{ values.name }} --tail=200
+kubectl -n ${{ values.name }}-development get deployment,pod,service \
+  -l app.kubernetes.io/name=${{ values.name }}
 ```
 
 ## Rollback
 
-Revert the Git commit that changed the desired state. Avoid making a permanent manual change in Kubernetes.
+Update `deploy/overlays/development/kustomization.yaml` to the last known good
+full Git SHA, review the change, and merge it. Argo CD will reconcile the rollback.
