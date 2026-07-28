@@ -1,3 +1,12 @@
+
+## Gitleaks organization-repository note
+
+The workflows intentionally run the open-source Gitleaks CLI from the pinned
+`zricethezav/gitleaks:v8.24.3` container image. Do not replace this with
+`gitleaks/gitleaks-action@v2` for an organization-owned repository unless a
+`GITLEAKS_LICENSE` subscription has been configured. The CLI scan remains
+blocking and uploads a SARIF report without requiring that license.
+
 # Next steps after importing the enhanced demo source
 
 This file is the execution order for the next demo milestone. Keep the existing

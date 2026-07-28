@@ -306,7 +306,8 @@ def validate_workflows() -> None:
             "ruff format --check",
             "mypy app",
             "--cov=app",
-            "gitleaks/gitleaks-action@v2",
+            "zricethezav/gitleaks:v8.24.3",
+            "gitleaks-demo-service.sarif",
             "semgrep scan",
             "trivy fs",
             "trivy image",
@@ -317,6 +318,10 @@ def validate_workflows() -> None:
         for marker in required:
             check(marker in text, f"Demo workflow is missing required marker: {marker}")
         check("@master" not in text, "Demo workflow contains an unpinned @master action")
+        check(
+            "gitleaks/gitleaks-action" not in text,
+            "Demo workflow uses the licensed Gitleaks GitHub Action instead of the OSS CLI",
+        )
 
     template_workflow = (
         ROOT
@@ -332,6 +337,14 @@ def validate_workflows() -> None:
             "Generated-service CI path filter would retrigger on its own release PR",
         )
         check("@master" not in text, "Generated-service workflow contains @master")
+        check(
+            "zricethezav/gitleaks:v8.24.3" in text,
+            "Generated-service workflow does not use the pinned OSS Gitleaks CLI image",
+        )
+        check(
+            "gitleaks/gitleaks-action" not in text,
+            "Generated-service workflow uses the licensed Gitleaks GitHub Action",
+        )
 
     demo_requirements = (
         ROOT / "workloads/demo-service/requirements-dev.txt"
