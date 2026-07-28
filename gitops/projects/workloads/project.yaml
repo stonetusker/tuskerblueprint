@@ -17,7 +17,9 @@ spec:
       server: https://kubernetes.default.svc
   sourceNamespaces:
     - argocd
-  clusterResourceWhitelist: []
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
   namespaceResourceWhitelist:
     - group: ''
       kind: ConfigMap
