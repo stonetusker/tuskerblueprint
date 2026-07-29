@@ -11,6 +11,8 @@ rules:
       - configmaps
       - events
       - namespaces
+      - limitranges
+      - resourcequotas
     verbs: ["get", "list", "watch"]
   - apiGroups: ["apps"]
     resources:
