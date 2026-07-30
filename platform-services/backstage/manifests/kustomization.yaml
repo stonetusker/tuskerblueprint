@@ -2,20 +2,16 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 namespace: backstage
-resources:
-  - service-account.yaml
-  - cluster-role.yaml
-  - cluster-role-binding.yaml
-  - network-policy.yaml
-
-commonLabels:
-  app.kubernetes.io/name: backstage
-  app.kubernetes.io/part-of: tuskerblueprint
-  app.kubernetes.io/managed-by: argocd
 
 resources:
-  - service-account.yaml
-  - cluster-role.yaml
-  - cluster-role-binding.yaml
-  - network-policy.yaml
-  - argocd-ca-configmap.yaml
+- service-account.yaml
+- cluster-role.yaml
+- cluster-role-binding.yaml
+- network-policy.yaml
+- argocd-ca-configmap.yaml
+
+labels:
+- pairs:
+    app.kubernetes.io/managed-by: argocd
+    app.kubernetes.io/name: backstage
+    app.kubernetes.io/part-of: tuskerblueprint
