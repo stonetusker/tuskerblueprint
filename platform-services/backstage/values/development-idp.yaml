@@ -1,6 +1,7 @@
 # CUSTOM IDP MODE
 # Activate this file only after ghcr.io/stonetusker/tuskerblueprint-backstage
 # has been built and the required Kubernetes Secrets have been created.
+
 backstage:
   image:
     registry: ghcr.io
@@ -12,6 +13,20 @@ backstage:
     - backstage-github-credentials
     - backstage-auth-secrets
     - backstage-argocd-credentials
+
+  extraEnvVars:
+    - name: NODE_EXTRA_CA_CERTS
+      value: /etc/backstage/argocd-ca/argocd-server.crt
+
+  extraVolumes:
+    - name: argocd-ca
+      configMap:
+        name: backstage-argocd-ca
+
+  extraVolumeMounts:
+    - name: argocd-ca
+      mountPath: /etc/backstage/argocd-ca
+      readOnly: true
 
   appConfig:
     app:
@@ -38,7 +53,13 @@ backstage:
           - secret: ${BACKEND_SECRET}
       cors:
         origin: http://localhost:7007
-        methods: [GET, HEAD, PATCH, POST, PUT, DELETE]
+        methods:
+          - GET
+          - HEAD
+          - PATCH
+          - POST
+          - PUT
+          - DELETE
         credentials: true
 
     integrations:
@@ -132,16 +153,3 @@ resources:
   limits:
     cpu: "1"
     memory: 1Gi
-  extraEnvVars:
-    - name: NODE_EXTRA_CA_CERTS
-      value: /etc/backstage/argocd-ca/argocd-server.crt
-
-  extraVolumes:
-    - name: argocd-ca
-      configMap:
-        name: backstage-argocd-ca
-
-  extraVolumeMounts:
-    - name: argocd-ca
-      mountPath: /etc/backstage/argocd-ca
-      readOnly: true
