@@ -1,5 +1,14 @@
 # Doppler
 
+## Current status
+
+Doppler integration is optional and is not enabled in the active development
+environment. The current Backstage deployment consumes pre-created Kubernetes
+Secrets directly.
+
+The manifests in this directory are retained as a scaffold for a future
+Doppler-backed secret-management implementation.
+
 ## Purpose
 
 Doppler provides a centralized secret-management integration layer for platform workloads and applications.

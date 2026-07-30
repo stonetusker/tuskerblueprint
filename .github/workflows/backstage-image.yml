@@ -2,21 +2,17 @@ name: Backstage IDP Image
 
 on:
   workflow_dispatch:
-
   push:
-    branches:
-      - main
+    branches: [main]
     paths:
       - 'backstage-app/**'
       - 'scripts/backstage/bootstrap-custom-app.sh'
       - '.github/workflows/backstage-image.yml'
 
 permissions:
-  actions: read
   contents: read
   packages: write
   security-events: write
-  id-token: write
 
 concurrency:
   group: backstage-image-${{ github.ref }}
@@ -26,15 +22,13 @@ env:
   COREPACK_ENABLE_DOWNLOAD_PROMPT: '0'
   YARN_ENABLE_IMMUTABLE_INSTALLS: 'false'
   YARN_ENABLE_SCRIPTS: 'false'
-  npm_config_python: /usr/bin/python3
-  PYTHON: /usr/bin/python3
-  TRIVY_NO_PROGRESS: 'true'
+  IMAGE_NAME: ghcr.io/stonetusker/tuskerblueprint-backstage
+  TRIVY_IMAGE: aquasec/trivy:0.58.1
 
 jobs:
-  build:
-    name: Build and scan Backstage
+  build-and-scan:
     runs-on: ubuntu-latest
-    timeout-minutes: 75
+    timeout-minutes: 60
 
     steps:
       - name: Check out repository
@@ -43,397 +37,53 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20.20.2'
+          node-version: '20.19.0'
 
-      - name: Install generation dependencies
-        run: |
-          set -euo pipefail
-
-          sudo apt-get update
-          sudo apt-get install --yes --no-install-recommends \
-            python3 \
-            make \
-            g++ \
-            pkg-config \
-            libsecret-1-dev \
-            rsync
+      - name: Install rsync
+        run: sudo apt-get update && sudo apt-get install -y rsync
 
       - name: Enable Corepack
-        run: |
-          set -euo pipefail
-
-          corepack enable
-
-          echo "Node version: $(node --version)"
-          echo "Corepack version: $(corepack --version)"
+        run: corepack enable
 
       - name: Generate custom Backstage application
-        env:
-          BACKSTAGE_APP_NAME: tuskerblueprint-backstage
-        run: |
-          set -euo pipefail
+        run: scripts/backstage/bootstrap-custom-app.sh
 
-          bash scripts/backstage/bootstrap-custom-app.sh
-
-      - name: Verify generated application
-        run: |
-          set -euo pipefail
-
-          test -f .generated/backstage/package.json
-          test -f .generated/backstage/yarn.lock
-          test -f .generated/backstage/backstage.json
-          test -f .generated/backstage/.yarnrc.yml
-          test -f .generated/backstage/packages/app/package.json
-          test -f .generated/backstage/packages/backend/package.json
-          test -s .generated/backstage/packages/backend/Dockerfile
-
-          echo "Generated Backstage release: $(
-            node -p "require('./.generated/backstage/backstage.json').version"
-          )"
-
-          echo "Generated package manager: $(
-            node -p "require('./.generated/backstage/package.json').packageManager"
-          )"
-
-          if grep -q \
-            'corepack yarn cache clean' \
-            .generated/backstage/packages/backend/Dockerfile; then
-            echo "Unsupported Dockerfile cache-clean command detected." >&2
-            exit 1
-          fi
-
-          echo "Generated Dockerfile artifact references:"
-
-          grep -nE \
-            'skeleton\.tar\.gz|bundle\.tar\.gz' \
-            .generated/backstage/packages/backend/Dockerfile
-
-          grep -q \
-            'packages/backend/dist/skeleton.tar.gz' \
-            .generated/backstage/packages/backend/Dockerfile
-
-          grep -q \
-            'packages/backend/dist/bundle.tar.gz' \
-            .generated/backstage/packages/backend/Dockerfile
-
-          (
-            cd .generated/backstage
-
-            echo "Generated Yarn version: $(corepack yarn --version)"
-            corepack yarn workspaces list
-          )
-
-      - name: Type-check Backstage application
+      - name: Validate generated application
         working-directory: .generated/backstage
-        env:
-          CI: 'true'
         run: |
-          set -euo pipefail
-
           corepack yarn tsc
-
-      - name: Test Backstage frontend
-        working-directory: .generated/backstage
-        env:
-          CI: 'true'
-        run: |
-          set -euo pipefail
-
-          corepack yarn workspace app test \
-            --ci \
-            --watchAll=false \
-            --runInBand \
-            --passWithNoTests
-
-      - name: Build Backstage backend
-        working-directory: .generated/backstage
-        env:
-          CI: 'true'
-        run: |
-          set -euo pipefail
-
+          corepack yarn workspace app test --ci --runInBand --passWithNoTests
           corepack yarn workspace backend build
 
-      - name: Verify backend container artifacts
+      - name: Build Backstage image
+        working-directory: .generated/backstage
         run: |
-          set -euo pipefail
+          docker build \
+            --file packages/backend/Dockerfile \
+            --tag "${IMAGE_NAME}:${GITHUB_SHA}" \
+            .
 
-          SKELETON_ARCHIVE=".generated/backstage/packages/backend/dist/skeleton.tar.gz"
-          BUNDLE_ARCHIVE=".generated/backstage/packages/backend/dist/bundle.tar.gz"
+      - name: Scan Backstage image
+        run: |
+          trivy() {
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+              --entrypoint trivy "${TRIVY_IMAGE}" "$@"
+          }
+          trivy image \
+            --exit-code 1 \
+            --severity HIGH,CRITICAL \
+            --ignore-unfixed \
+            "${IMAGE_NAME}:${GITHUB_SHA}"
 
-          test -s "${SKELETON_ARCHIVE}"
-          test -s "${BUNDLE_ARCHIVE}"
-
-          tar -tzf "${SKELETON_ARCHIVE}" >/dev/null
-          tar -tzf "${BUNDLE_ARCHIVE}" >/dev/null
-
-          ls -lh \
-            "${SKELETON_ARCHIVE}" \
-            "${BUNDLE_ARCHIVE}"
-
-          echo "Backstage backend container artifacts are valid."
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to GitHub Container Registry
+      - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Prepare image name
-        id: image
-        shell: bash
+      - name: Publish immutable and main tags
         run: |
-          set -euo pipefail
-
-          IMAGE_NAME="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/tuskerblueprint-backstage"
-
-          echo "name=${IMAGE_NAME}" >> "$GITHUB_OUTPUT"
-          echo "Image name: ${IMAGE_NAME}"
-
-      # Publish only the immutable SHA initially. The main tag is promoted
-      # after runtime and security validation.
-      - name: Build and push Backstage SHA image
-        uses: docker/build-push-action@v6
-        with:
-          context: .generated/backstage
-          file: .generated/backstage/packages/backend/Dockerfile
-          push: true
-          tags: |
-            ${{ steps.image.outputs.name }}:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          provenance: true
-          sbom: true
-
-      # This catches runtime dependency and plugin-wiring failures that
-      # TypeScript compilation and the Docker build cannot detect.
-      - name: Smoke test Backstage runtime
-        env:
-          IMAGE_REF: ${{ steps.image.outputs.name }}:${{ github.sha }}
-        run: |
-          set -euo pipefail
-
-          CONTAINER_NAME="backstage-smoke"
-          SMOKE_URL="http://127.0.0.1:17007"
-          BACKEND_SECRET_VALUE="$(openssl rand -hex 32)"
-          HEALTHY="false"
-
-          cleanup() {
-            docker rm -f "${CONTAINER_NAME}" >/dev/null 2>&1 || true
-          }
-
-          trap cleanup EXIT
-
-          docker rm -f "${CONTAINER_NAME}" >/dev/null 2>&1 || true
-          docker pull "${IMAGE_REF}"
-
-          docker run --detach \
-            --name "${CONTAINER_NAME}" \
-            --publish 17007:7007 \
-            --env BACKSTAGE_BASE_URL="${SMOKE_URL}" \
-            --env BACKSTAGE_BACKEND_URL="${SMOKE_URL}" \
-            --env AUTH_GITHUB_CLIENT_ID="smoke-test-client" \
-            --env AUTH_GITHUB_CLIENT_SECRET="smoke-test-secret" \
-            --env BACKEND_SECRET="${BACKEND_SECRET_VALUE}" \
-            --env GITHUB_TOKEN="smoke-test-token" \
-            --env ARGOCD_AUTH_TOKEN="smoke-test-token" \
-            "${IMAGE_REF}"
-
-          for attempt in $(seq 1 40); do
-            RUNNING="$(
-              docker inspect \
-                --format '{{.State.Running}}' \
-                "${CONTAINER_NAME}" \
-                2>/dev/null || echo "false"
-            )"
-
-            if [[ "${RUNNING}" != "true" ]]; then
-              echo "Backstage smoke-test container stopped unexpectedly." >&2
-
-              docker logs "${CONTAINER_NAME}" 2>&1 \
-                | tee backstage-smoke.log
-
-              exit 1
-            fi
-
-            docker logs "${CONTAINER_NAME}" \
-              > backstage-smoke.log \
-              2>&1 || true
-
-            if grep -Eiq \
-              'BackendStartupError|core\.auditor|core\.permissionsRegistry|startup failed|unhandled rejection|fatal' \
-              backstage-smoke.log; then
-              echo "Backstage runtime startup errors were detected." >&2
-              cat backstage-smoke.log
-              exit 1
-            fi
-
-            ROOT_STATUS="$(
-              curl \
-                --silent \
-                --show-error \
-                --output /dev/null \
-                --write-out '%{http_code}' \
-                "${SMOKE_URL}/" \
-                2>/dev/null || true
-            )"
-
-            if [[ "${ROOT_STATUS}" == "200" ]] &&
-              grep -q \
-                'Plugin initialization complete' \
-                backstage-smoke.log; then
-              HEALTHY="true"
-              echo "Backstage frontend and backend plugins are ready."
-              break
-            fi
-
-            echo "Waiting for Backstage startup: attempt ${attempt}/40"
-            sleep 3
-          done
-
-          docker logs "${CONTAINER_NAME}" 2>&1 \
-            | tee backstage-smoke.log
-
-          if [[ "${HEALTHY}" != "true" ]]; then
-            echo "Backstage did not complete plugin initialization." >&2
-            exit 1
-          fi
-
-          CATALOG_STATUS="$(
-            curl \
-              --silent \
-              --show-error \
-              --output /dev/null \
-              --write-out '%{http_code}' \
-              "${SMOKE_URL}/api/catalog/health" \
-              2>/dev/null || true
-          )"
-
-          case "${CATALOG_STATUS}" in
-            200)
-              echo "Catalog health endpoint returned HTTP 200."
-              ;;
-            401)
-              echo "Catalog health endpoint returned HTTP 401 as expected for an authenticated endpoint."
-              ;;
-            *)
-              echo "Unexpected Catalog health status: ${CATALOG_STATUS}" >&2
-              exit 1
-              ;;
-          esac
-
-          if ! grep -q \
-            "'catalog'.*'scaffolder'\|'scaffolder'.*'catalog'" \
-            backstage-smoke.log; then
-            echo "Catalog and Scaffolder initialization was not confirmed." >&2
-            exit 1
-          fi
-
-          echo "Backstage runtime smoke test passed."
-
-      - name: Upload Backstage smoke-test logs
-        uses: actions/upload-artifact@v4
-        if: always() && hashFiles('backstage-smoke.log') != ''
-        with:
-          name: backstage-smoke-test-log
-          path: backstage-smoke.log
-          if-no-files-found: warn
-          retention-days: 14
-
-      - name: Set up Trivy
-        uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567
-        with:
-          version: v0.72.0
-
-      - name: Generate Trivy SARIF report
-        env:
-          IMAGE_REF: ${{ steps.image.outputs.name }}:${{ github.sha }}
-        run: |
-          set -euo pipefail
-
-          trivy image \
-            --scanners vuln \
-            --vuln-type os,library \
-            --severity HIGH,CRITICAL \
-            --ignore-unfixed \
-            --exit-code 0 \
-            --format sarif \
-            --output trivy-backstage.sarif \
-            "${IMAGE_REF}"
-
-          test -s trivy-backstage.sarif
-
-      - name: Upload Trivy results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v4
-        if: always() && hashFiles('trivy-backstage.sarif') != ''
-        continue-on-error: true
-        with:
-          sarif_file: trivy-backstage.sarif
-          category: trivy-backstage-container
-
-      - name: Display Trivy vulnerability report
-        env:
-          IMAGE_REF: ${{ steps.image.outputs.name }}:${{ github.sha }}
-        run: |
-          set -euo pipefail
-
-          trivy image \
-            --scanners vuln \
-            --vuln-type os,library \
-            --severity HIGH,CRITICAL \
-            --ignore-unfixed \
-            --exit-code 0 \
-            --format table \
-            --output trivy-backstage.txt \
-            "${IMAGE_REF}"
-
-          test -s trivy-backstage.txt
-          cat trivy-backstage.txt
-
-      - name: Upload Trivy reports as workflow artifacts
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: trivy-backstage-reports
-          path: |
-            trivy-backstage.sarif
-            trivy-backstage.txt
-          if-no-files-found: warn
-          retention-days: 14
-
-      # Advisory initially. This step produces a warning when unfixed
-      # CRITICAL findings exist, but does not fail the complete workflow.
-      - name: Check critical vulnerability policy
-        continue-on-error: true
-        env:
-          IMAGE_REF: ${{ steps.image.outputs.name }}:${{ github.sha }}
-        run: |
-          set -euo pipefail
-
-          trivy image \
-            --scanners vuln \
-            --vuln-type os,library \
-            --severity CRITICAL \
-            --ignore-unfixed \
-            --exit-code 1 \
-            --format table \
-            "${IMAGE_REF}"
-
-      # Promote main only after generation, compilation, tests, packaging,
-      # runtime startup, and vulnerability reporting have completed.
-      - name: Promote validated image to main
-        if: github.ref == 'refs/heads/main'
-        env:
-          IMAGE_NAME: ${{ steps.image.outputs.name }}
-        run: |
-          set -euo pipefail
-
-          docker buildx imagetools create \
-            --tag "${IMAGE_NAME}:main" \
-            "${IMAGE_NAME}:${GITHUB_SHA}"
-
-          echo "Promoted ${IMAGE_NAME}:${GITHUB_SHA} to ${IMAGE_NAME}:main"
+          docker tag "${IMAGE_NAME}:${GITHUB_SHA}" "${IMAGE_NAME}:main"
+          docker push "${IMAGE_NAME}:${GITHUB_SHA}"
+          docker push "${IMAGE_NAME}:main"

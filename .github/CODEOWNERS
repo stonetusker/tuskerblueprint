@@ -1,14 +1,16 @@
 # Default ownership
-* @subeeshes
+* @stonetusker
 
-# Platform
-/infrastructure/ @subeeshes
+# Platform and GitOps
+/gitops/ @stonetusker
+/platform-services/ @stonetusker
+/infrastructure/ @stonetusker
 
-# GitOps
-/gitops/ @subeeshes
+# Developer portal and catalog
+/backstage-app/ @stonetusker
+/catalog/ @stonetusker
+/software-templates/ @stonetusker
 
-# Platform Services
-/platform-services/ @subeeshes
-
-# Documentation
-/docs/ @subeeshes
+# Reference workload and documentation
+/workloads/ @stonetusker
+/docs/ @stonetusker

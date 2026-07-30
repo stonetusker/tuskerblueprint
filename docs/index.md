@@ -13,6 +13,7 @@ TuskerBlueprint is a portfolio-grade Internal Developer Platform reference imple
 - Documentation-as-code through TechDocs.
 - Read-only platform access from the developer portal.
 - Secret separation between GitHub, Backstage, and Argo CD.
+- Explicit trust of the internal Argo CD server certificate.
 
 ## Primary personas
 
@@ -23,7 +24,18 @@ TuskerBlueprint is a portfolio-grade Internal Developer Platform reference imple
 
 ## Start here
 
-1. Read [Architecture](architecture.md).
-2. Walk through the [Developer journey](developer-journey.md).
-3. Review the [Service standards](service-standards.md).
-4. Follow the [Customer demo](demo-runbook.md).
+1. Build the environment with [Setup from scratch](SETUP-FROM-SCRATCH.md).
+2. Understand the platform through [Architecture](architecture.md).
+3. Configure and operate [Backstage and Argo CD integration](BACKSTAGE-ARGOCD-INTEGRATION.md).
+4. Walk through the [Developer journey](developer-journey.md).
+5. Review the [Service standards](service-standards.md).
+6. Follow the [Customer demo](demo-runbook.md).
+
+## Local browser access
+
+```text
+Backstage: http://localhost:7007
+Argo CD:   https://localhost:8080
+```
+
+Use separate port-forward sessions as documented in the setup guide.

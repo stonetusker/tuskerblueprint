@@ -2,37 +2,115 @@
 
 ## Before the meeting
 
-1. Keep both port-forward sessions running.
-2. Confirm Backstage and demo-service are `Synced` and `Healthy`.
-3. Confirm the catalog, Docs, API, Kubernetes, and Argo CD tabs load.
-4. Keep a prepared Git change ready for the release demonstration.
+1. Run repository and platform validation:
+
+   ```bash
+   PYTHONDONTWRITEBYTECODE=1 python3 scripts/validate_idp.py
+   scripts/demo/preflight.sh
+   scripts/demo/status.sh
+   ```
+
+2. Keep these port-forward sessions running in separate terminals:
+
+   ```bash
+   kubectl -n backstage port-forward svc/backstage 7007:7007
+   kubectl -n argocd port-forward svc/argocd-server 8080:443
+   kubectl -n demo-service-development port-forward svc/demo-service 8081:80
+   ```
+
+3. Open:
+
+   ```text
+   Backstage:    http://localhost:7007
+   Argo CD:      https://localhost:8080
+   Demo service: http://localhost:8081
+   ```
+
+4. Confirm `backstage`, `backstage-platform-resources`, and `demo-service-development` are `Synced` and `Healthy`.
+5. Confirm the Backstage Catalog, Docs, APIs, Kubernetes, and Argo CD tabs load.
+6. Confirm the Argo CD tab shows `demo-service-development` without a certificate error.
+7. Keep a prepared Git change ready for the release demonstration.
 
 ## Demo flow
 
 ### 1. Platform catalog
 
-Open **Backstage → Catalog** and show systems, components, APIs, resources, ownership, and lifecycle.
+### Backstage UI steps
+
+```text
+Backstage
+→ Catalog
+```
+
+Show systems, components, APIs, resources, ownership, and lifecycle.
 
 ### 2. Golden path
 
-Open **Backstage → Create → Tusker Service**. Explain the inputs and generated assets. Use a test repository during a full demonstration.
+### Backstage UI steps
+
+```text
+Backstage
+→ Create
+→ Tusker Service
+```
+
+Explain the inputs and generated assets. Use a test repository during a full demonstration.
 
 ### 3. Documentation and API
 
-Open the demo-service entity, then show **Docs** and **APIs**.
+Open `StoneTusker Customer Notification API`, then show **Docs** and **APIs**.
 
 ### 4. Runtime and deployment
 
-Show the Kubernetes tab and the Argo CD card or link. Explain that Backstage is the developer experience layer while Argo CD remains the reconciliation control plane.
+Show the **Kubernetes** and **Argo CD** tabs. Explain:
+
+- Backstage is the developer-experience layer;
+- Argo CD remains the reconciliation control plane;
+- Backstage uses a read-only Argo CD account;
+- Backstage validates the internal Argo CD certificate through a mounted public CA.
 
 ### 5. Git-driven release
 
-Change `workloads/demo-service/base/content/index.html`, commit, and push. Show Argo CD reconcile the new revision.
+Change a safe demo-service source or deployment value, commit, and push. Show Argo CD reconcile the new immutable revision.
+
+Useful commands:
+
+```bash
+argocd app get demo-service-development --refresh
+argocd app wait demo-service-development --sync --health --timeout 300
+kubectl -n demo-service-development rollout status deployment/demo-service --timeout=300s
+```
 
 ### 6. Self-healing
 
-Run `scripts/demo/introduce-drift.sh`, then show Argo CD restoring the desired replica count.
+Run:
+
+```bash
+scripts/demo/introduce-drift.sh
+```
+
+Show Argo CD restoring the Git-declared state.
+
+Verify recovery:
+
+```bash
+scripts/demo/verify-recovery.sh
+```
 
 ### 7. Close
 
-Summarize the value: standardized creation, visible ownership, governed delivery, runtime transparency, and reduced developer cognitive load.
+Summarize the value: standardized creation, visible ownership, governed delivery, runtime transparency, certificate-aware internal integration, and reduced developer cognitive load.
+
+## Troubleshooting before the call
+
+Argo CD plugin logs:
+
+```bash
+kubectl -n backstage logs deployment/backstage --since=3m \
+  | grep -Ei 'argocd|certificate|self-signed|altname|unauthorized|forbidden|error|failed' \
+  || true
+```
+
+Expected successful requests include HTTP `200`; HTTP `304` is a normal cache response.
+
+Full troubleshooting: [Backstage and Argo CD integration](BACKSTAGE-ARGOCD-INTEGRATION.md).

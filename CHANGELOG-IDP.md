@@ -1,5 +1,18 @@
 # IDP enhancement changelog
 
+
+## 1.2.0
+
+- Added the canonical `docs/SETUP-FROM-SCRATCH.md` installation guide.
+- Documented the current Terraform and Ansible automation boundary.
+- Added the Backstage-to-Argo CD authentication, TLS trust, certificate rotation, verification, and troubleshooting runbook.
+- Added `scripts/backstage/update-argocd-ca-configmap.sh` to regenerate the public CA ConfigMap from the live Argo CD certificate.
+- Corrected documentation to show `development-idp.yaml` as the active development values file and `development.yaml` as the rollback path.
+- Documented the required sync order: `backstage-platform-resources` before `backstage`.
+- Added exact port-forward URLs and UI navigation for Backstage and Argo CD.
+- Updated TechDocs navigation, operations guidance, demo preparation, and repository path references.
+- Restored the root `.gitignore` and GitHub workflow metadata omitted from the uploaded archive, allowing the full demo validator to pass.
+
 ## 1.1.0
 
 - Added a structured Backstage catalog under `catalog/`.

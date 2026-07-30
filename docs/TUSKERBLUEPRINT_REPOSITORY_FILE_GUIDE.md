@@ -1,16 +1,17 @@
 # TuskerBlueprint repository file guide
 
-This learning guide explains all **340 files** in the IDP reference repository. Paths are relative to the repository root.
+This learning guide explains the maintained files in the IDP reference repository. Paths are relative to the repository root; generated and packaged file counts may vary.
 
 ## Recommended learning order
 
-1. `README.md` and `docs/architecture.md`
-2. `catalog-info.yaml` and `catalog/`
-3. `platform-services/backstage/` and `backstage-app/`
-4. `software-templates/`
-5. `gitops/` and `workloads/demo-service/`
-6. `scripts/` and `.github/workflows/`
-7. `infrastructure/`
+1. `README.md` and `docs/SETUP-FROM-SCRATCH.md`
+2. `docs/architecture.md` and `docs/BACKSTAGE-ARGOCD-INTEGRATION.md`
+3. `catalog-info.yaml` and `catalog/`
+4. `platform-services/backstage/` and `backstage-app/`
+5. `software-templates/`
+6. `gitops/` and `workloads/demo-service/`
+7. `scripts/` and `.github/workflows/`
+8. `infrastructure/`
 
 ## Repository root
 
@@ -71,6 +72,10 @@ Collects change summary, risk, validation, rollout, and rollback information in 
 ### `.github/workflows/backstage-image.yml`
 
 Defines the `backstage-image` GitHub Actions workflow for automated repository or image validation.
+
+### `.github/workflows/demo-service-ci.yml`
+
+Defines quality, test coverage, Gitleaks, Semgrep, Trivy, SBOM, GHCR publishing, and immutable development-release pull-request automation for the demo service.
 
 ### `.github/workflows/idp-validation.yml`
 
@@ -1288,9 +1293,13 @@ Learning and operating documentation: TuskerBlueprint GitOps Standards.
 
 Learning and operating documentation: IDP change manifest.
 
+### `docs/BACKSTAGE-ARGOCD-INTEGRATION.md`
+
+Documents read-only Argo CD authentication, internal service routing, certificate trust, certificate rotation, live verification, and troubleshooting.
+
 ### `docs/IDP-MIGRATION-RUNBOOK.md`
 
-Learning and operating documentation: Backstage IDP migration runbook.
+Learning and operating documentation: Backstage IDP deployment and rollback runbook.
 
 ### `docs/IDP-VALIDATION-REPORT.md`
 
@@ -1315,6 +1324,10 @@ Learning and operating documentation: TuskerBlueprint Repository Standards.
 ### `docs/SECURITY-STANDARDS.md`
 
 Learning and operating documentation: TuskerBlueprint Security Standards.
+
+### `docs/SETUP-FROM-SCRATCH.md`
+
+Provides the canonical end-to-end guide for preparing a host, installing k3s and Argo CD, configuring runtime credentials, trusting the Argo CD certificate, reconciling Backstage, and verifying the demo environment.
 
 ### `docs/TUSKERBLUEPRINT_REPOSITORY_FILE_GUIDE.md`
 

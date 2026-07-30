@@ -1,27 +1,28 @@
 ## Summary
 
-Describe the change.
+Describe the change and the user or platform outcome.
 
-## Type of Change
+## Repository paths changed
 
-- [ ] Feature
-- [ ] Bug Fix
-- [ ] Documentation
-- [ ] Refactoring
-- [ ] Infrastructure
-- [ ] CI/CD
+List the exact paths changed from the repository root.
+
+## Risk and security
+
+- [ ] No secret values, private keys, tokens, kubeconfigs, or Terraform state are included.
+- [ ] Runtime permissions remain least privilege.
+- [ ] Image and dependency changes are pinned and reviewed.
 
 ## Validation
 
-- [ ] Tested locally
-- [ ] Documentation updated
-- [ ] No secrets committed
-- [ ] CI passes
+- [ ] `PYTHONDONTWRITEBYTECODE=1 python3 scripts/validate_idp.py`
+- [ ] `find scripts -type f -name '*.sh' -print0 | xargs -0 -n1 bash -n`
+- [ ] Relevant Helm or Kustomize rendering completed.
+- [ ] Relevant workload tests completed.
 
-## Rollback Plan
+## Rollout
 
-Describe how this change can be rolled back.
+Describe the GitOps reconciliation order and operational checks.
 
-## Related Issues
+## Rollback
 
-Closes #
+Describe the Git revert or values-file rollback procedure.

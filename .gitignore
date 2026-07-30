@@ -1,11 +1,10 @@
-# Generated Backstage application and JavaScript dependencies
-.generated/
-node_modules/
-.yarn/cache/
-.yarn/unplugged/
-.yarn/install-state.gz
+# OS and editor files
+.DS_Store
+.idea/
+.vscode/
+*.swp
 
-# Python virtual environments and caches
+# Python
 .venv/
 venv/
 __pycache__/
@@ -17,14 +16,37 @@ __pycache__/
 coverage.xml
 htmlcov/
 
-# Build and runtime artifacts
-dist/
+# Node and Backstage
+node_modules/
+.yarn/cache/
+.yarn/install-state.gz
+.generated/
 build/
-reports/
-*.log
+dist/
 
-# Editors and operating systems
-.DS_Store
-.idea/
-.vscode/
-__MACOSX/
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfvars
+!*.tfvars.example
+
+# Kubernetes and credentials
+*.kubeconfig
+kubeconfig
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt.local
+.env
+.env.*
+!.env.example
+
+# Reports and temporary files
+reports/
+*.sarif
+*.spdx.json
+/tmp/
+*.venv*

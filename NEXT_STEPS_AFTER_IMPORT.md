@@ -1,3 +1,5 @@
+> **Status:** This is a historical delivery-milestone guide. For a new environment, use `docs/SETUP-FROM-SCRATCH.md`. For current Backstage and Argo CD TLS configuration, use `docs/BACKSTAGE-ARGOCD-INTEGRATION.md`.
+
 
 ## Gitleaks organization-repository note
 
