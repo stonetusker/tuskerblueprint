@@ -1,0 +1,29 @@
+apiVersion: v1
+data:
+  argocd-server.crt: |
+    -----BEGIN CERTIFICATE-----
+    MIIDYzCCAkugAwIBAgIRAIpNK6lGt7CCxoSn3LEi71MwDQYJKoZIhvcNAQELBQAw
+    EjEQMA4GA1UEChMHQXJnbyBDRDAeFw0yNjA3MDcxMTAwMTBaFw0yNzA3MDcxMTAw
+    MTBaMBIxEDAOBgNVBAoTB0FyZ28gQ0QwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAw
+    ggEKAoIBAQDXjquqMBx/BOpHyvvXYAKfFl4V0XEpHTlnf/1wfdpCPhkU+0KMIJjr
+    aWAbhd8EDLx2AoEV9phqFZTClYP7vIb9asKEDjoQTvF24RTVOOFiELtDHxiRqEe0
+    fL/u6/eCy5K6PvKb8vQFGjQrErqudsUkA6WEy/8QFVzXG0xA9EHBtBAP1JZeMWHK
+    U/JiuMBvbL+UZMJkErZEpMfVaX2XMooXShMlkP0NxPu+psokPXlC8sKxtt3iHoBc
+    hNofwQ3WnzPmluy/yg3ppZRUk3uTK7gmBdn1RJ9tp1V5/+qj65G4AaI5jVkoO3/H
+    sBLeX7UkwtgNx913FUBtgpIKz+AFMLY7AgMBAAGjgbMwgbAwDgYDVR0PAQH/BAQD
+    AgWgMBMGA1UdJQQMMAoGCCsGAQUFBwMBMAwGA1UdEwEB/wQCMAAwewYDVR0RBHQw
+    coIJbG9jYWxob3N0gg1hcmdvY2Qtc2VydmVyghRhcmdvY2Qtc2VydmVyLmFyZ29j
+    ZIIYYXJnb2NkLXNlcnZlci5hcmdvY2Quc3ZjgiZhcmdvY2Qtc2VydmVyLmFyZ29j
+    ZC5zdmMuY2x1c3Rlci5sb2NhbDANBgkqhkiG9w0BAQsFAAOCAQEA1PQAibkbBXwR
+    eX+05cEtARu4LakBOQ1JFxQtuTo8tkFCSqFl1yrVD/I1VE285OOWvvmIim26rBuy
+    MqlyhQ5qT+VY4HRxo3z2pNfppURYiXt+KoE54QmirhoICtpHsCBR/LhfjEYR3vKm
+    1KilghnL8kxX6bIWXffIwXzJlpjQhcOzXCZ84soeilc8K1LhYgv3uagM7yOdTcKF
+    4nvUP1jbd7V5kZlNBdYPQmu0mHJWzEo+EpXZQJT0vfDip+uH9cSRRO/+n04enzwV
+    YzP8PQAWLhDfE9+nx1T8yI3K5wLoA+1wa/H5vnsJwA/jqz2pXdKMEndeDey5W+kg
+    FSdaQtWxgg==
+    -----END CERTIFICATE-----
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: backstage-argocd-ca
+  namespace: backstage

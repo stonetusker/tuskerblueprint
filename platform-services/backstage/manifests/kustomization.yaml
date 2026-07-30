@@ -12,3 +12,10 @@ commonLabels:
   app.kubernetes.io/name: backstage
   app.kubernetes.io/part-of: tuskerblueprint
   app.kubernetes.io/managed-by: argocd
+
+resources:
+  - service-account.yaml
+  - cluster-role.yaml
+  - cluster-role-binding.yaml
+  - network-policy.yaml
+  - argocd-ca-configmap.yaml

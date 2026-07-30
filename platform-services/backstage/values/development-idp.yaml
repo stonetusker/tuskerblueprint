@@ -132,3 +132,16 @@ resources:
   limits:
     cpu: "1"
     memory: 1Gi
+  extraEnvVars:
+    - name: NODE_EXTRA_CA_CERTS
+      value: /etc/backstage/argocd-ca/argocd-server.crt
+
+  extraVolumes:
+    - name: argocd-ca
+      configMap:
+        name: backstage-argocd-ca
+
+  extraVolumeMounts:
+    - name: argocd-ca
+      mountPath: /etc/backstage/argocd-ca
+      readOnly: true
