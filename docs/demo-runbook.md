@@ -23,13 +23,15 @@
    ```text
    Backstage:    http://localhost:7007
    Argo CD:      https://localhost:8080
-   Demo service: http://localhost:8081
+   Demo application: http://localhost:8081/
    ```
 
 4. Confirm `backstage`, `backstage-platform-resources`, and `demo-service-development` are `Synced` and `Healthy`.
 5. Confirm the Backstage Catalog, Docs, APIs, Kubernetes, and Argo CD tabs load.
 6. Confirm the Argo CD tab shows `demo-service-development` without a certificate error.
 7. Keep a prepared Git change ready for the release demonstration.
+8. Confirm `subeeshlearn` is an accepted StoneTusker organization member and can sign in through GitHub OAuth.
+9. Confirm the Backstage platform GitHub credential can create repositories and open the onboarding pull request.
 
 ## Demo flow
 
@@ -54,13 +56,17 @@ Backstage
 → Tusker Service
 ```
 
-Explain the inputs and generated assets. Use a test repository during a full demonstration.
+Use the second GitHub identity `subeeshlearn` and follow [End-to-end developer demo](DEVELOPER-DEMO-WORKFLOW.md). Show the generated source repository, developer collaborator access, Component/API registration, complete TechDocs, GitHub Actions, and the GitOps onboarding pull request.
 
-### 3. Documentation and API
+### 3. Demo application
+
+Open `http://localhost:8081/`. Submit one fictional notification and retain the returned correlation ID. Explain that the UI, API, structured log and Prometheus metric are produced by the same immutable workload reconciled by Argo CD.
+
+### 4. Documentation and API
 
 Open `StoneTusker Customer Notification API`, then show **Docs** and **APIs**.
 
-### 4. Runtime and deployment
+### 5. Runtime and deployment
 
 Show the **Kubernetes** and **Argo CD** tabs. Explain:
 
@@ -69,7 +75,7 @@ Show the **Kubernetes** and **Argo CD** tabs. Explain:
 - Backstage uses a read-only Argo CD account;
 - Backstage validates the internal Argo CD certificate through a mounted public CA.
 
-### 5. Git-driven release
+### 6. Git-driven release
 
 Change a safe demo-service source or deployment value, commit, and push. Show Argo CD reconcile the new immutable revision.
 
@@ -81,7 +87,7 @@ argocd app wait demo-service-development --sync --health --timeout 300
 kubectl -n demo-service-development rollout status deployment/demo-service --timeout=300s
 ```
 
-### 6. Self-healing
+### 7. Self-healing
 
 Run:
 
@@ -97,7 +103,7 @@ Verify recovery:
 scripts/demo/verify-recovery.sh
 ```
 
-### 7. Close
+### 8. Close
 
 Summarize the value: standardized creation, visible ownership, governed delivery, runtime transparency, certificate-aware internal integration, and reduced developer cognitive load.
 

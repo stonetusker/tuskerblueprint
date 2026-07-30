@@ -28,8 +28,9 @@ TuskerBlueprint is a portfolio-grade Internal Developer Platform reference imple
 2. Understand the platform through [Architecture](architecture.md).
 3. Configure and operate [Backstage and Argo CD integration](BACKSTAGE-ARGOCD-INTEGRATION.md).
 4. Walk through the [Developer journey](developer-journey.md).
-5. Review the [Service standards](service-standards.md).
-6. Follow the [Customer demo](demo-runbook.md).
+5. Run the complete [`subeeshlearn` developer demo](DEVELOPER-DEMO-WORKFLOW.md).
+6. Review the [Service standards](service-standards.md).
+7. Follow the [Customer demo](demo-runbook.md).
 
 ## Local browser access
 

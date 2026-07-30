@@ -19,6 +19,9 @@ metadata:
     - kubernetes
     - observability
   links:
+    - url: http://localhost:8081/
+      title: Demo application UI
+      icon: web
     - url: https://github.com/stonetusker/tuskerblueprint/tree/main/workloads/demo-service
       title: Application source
       icon: github

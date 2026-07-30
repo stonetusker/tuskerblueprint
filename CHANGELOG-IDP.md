@@ -1,3 +1,12 @@
+
+## 2026-07-30: Browser application and service access model
+
+- Added a responsive browser UI to the maintained Customer Notification demo.
+- Added the same lightweight UI pattern to newly generated golden-path services.
+- Added service status and notification-list APIs with tests and OpenAPI updates.
+- Added workload namespace labels and NetworkPolicy rules for approved service-to-service access.
+- Documented Argo CD deployment destinations, repository boundaries, Kubernetes DNS and port-forward access.
+- Added `scripts/demo/open-demo-ui.sh` for repeatable browser access.
 # IDP enhancement changelog
 
 
@@ -40,3 +49,13 @@
 - Added a Grafana delivery dashboard and optional Alloy log collector.
 - Enhanced the Tusker Service golden path with immutable release promotion.
 - Added offline validation, preflight, reset, traffic, failure, and recovery scripts.
+
+## 1.3.0
+
+- Added the Backstage User entity for the GitHub identity `subeeshlearn` and a non-administrator `developers` Group.
+- Expanded the Tusker Service golden path to provision the repository with the Backstage platform credential and grant the selected developer push access.
+- Added complete generated service assets: README, contribution and security guidance, pull-request template, Dependabot, local verification, TechDocs architecture/development/delivery/operations/observability/security pages, OpenAPI, and hardened Kubernetes overlays.
+- Added separate generated-service CI/release and metadata/GitOps validation workflows.
+- Added the complete `docs/DEVELOPER-DEMO-WORKFLOW.md` runbook covering first login, scaffolding, repository access, clone, pull request, CI/security evidence, immutable image publication, GitOps onboarding, Argo CD deployment, and Backstage runtime views.
+- Added `scripts/backstage/configure-github-platform-secret.sh` and aligned the ExternalSecret example to use the scaffolder-capable GitHub token.
+- Strengthened repository validators to require the developer identity, workflows, generated documentation, provisioning actions, collaborator access, and GitOps target path.

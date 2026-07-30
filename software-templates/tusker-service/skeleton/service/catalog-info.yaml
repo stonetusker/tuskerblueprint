@@ -18,6 +18,9 @@ metadata:
     - gitops
     - techdocs
   links:
+    - url: http://localhost:8082/
+      title: Local application UI after port-forward
+      icon: web
     - url: https://github.com/${{ values.repoUrl | parseRepoUrl | pick('owner') }}/${{ values.repoUrl | parseRepoUrl | pick('repo') }}/actions
       title: Delivery workflow
       icon: github

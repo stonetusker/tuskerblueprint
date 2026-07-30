@@ -33,6 +33,18 @@
 - [ ] Last-known-good SHA is recorded.
 - [ ] Reset script has been rehearsed.
 
+## Developer identity and provisioning
+
+- [ ] `subeeshlearn` accepted the StoneTusker organization invitation.
+- [ ] `catalog/users/subeeshlearn.yaml` resolves in Backstage.
+- [ ] `group:default/developers` is visible and owns the generated service.
+- [ ] The platform GitHub credential creates a public organization repository.
+- [ ] The template grants `subeeshlearn` push access.
+- [ ] The catalog Component and API are registered automatically.
+- [ ] The GitOps onboarding pull request is created automatically.
+- [ ] The generated repository includes both CI/release and metadata/GitOps validation workflows.
+- [ ] The initial image exists before the onboarding pull request is merged.
+
 ## Developer experience
 
 - [ ] Backstage sign-in works.

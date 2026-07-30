@@ -1,16 +1,30 @@
 openapi: 3.0.3
 info:
   title: StoneTusker Customer Notification API
-  version: 1.0.0
+  version: 1.1.0
   description: >-
-    Deterministic reference API used to demonstrate secure delivery, GitOps,
-    observability, failure detection, rollback, and Backstage API discovery.
-    The service does not send real notifications.
+    Reference application used to demonstrate a browser UI, secure delivery,
+    GitOps, observability, failure detection, rollback, and Backstage API
+    discovery. The service records fictional notifications in memory and never
+    sends email, SMS, or webhooks.
 servers:
   - url: http://demo-service.demo-service-development.svc.cluster.local
     description: Development cluster service
+  - url: http://localhost:8081
+    description: Developer workstation after Kubernetes port-forward
 paths:
   /:
+    get:
+      summary: Open the browser-based notification demo
+      operationId: getApplicationUi
+      responses:
+        '200':
+          description: HTML application
+          content:
+            text/html:
+              schema:
+                type: string
+  /api/v1/status:
     get:
       summary: Return service and release metadata
       operationId: getServiceMetadata
@@ -53,12 +67,38 @@ paths:
         '503':
           description: Controlled readiness failure or unavailable dependency
   /api/v1/notifications:
+    get:
+      summary: Return recent in-memory notification records
+      operationId: listNotifications
+      parameters:
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+      responses:
+        '200':
+          description: Most recent notifications, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NotificationRecord'
     post:
       summary: Accept a fictional notification request
       operationId: createNotification
       parameters:
         - in: header
           name: X-Demo-Request
+          required: false
+          schema:
+            type: string
+        - in: header
+          name: X-Correlation-ID
           required: false
           schema:
             type: string
@@ -151,4 +191,3 @@ components:
               format: date-time
             correlation_id:
               type: string
-              format: uuid

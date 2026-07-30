@@ -2,19 +2,28 @@
 
 ${{ values.description }}
 
-## Local development
+This service was created through the TuskerBlueprint golden path and includes a
+small browser UI at `/`, a FastAPI backend, CI/CD, GitOps, OpenAPI, TechDocs,
+metrics, structured logs and Kubernetes runtime controls.
+
+## Local experience
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements-dev.txt
 uvicorn src.main:app --reload --port ${{ values.port }}
 ```
 
-## Delivery
+Open:
 
-Pull requests run formatting, linting, type checks, tests, secret scanning,
-Semgrep, Trivy filesystem and image scanning, and SPDX SBOM generation.
+```text
+Application UI: http://localhost:${{ values.port }}/
+API docs:       http://localhost:${{ values.port }}/docs
+```
 
-A successful main-branch build publishes an immutable image and opens a GitOps
-pull request that updates the development overlay to the full Git SHA.
+## Deployed experience
+
+```bash
+kubectl -n ${{ values.name }}-development port-forward \
+  service/${{ values.name }} 8082:80
+```
+
+Open `http://localhost:8082/`.

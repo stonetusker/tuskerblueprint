@@ -23,6 +23,10 @@ spec:
     namespace: demo-service-development
   revisionHistoryLimit: 10
   syncPolicy:
+    managedNamespaceMetadata:
+      labels:
+        platform.stonetusker.com/workload: "true"
+        app.kubernetes.io/environment: development
     automated:
       prune: true
       selfHeal: true

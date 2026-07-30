@@ -278,6 +278,7 @@ def validate_openapi_and_docs() -> None:
         check(api.get("openapi") == "3.0.3", "Demo OpenAPI version must be 3.0.3")
         for endpoint in (
             "/",
+            "/api/v1/status",
             "/healthz",
             "/readyz",
             "/api/v1/notifications",
@@ -363,6 +364,28 @@ def validate_workflows() -> None:
             "Generated-service workflow installs Semgrep into runner Python",
         )
 
+    template_platform_workflow = (
+        ROOT
+        / "software-templates/tusker-service/skeleton/service/.github/workflows/platform-validation.yml"
+    )
+    check(
+        template_platform_workflow.exists(),
+        "Generated-service metadata and GitOps validation workflow is missing",
+    )
+    if template_platform_workflow.exists():
+        text = template_platform_workflow.read_text(encoding="utf-8")
+        for marker in (
+            "catalog-info.yaml",
+            "mkdocs.yml",
+            "deploy/**",
+            "kubectl kustomize",
+            "Validate YAML and TechDocs navigation",
+        ):
+            check(
+                marker in text,
+                f"Generated-service platform validation workflow is missing: {marker}",
+            )
+
     demo_requirements = (
         ROOT / "workloads/demo-service/requirements-dev.txt"
     ).read_text(encoding="utf-8")
@@ -378,6 +401,74 @@ def validate_workflows() -> None:
     print("Workflow and test dependency validation: passed")
 
 
+def validate_template_definition() -> None:
+    path = ROOT / "software-templates/tusker-service/template.yaml"
+    documents = load_yaml(path)
+    check(bool(documents), "Tusker Service template could not be parsed")
+    if not documents:
+        return
+
+    template = documents[0]
+    parameters = template.get("spec", {}).get("parameters", [])
+    properties: dict[str, Any] = {}
+    for group in parameters:
+        properties.update(group.get("properties", {}) or {})
+
+    check(
+        properties.get("developerUsername", {}).get("default") == "subeeshlearn",
+        "Tusker Service template does not default to the demo developer subeeshlearn",
+    )
+    check(
+        "repoVisibility" not in properties,
+        "The complete buyer-demo template must use the supported public repository path",
+    )
+
+    steps = template.get("spec", {}).get("steps", [])
+    actions = {step.get("id"): step for step in steps}
+    required_actions = {
+        "fetch-service": "fetch:template",
+        "publish-service": "publish:github",
+        "register-service": "catalog:register",
+        "fetch-gitops": "fetch:template",
+        "publish-gitops-pr": "publish:github:pull-request",
+    }
+    for step_id, action in required_actions.items():
+        check(step_id in actions, f"Tusker Service template is missing step {step_id}")
+        if step_id in actions:
+            check(
+                actions[step_id].get("action") == action,
+                f"Tusker Service step {step_id} must use {action}",
+            )
+
+    publish_input = actions.get("publish-service", {}).get("input", {})
+    check(
+        "token" not in publish_input,
+        "Service repository creation must use the Backstage platform credential",
+    )
+    collaborators = publish_input.get("collaborators", []) or []
+    check(
+        any(
+            item.get("user") == "${{ parameters.developerUsername }}"
+            and item.get("access") == "push"
+            for item in collaborators
+            if isinstance(item, dict)
+        ),
+        "Generated repository does not grant the selected developer push access",
+    )
+
+    gitops_input = actions.get("publish-gitops-pr", {}).get("input", {})
+    check(
+        "token" not in gitops_input,
+        "GitOps onboarding must use the Backstage platform credential",
+    )
+    check(
+        gitops_input.get("targetPath")
+        == "gitops/generated-workloads/${{ parameters.name }}",
+        "GitOps onboarding target path is incorrect",
+    )
+    print("Software-template action validation: passed")
+
+
 def render_template_text(text: str, visibility: str = "public") -> str:
     conditional = re.compile(
         r"\{% if values\.repoVisibility != 'public' %\}(.*?)\{% endif %\}",
@@ -391,7 +482,8 @@ def render_template_text(text: str, visibility: str = "public") -> str:
     replacements = {
         "${{ values.name }}": "generated-demo-api",
         "${{ values.description }}": "Generated service validation fixture",
-        "${{ values.owner }}": "group:default/platform-team",
+        "${{ values.owner }}": "group:default/developers",
+        "${{ values.developerUsername }}": "subeeshlearn",
         "${{ values.system }}": "system:default/tuskerblueprint",
         "${{ values.port }}": "8000",
         "${{ values.repoVisibility }}": visibility,
@@ -456,6 +548,36 @@ def validate_rendered_template() -> None:
                     f"Unresolved conditional in {visibility} template file {relative}",
                 )
                 destination.write_text(rendered, encoding="utf-8")
+
+            required_generated_files = [
+                "README.md",
+                "CONTRIBUTING.md",
+                "SECURITY.md",
+                ".gitignore",
+                ".github/PULL_REQUEST_TEMPLATE.md",
+                ".github/dependabot.yml",
+                ".github/workflows/ci.yml",
+                ".github/workflows/platform-validation.yml",
+                "catalog-info.yaml",
+                "openapi.yaml",
+                "mkdocs.yml",
+                "docs/architecture.md",
+                "docs/development.md",
+                "docs/delivery.md",
+                "docs/runbook.md",
+                "docs/observability.md",
+                "docs/security.md",
+                "scripts/verify.sh",
+                "src/static/index.html",
+                "src/static/styles.css",
+                "src/static/app.js",
+                "deploy/overlays/development/kustomization.yaml",
+            ]
+            for required in required_generated_files:
+                check(
+                    (rendered_root / required).is_file(),
+                    f"Rendered {visibility} template is missing {required}",
+                )
 
             yaml_paths = sorted(rendered_root.rglob("*.yaml")) + sorted(
                 rendered_root.rglob("*.yml")
@@ -591,6 +713,94 @@ def validate_release_updater() -> None:
         check(updated.count(sha) == 2, "Release updater did not update tag and annotation")
 
 
+
+def validate_ui_and_access_model() -> None:
+    demo_static = ROOT / "workloads/demo-service/app/static"
+    template_static = (
+        ROOT / "software-templates/tusker-service/skeleton/service/src/static"
+    )
+    for root, label in (
+        (demo_static, "Demo"),
+        (template_static, "Generated-service"),
+    ):
+        for name in ("index.html", "styles.css", "app.js"):
+            check((root / name).is_file(), f"{label} UI is missing {name}")
+
+        html = (root / "index.html").read_text(encoding="utf-8")
+        js = (root / "app.js").read_text(encoding="utf-8")
+        check("/assets/styles.css" in html, f"{label} UI does not load local CSS")
+        check("/assets/app.js" in html, f"{label} UI does not load local JavaScript")
+        check("https://" not in html, f"{label} UI unexpectedly depends on external assets")
+        check("innerHTML" not in js, f"{label} UI uses innerHTML for dynamic content")
+
+    demo_main = (ROOT / "workloads/demo-service/app/main.py").read_text(
+        encoding="utf-8"
+    )
+    template_main = (
+        ROOT / "software-templates/tusker-service/skeleton/service/src/main.py"
+    ).read_text(encoding="utf-8")
+    for text, label in ((demo_main, "Demo"), (template_main, "Generated-service")):
+        for marker in (
+            'app.mount("/assets"',
+            'Content-Security-Policy',
+            '@app.get("/", include_in_schema=False)',
+            '@app.get("/api/v1/status"',
+        ):
+            check(marker in text, f"{label} application is missing UI marker: {marker}")
+
+    demo_application = load_yaml(
+        ROOT / "gitops/applications/workloads/demo-service/application-development.yaml"
+    )
+    generated_application = load_yaml(
+        ROOT
+        / "software-templates/tusker-service/skeleton/gitops-registration/application.yaml"
+    )
+    for documents, label in (
+        (demo_application, "Demo"),
+        (generated_application, "Generated-service"),
+    ):
+        if not documents:
+            continue
+        labels = (
+            documents[0]
+            .get("spec", {})
+            .get("syncPolicy", {})
+            .get("managedNamespaceMetadata", {})
+            .get("labels", {})
+        )
+        check(
+            labels.get("platform.stonetusker.com/workload") == "true",
+            f"{label} Application does not label its workload namespace",
+        )
+
+    demo_policy = (ROOT / "workloads/demo-service/base/network-policy.yaml").read_text(
+        encoding="utf-8"
+    )
+    template_policy = (
+        ROOT
+        / "software-templates/tusker-service/skeleton/service/deploy/base/network-policy.yaml"
+    ).read_text(encoding="utf-8")
+    for text, label in ((demo_policy, "Demo"), (template_policy, "Generated-service")):
+        check(
+            "platform.stonetusker.com/workload" in text,
+            f"{label} NetworkPolicy omits approved workload namespaces",
+        )
+
+    access_doc = ROOT / "docs/SERVICE-DEPLOYMENT-AND-ACCESS.md"
+    check(access_doc.is_file(), "Service deployment and access guide is missing")
+    if access_doc.is_file():
+        text = access_doc.read_text(encoding="utf-8")
+        for marker in (
+            "demo-service-development",
+            "<service-name>-development",
+            "svc.cluster.local",
+            "does not clone arbitrary",
+            "scripts/demo/open-demo-ui.sh",
+        ):
+            check(marker in text, f"Service access guide is missing: {marker}")
+
+    print("Browser UI and service-access validation: passed")
+
 def validate_repository_hygiene() -> None:
     forbidden_files = []
     maintained_roots = [
@@ -634,9 +844,11 @@ def main() -> int:
     validate_kustomize_references()
     validate_openapi_and_docs()
     validate_workflows()
+    validate_template_definition()
     validate_rendered_template()
     validate_live_app_tests()
     validate_release_updater()
+    validate_ui_and_access_model()
     validate_repository_hygiene()
 
     if WARNINGS:

@@ -5,6 +5,11 @@ edit_uri: edit/main/docs/
 docs_dir: docs
 nav:
   - Overview: index.md
+  - Architecture: architecture.md
+  - Development: development.md
+  - CI/CD and GitOps: delivery.md
   - Operations: runbook.md
+  - Observability: observability.md
+  - Security: security.md
 plugins:
   - techdocs-core

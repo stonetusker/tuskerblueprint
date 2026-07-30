@@ -1,20 +1,22 @@
-# Customer Notification API
+# Customer Notification application
 
-The Customer Notification API is the reference workload used in the StoneTusker
-buyer-facing delivery-platform demonstration. It accepts fictional notification
-requests and records them in memory. It never sends real email, SMS, or webhooks.
+The Customer Notification application is the reference workload used in the
+StoneTusker buyer-facing delivery-platform demonstration. It combines a small
+browser UI with a FastAPI backend. It accepts fictional notification requests,
+records them in memory and never sends real email, SMS or webhooks.
 
-## What the service demonstrates
+## What the application demonstrates
 
+- A usable browser interface backed by the deployed API
 - Pull-request validation and security controls
 - Immutable container images identified by Git SHA
 - GitOps deployment through Argo CD
-- Kubernetes startup, readiness, and liveness checks
+- Kubernetes startup, readiness and liveness checks
 - Prometheus metrics and structured JSON logs
-- Correlation IDs for request investigation
-- Deterministic readiness, error, and latency failure modes
+- Correlation IDs shared by the UI, API response and logs
+- Deterministic readiness, error and latency failure modes
 - Git-driven rollback
-- Backstage ownership, API documentation, TechDocs, CI/CD, Argo CD, and Kubernetes views
+- Backstage ownership, API documentation, TechDocs, CI/CD, Argo CD and Kubernetes views
 
 ## Ownership
 
@@ -32,13 +34,29 @@ python -m pip install -r requirements-dev.txt
 uvicorn app.main:app --reload --port 8000
 ```
 
-Open `http://localhost:8000/docs` for the generated API interface.
+Open:
+
+```text
+Application UI: http://localhost:8000/
+OpenAPI UI:     http://localhost:8000/docs
+```
+
+## Cluster access
+
+```bash
+scripts/demo/open-demo-ui.sh
+```
+
+Then open `http://localhost:8081/`.
 
 ## Safe demo request
+
+The UI submits the same request as this command:
 
 ```bash
 curl -sS http://localhost:8000/api/v1/notifications \
   -H 'Content-Type: application/json' \
+  -H 'X-Correlation-ID: techdocs-demo-001' \
   -H 'X-Demo-Request: buyer-demo' \
   -d '{
     "channel": "email",

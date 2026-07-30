@@ -1,0 +1,109 @@
+name: Service Metadata and GitOps Validation
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'catalog-info.yaml'
+      - 'openapi.yaml'
+      - 'mkdocs.yml'
+      - 'docs/**'
+      - 'deploy/**'
+      - '.github/workflows/platform-validation.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'catalog-info.yaml'
+      - 'openapi.yaml'
+      - 'mkdocs.yml'
+      - 'docs/**'
+      - 'deploy/**'
+      - '.github/workflows/platform-validation.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: service-platform-validation-${{ '${{ github.ref }}' }}
+  cancel-in-progress: true
+
+jobs:
+  validate-metadata-and-gitops:
+    name: Validate metadata, TechDocs, and Kubernetes manifests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install YAML parser
+        run: python -m pip install 'PyYAML==6.0.2'
+
+      - name: Validate YAML and TechDocs navigation
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import yaml
+
+          for path in sorted(Path('.').rglob('*.yaml')) + sorted(Path('.').rglob('*.yml')):
+              if '.github/workflows' in str(path):
+                  continue
+              list(yaml.safe_load_all(path.read_text(encoding='utf-8')))
+
+          config = yaml.safe_load(Path('mkdocs.yml').read_text(encoding='utf-8'))
+          docs_dir = Path(config.get('docs_dir', 'docs'))
+
+          def entries(value):
+              if isinstance(value, str):
+                  yield value
+              elif isinstance(value, list):
+                  for item in value:
+                      yield from entries(item)
+              elif isinstance(value, dict):
+                  for item in value.values():
+                      yield from entries(item)
+
+          missing = [str(docs_dir / item) for item in entries(config.get('nav', [])) if not (docs_dir / item).is_file()]
+          if missing:
+              raise SystemExit(f'Missing TechDocs files: {missing}')
+
+          print('YAML and TechDocs validation passed')
+          PY
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: v1.31.4
+
+      - name: Validate Kubernetes overlays
+        run: |
+          set -euo pipefail
+          kubectl version --client
+          for environment in development staging production; do
+            kubectl kustomize "deploy/overlays/${environment}" > "/tmp/${environment}.yaml"
+            test -s "/tmp/${environment}.yaml"
+          done
+
+      - name: Verify release image policy
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          development = Path('deploy/overlays/development/kustomization.yaml').read_text(encoding='utf-8')
+          match = re.search(r'(?m)^\s*newTag:\s*(\S+)\s*$', development)
+          if not match:
+              raise SystemExit('Development image tag is missing')
+          if match.group(1) == 'latest':
+              raise SystemExit('The development image tag must not use latest')
+          print(f'Development release tag: {match.group(1)}')
+          PY

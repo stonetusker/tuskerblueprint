@@ -8,7 +8,9 @@ spec:
   type: url
   targets:
     - ./catalog/groups/platform-team.yaml
+    - ./catalog/groups/developers.yaml
     - ./catalog/users/subeesh.yaml
+    - ./catalog/users/subeeshlearn.yaml
     - ./catalog/domains/platform-engineering.yaml
     - ./catalog/systems/tuskerblueprint.yaml
     - ./catalog/resources/development-cluster.yaml

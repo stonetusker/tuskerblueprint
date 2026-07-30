@@ -1,0 +1,11 @@
+apiVersion: backstage.io/v1alpha1
+kind: User
+metadata:
+  name: subeeshlearn
+  title: Subeesh Learn
+  description: Demo developer identity mapped to the GitHub user subeeshlearn
+spec:
+  profile:
+    displayName: Subeesh Learn
+  memberOf:
+    - developers

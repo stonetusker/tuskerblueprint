@@ -11,15 +11,30 @@ def setup_function() -> None:
     NOTIFICATION_STORE.clear()
 
 
-def test_root_contains_release_metadata(monkeypatch) -> None:
+def test_ui_and_release_metadata(monkeypatch) -> None:
     monkeypatch.setenv("DEMO_FAILURE_MODE", "none")
-    response = client.get("/")
-    assert response.status_code == 200
-    payload = response.json()
+
+    ui_response = client.get("/")
+    assert ui_response.status_code == 200
+    assert "StoneTusker Notification Center" in ui_response.text
+    assert ui_response.headers["content-security-policy"]
+    assert ui_response.headers["x-content-type-options"] == "nosniff"
+
+    status_response = client.get("/api/v1/status")
+    payload = status_response.json()
     assert payload["service"] == "demo-service"
     assert payload["status"] == "ok"
-    assert response.headers["x-correlation-id"]
-    assert response.headers["x-service-version"]
+    assert status_response.headers["x-correlation-id"]
+    assert status_response.headers["x-service-version"]
+
+
+def test_static_assets() -> None:
+    css_response = client.get("/assets/styles.css")
+    js_response = client.get("/assets/app.js")
+    assert css_response.status_code == 200
+    assert "--brand" in css_response.text
+    assert js_response.status_code == 200
+    assert "submitNotification" in js_response.text
 
 
 def test_health_and_readiness(monkeypatch) -> None:
@@ -35,11 +50,11 @@ def test_controlled_readiness_failure(monkeypatch) -> None:
     assert response.json()["detail"] == "Controlled readiness failure"
 
 
-def test_notification_round_trip(monkeypatch) -> None:
+def test_notification_round_trip_and_list(monkeypatch) -> None:
     monkeypatch.setenv("DEMO_FAILURE_MODE", "none")
     created = client.post(
         "/api/v1/notifications",
-        headers={"X-Demo-Request": "pytest"},
+        headers={"X-Demo-Request": "pytest", "X-Correlation-ID": "pytest-correlation"},
         json={
             "channel": "email",
             "recipient": "demo@example.invalid",
@@ -48,11 +63,23 @@ def test_notification_round_trip(monkeypatch) -> None:
     )
     assert created.status_code == 202
     notification_id = created.json()["id"]
+    assert created.json()["correlation_id"] == "pytest-correlation"
+
+    listed = client.get("/api/v1/notifications?limit=5")
+    assert listed.status_code == 200
+    assert len(listed.json()) == 1
+    assert listed.json()[0]["id"] == notification_id
 
     fetched = client.get(f"/api/v1/notifications/{notification_id}")
     assert fetched.status_code == 200
     assert fetched.json()["state"] == "accepted"
-    assert fetched.json()["correlation_id"]
+    assert fetched.json()["correlation_id"] == "pytest-correlation"
+
+
+def test_notification_list_limit_validation(monkeypatch) -> None:
+    monkeypatch.setenv("DEMO_FAILURE_MODE", "none")
+    assert client.get("/api/v1/notifications?limit=0").status_code == 422
+    assert client.get("/api/v1/notifications?limit=51").status_code == 422
 
 
 def test_controlled_api_error(monkeypatch) -> None:

@@ -6,8 +6,10 @@ resources:
   - service.yaml
   - pod-disruption-budget.yaml
   - network-policy.yaml
-commonLabels:
-  app.kubernetes.io/name: ${{ values.name }}
-  app.kubernetes.io/part-of: ${{ values.name }}
-  app.kubernetes.io/managed-by: argocd
-  backstage.io/kubernetes-id: ${{ values.name }}
+labels:
+  - pairs:
+      app.kubernetes.io/name: ${{ values.name }}
+      app.kubernetes.io/part-of: ${{ values.name }}
+      app.kubernetes.io/managed-by: argocd
+      backstage.io/kubernetes-id: ${{ values.name }}
+    includeSelectors: true

@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="StoneTusker Customer Notification Center demo application">
+  <title>StoneTusker Notification Center</title>
+  <link rel="stylesheet" href="/assets/styles.css">
+  <script src="/assets/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">ST</span>
+      <div>
+        <strong>StoneTusker</strong>
+        <span>Customer Notification Center</span>
+      </div>
+    </div>
+    <nav aria-label="Application links">
+      <a href="/docs">API Docs</a>
+      <a href="/metrics">Metrics</a>
+    </nav>
+  </header>
+
+  <main id="main-content">
+    <section class="hero" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow">Internal Developer Platform reference workload</p>
+        <h1 id="page-title">Send a fictional customer notification</h1>
+        <p class="hero-copy">
+          This UI exercises the same API, metrics, structured logs, correlation IDs,
+          Kubernetes workload and Argo CD release shown in the platform demo.
+        </p>
+      </div>
+      <div class="release-card" aria-live="polite">
+        <span class="status-dot" id="release-dot" aria-hidden="true"></span>
+        <div>
+          <span class="muted">Running release</span>
+          <strong id="release-version">Loading...</strong>
+          <span id="release-environment">Checking environment</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="status-grid" aria-label="Service status">
+      <article class="status-card">
+        <span class="status-label">Service</span>
+        <strong id="service-name">Loading...</strong>
+      </article>
+      <article class="status-card">
+        <span class="status-label">API status</span>
+        <strong id="api-status">Checking...</strong>
+      </article>
+      <article class="status-card">
+        <span class="status-label">Readiness</span>
+        <strong id="readiness-status">Checking...</strong>
+      </article>
+      <article class="status-card">
+        <span class="status-label">Latest correlation ID</span>
+        <strong class="mono" id="latest-correlation">Not sent yet</strong>
+      </article>
+    </section>
+
+    <section class="workspace">
+      <article class="panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Interactive API request</p>
+            <h2>Create notification</h2>
+          </div>
+          <span class="pill">Demo only</span>
+        </div>
+
+        <form id="notification-form">
+          <label for="channel">Channel</label>
+          <select id="channel" name="channel" required>
+            <option value="email">Email</option>
+            <option value="sms">SMS</option>
+            <option value="webhook">Webhook</option>
+          </select>
+
+          <label for="recipient">Recipient</label>
+          <input
+            id="recipient"
+            name="recipient"
+            type="text"
+            value="buyer@example.invalid"
+            minlength="3"
+            maxlength="200"
+            required
+          >
+          <p class="field-help">Use fictional recipients only. The service sends nothing externally.</p>
+
+          <label for="message">Message</label>
+          <textarea id="message" name="message" rows="5" maxlength="2000" required>StoneTusker delivery-platform demonstration</textarea>
+
+          <button id="submit-button" type="submit">Submit notification</button>
+          <p id="form-result" class="form-result" role="status" aria-live="polite"></p>
+        </form>
+      </article>
+
+      <article class="panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">In-memory activity</p>
+            <h2>Recent notifications</h2>
+          </div>
+          <button class="secondary-button" id="refresh-button" type="button">Refresh</button>
+        </div>
+        <div id="notifications-empty" class="empty-state">
+          No notifications have been accepted by this pod yet.
+        </div>
+        <ol id="notification-list" class="notification-list" aria-live="polite"></ol>
+      </article>
+    </section>
+
+    <section class="platform-story" aria-labelledby="platform-story-title">
+      <div>
+        <p class="eyebrow">What this request proves</p>
+        <h2 id="platform-story-title">One action, full platform evidence</h2>
+      </div>
+      <div class="story-steps">
+        <span>Browser UI</span>
+        <span>FastAPI</span>
+        <span>Correlation log</span>
+        <span>Prometheus metric</span>
+        <span>Grafana and Loki</span>
+        <span>Backstage and Argo CD</span>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span>StoneTusker Systems</span>
+    <span>Reference application. No real notifications are sent.</span>
+  </footer>
+</body>
+</html>

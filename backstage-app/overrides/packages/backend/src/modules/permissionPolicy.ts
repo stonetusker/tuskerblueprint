@@ -37,7 +37,7 @@ class TuskerPermissionPolicy implements PermissionPolicy {
       user.info.ownershipEntityRefs ?? [];
 
     const isPlatformAdministrator =
-      userEntityRef === 'user:default/subeesh' ||
+      userEntityRef === 'user:default/subeeshes' ||
       ownershipEntityRefs.includes(
         'group:default/platform-team',
       );

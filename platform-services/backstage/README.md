@@ -29,6 +29,19 @@ backstage/backstage-argocd-ca
 
 The first three are Secrets and must never be committed. `backstage-argocd-ca` is a ConfigMap containing only the public Argo CD certificate.
 
+
+## GitHub provisioning credential
+
+The active integration reads `GITHUB_TOKEN` from `backstage-github-credentials`. For the golden-path demo, this must be a platform/scaffolder credential capable of creating repositories in `stonetusker`, adding `subeeshlearn` as a collaborator, writing workflow files, and opening the GitOps onboarding pull request.
+
+Create or update it with:
+
+```bash
+scripts/backstage/configure-github-platform-secret.sh
+```
+
+GitHub OAuth remains separate and is used only for interactive user sign-in.
+
 ## Argo CD certificate trust
 
 Backstage connects to:
@@ -69,6 +82,7 @@ backstage-app/
 ## Documentation
 
 - `docs/SETUP-FROM-SCRATCH.md`
+- `docs/DEVELOPER-DEMO-WORKFLOW.md`
 - `docs/BACKSTAGE-ARGOCD-INTEGRATION.md`
 - `docs/IDP-MIGRATION-RUNBOOK.md`
 - `docs/demo-runbook.md`

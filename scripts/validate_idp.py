@@ -117,6 +117,26 @@ def validate_required_files() -> None:
         'backstage-app/overrides/packages/backend/src/index.ts',
         'backstage-app/overrides/packages/app/src/components/catalog/EntityPage.tsx',
         'docs/IDP-MIGRATION-RUNBOOK.md',
+        'docs/DEVELOPER-DEMO-WORKFLOW.md',
+        'docs/SERVICE-DEPLOYMENT-AND-ACCESS.md',
+        'workloads/demo-service/app/static/index.html',
+        'workloads/demo-service/app/static/styles.css',
+        'workloads/demo-service/app/static/app.js',
+        'catalog/groups/developers.yaml',
+        'catalog/users/subeeshlearn.yaml',
+        '.github/workflows/idp-validation.yml',
+        '.github/workflows/backstage-image.yml',
+        '.github/workflows/demo-service-ci.yml',
+        'software-templates/tusker-service/skeleton/service/README.md',
+        'software-templates/tusker-service/skeleton/service/.github/workflows/ci.yml',
+        'software-templates/tusker-service/skeleton/service/.github/workflows/platform-validation.yml',
+        'software-templates/tusker-service/skeleton/service/mkdocs.yml',
+        'scripts/backstage/configure-github-platform-secret.sh',
+        'scripts/demo/developer-workflow-preflight.sh',
+        'scripts/demo/open-demo-ui.sh',
+        'software-templates/tusker-service/skeleton/service/src/static/index.html',
+        'software-templates/tusker-service/skeleton/service/src/static/styles.css',
+        'software-templates/tusker-service/skeleton/service/src/static/app.js',
     ]
     missing = [item for item in required if not (ROOT / item).is_file()]
     if missing:
@@ -179,6 +199,10 @@ def validate_catalog_relations() -> None:
             references.append((spec['system'], 'system'))
         if spec.get('domain'):
             references.append((spec['domain'], 'domain'))
+        references.extend((item, 'group') for item in spec.get('memberOf', []) or [])
+        if spec.get('parent'):
+            references.append((spec['parent'], 'group'))
+        references.extend((item, 'group') for item in spec.get('children', []) or [])
         references.extend((item, 'api') for item in spec.get('providesApis', []) or [])
         references.extend((item, None) for item in spec.get('dependsOn', []) or [])
         for reference, default_kind in references:

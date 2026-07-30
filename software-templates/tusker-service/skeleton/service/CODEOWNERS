@@ -1,1 +1,3 @@
-* @stonetusker/platform-team
+* @${{ values.developerUsername }}
+/.github/ @${{ values.developerUsername }}
+/deploy/ @${{ values.developerUsername }}

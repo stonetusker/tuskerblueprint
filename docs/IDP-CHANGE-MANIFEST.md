@@ -103,10 +103,14 @@ This package adds or modifies **127 files** relative to the uploaded archive and
 - `software-templates/tusker-service/skeleton/service/requirements.txt`
 - `software-templates/tusker-service/skeleton/service/src/__init__.py`
 - `software-templates/tusker-service/skeleton/service/src/main.py`
+- `software-templates/tusker-service/skeleton/service/src/static/index.html`
+- `software-templates/tusker-service/skeleton/service/src/static/styles.css`
+- `software-templates/tusker-service/skeleton/service/src/static/app.js`
 - `software-templates/tusker-service/skeleton/service/tests/test_main.py`
 - `software-templates/tusker-service/template.yaml`
-- `workloads/demo-service/base/content/healthz`
-- `workloads/demo-service/base/content/index.html`
+- `workloads/demo-service/app/static/index.html`
+- `workloads/demo-service/app/static/styles.css`
+- `workloads/demo-service/app/static/app.js`
 - `workloads/demo-service/base/deployment.yaml`
 - `workloads/demo-service/base/kustomization.yaml`
 - `workloads/demo-service/base/network-policy.yaml`
@@ -145,3 +149,36 @@ This package adds or modifies **127 files** relative to the uploaded archive and
 - `platform-services/backstage/manifests/configmap-rbac.yaml`
 - `platform-services/backstage/manifests/configmap-techdocs.yaml`
 - `workloads/demo-service/catalog-info.yaml`
+
+## Developer demo completion additions
+
+### Added
+
+- `catalog/groups/developers.yaml`
+- `catalog/users/subeeshlearn.yaml`
+- `docs/DEVELOPER-DEMO-WORKFLOW.md`
+- `scripts/backstage/configure-github-platform-secret.sh`
+- `software-templates/tusker-service/skeleton/service/.gitignore`
+- `software-templates/tusker-service/skeleton/service/.github/PULL_REQUEST_TEMPLATE.md`
+- `software-templates/tusker-service/skeleton/service/.github/dependabot.yml`
+- `software-templates/tusker-service/skeleton/service/.github/workflows/platform-validation.yml`
+- `software-templates/tusker-service/skeleton/service/README.md`
+- `software-templates/tusker-service/skeleton/service/CONTRIBUTING.md`
+- `software-templates/tusker-service/skeleton/service/SECURITY.md`
+- `software-templates/tusker-service/skeleton/service/scripts/verify.sh`
+- `software-templates/tusker-service/skeleton/service/docs/architecture.md`
+- `software-templates/tusker-service/skeleton/service/docs/development.md`
+- `software-templates/tusker-service/skeleton/service/docs/delivery.md`
+- `software-templates/tusker-service/skeleton/service/docs/observability.md`
+- `software-templates/tusker-service/skeleton/service/docs/security.md`
+
+### Updated
+
+- `software-templates/tusker-service/template.yaml`
+- `software-templates/tusker-service/skeleton/gitops-registration/application.yaml`
+- `software-templates/tusker-service/skeleton/service/.github/workflows/ci.yml`
+- `software-templates/tusker-service/skeleton/service/CODEOWNERS`
+- `software-templates/tusker-service/skeleton/service/mkdocs.yml`
+- `scripts/validate_idp.py`
+- `scripts/demo/validate-demo-source.py`
+- `.github/workflows/idp-validation.yml`

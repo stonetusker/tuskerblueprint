@@ -8,10 +8,12 @@ import time
 import uuid
 from datetime import UTC, datetime
 from enum import Enum
+from pathlib import Path
 from typing import Annotated
 
-from fastapi import FastAPI, Header, HTTPException, Request, Response, status
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, Header, HTTPException, Query, Request, Response, status
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, Histogram, generate_latest
 from pydantic import BaseModel, Field
 
@@ -21,6 +23,7 @@ from .logging_config import configure_logging
 configure_logging()
 logger = logging.getLogger("demo-service")
 settings = Settings.from_environment()
+STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 REQUESTS = Counter(
     "http_requests_total",
@@ -86,8 +89,9 @@ app = FastAPI(
         "A deterministic reference workload used to demonstrate secure CI, GitOps, "
         "observability, failure detection, and rollback. It does not send real messages."
     ),
-    version="1.0.0",
+    version="1.1.0",
 )
+app.mount("/assets", StaticFiles(directory=STATIC_DIR), name="assets")
 
 
 @app.middleware("http")
@@ -113,6 +117,16 @@ async def request_observability(request: Request, call_next):  # type: ignore[no
 
     response.headers["X-Correlation-ID"] = correlation_id
     response.headers["X-Service-Version"] = settings.version
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("Referrer-Policy", "no-referrer")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Permissions-Policy", "camera=(), geolocation=(), microphone=()")
+    response.headers.setdefault(
+        "Content-Security-Policy",
+        "default-src 'self'; base-uri 'none'; frame-ancestors 'none'; "
+        "form-action 'self'; img-src 'self' data:; script-src 'self'; "
+        "style-src 'self'; connect-src 'self'",
+    )
 
     route = request.scope.get("route")
     route_path = getattr(route, "path", request.url.path)
@@ -150,8 +164,13 @@ async def request_observability(request: Request, call_next):  # type: ignore[no
     return response
 
 
-@app.get("/", response_model=ServiceMetadata)
-def root() -> ServiceMetadata:
+@app.get("/", include_in_schema=False)
+def application_ui() -> FileResponse:
+    return FileResponse(STATIC_DIR / "index.html", media_type="text/html")
+
+
+@app.get("/api/v1/status", response_model=ServiceMetadata)
+def service_status() -> ServiceMetadata:
     return ServiceMetadata(
         service=settings.service_name,
         environment=settings.environment,
@@ -178,6 +197,14 @@ def readiness() -> dict[str, str]:
 @app.get("/metrics", include_in_schema=False)
 def metrics() -> Response:
     return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
+
+
+@app.get("/api/v1/notifications", response_model=list[NotificationRecord])
+def list_notifications(
+    limit: Annotated[int, Query(ge=1, le=50)] = 10,
+) -> list[NotificationRecord]:
+    records = list(NOTIFICATION_STORE.values())
+    return list(reversed(records[-limit:]))
 
 
 @app.post(

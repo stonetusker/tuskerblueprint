@@ -3,13 +3,15 @@ kind: Template
 metadata:
   name: tusker-service
   title: Tusker Service
-  description: Create a secure FastAPI service with CI, TechDocs, OpenAPI, Kubernetes manifests, and GitOps onboarding
+  description: Create a secure FastAPI service with source code, CI/CD, TechDocs, OpenAPI, Kubernetes manifests, catalog registration, and GitOps onboarding
   tags:
     - recommended
     - python
     - fastapi
     - kubernetes
     - gitops
+    - techdocs
+    - devsecops
 spec:
   owner: group:default/platform-team
   type: service
@@ -21,6 +23,7 @@ spec:
         - description
         - owner
         - system
+        - developerUsername
       properties:
         name:
           title: Service name
@@ -31,9 +34,11 @@ spec:
         description:
           title: Description
           type: string
+          description: Explain the business capability exposed by the service
         owner:
-          title: Owner
+          title: Owning team
           type: string
+          default: group:default/developers
           ui:field: OwnerPicker
           ui:options:
             catalogFilter:
@@ -48,6 +53,12 @@ spec:
             catalogFilter:
               kind:
                 - System
+        developerUsername:
+          title: GitHub developer username
+          type: string
+          description: GitHub user that receives push access to the generated repository
+          default: subeeshlearn
+          pattern: '^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$'
         port:
           title: Application port
           type: integer
@@ -58,34 +69,17 @@ spec:
     - title: Repository
       required:
         - repoUrl
-        - repoVisibility
       properties:
         repoUrl:
           title: Repository location
           type: string
+          description: The platform credential creates the repository and grants the selected developer push access
           ui:field: RepoUrlPicker
           ui:options:
             allowedHosts:
               - github.com
             allowedOwners:
               - stonetusker
-            requestUserCredentials:
-              secretsKey: USER_OAUTH_TOKEN
-              additionalScopes:
-                github:
-                  - repo
-                  - workflow
-        repoVisibility:
-          title: Repository visibility
-          type: string
-          description: Use Public for the buyer demo. Private repositories require GHCR and Argo CD credentials in the generated namespace.
-          default: public
-          enum:
-            - public
-            - private
-          enumNames:
-            - Public
-            - Private
 
   steps:
     - id: fetch-service
@@ -99,25 +93,35 @@ spec:
           description: ${{ parameters.description }}
           owner: ${{ parameters.owner }}
           system: ${{ parameters.system }}
+          developerUsername: ${{ parameters.developerUsername }}
           port: ${{ parameters.port }}
           repoUrl: ${{ parameters.repoUrl }}
-          repoVisibility: ${{ parameters.repoVisibility }}
+          repoVisibility: public
 
     - id: publish-service
-      name: Create GitHub repository
+      name: Create GitHub repository and grant developer access
       action: publish:github
       input:
         sourcePath: ./service
         repoUrl: ${{ parameters.repoUrl }}
         description: ${{ parameters.description }}
         defaultBranch: main
-        repoVisibility: ${{ parameters.repoVisibility }}
+        repoVisibility: public
         protectDefaultBranch: true
         requireCodeOwnerReviews: false
-        token: ${{ secrets.USER_OAUTH_TOKEN }}
+        collaborators:
+          - user: ${{ parameters.developerUsername }}
+            access: push
+        topics:
+          - backstage
+          - fastapi
+          - gitops
+          - kubernetes
+          - stonetusker
+          - tuskerblueprint
 
     - id: register-service
-      name: Register service in Backstage
+      name: Register service and API in Backstage
       action: catalog:register
       input:
         repoContentsUrl: ${{ steps['publish-service'].output.repoContentsUrl }}
@@ -134,7 +138,7 @@ spec:
           repoUrl: ${{ parameters.repoUrl }}
 
     - id: publish-gitops-pr
-      name: Open GitOps onboarding pull request
+      name: Open platform GitOps onboarding pull request
       action: publish:github:pull-request
       input:
         repoUrl: github.com?owner=stonetusker&repo=tuskerblueprint
@@ -142,10 +146,12 @@ spec:
         title: 'feat(gitops): onboard ${{ parameters.name }}'
         description: |
           Registers `${{ parameters.name }}` with the TuskerBlueprint generated-workloads controller.
-          Review ownership, namespace, image policy, and resource settings before merging.
+
+          The generated service repository owns its Kubernetes base and development overlay. After this pull request is merged, Argo CD follows the service repository and deploys validated immutable releases.
+
+          Review ownership, namespace, public repository visibility, image policy, and resource settings before merging.
         sourcePath: ./gitops-registration
         targetPath: gitops/generated-workloads/${{ parameters.name }}
-        token: ${{ secrets.USER_OAUTH_TOKEN }}
 
   output:
     links:
@@ -154,5 +160,5 @@ spec:
       - title: Catalog entity
         icon: catalog
         entityRef: ${{ steps['register-service'].output.entityRef }}
-      - title: GitOps pull request
+      - title: GitOps onboarding pull request
         url: ${{ steps['publish-gitops-pr'].output.remoteUrl }}

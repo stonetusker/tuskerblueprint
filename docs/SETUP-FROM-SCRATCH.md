@@ -332,20 +332,25 @@ Create the namespace first:
 kubectl create namespace backstage --dry-run=client -o yaml | kubectl apply -f -
 ```
 
-### 11.1 Private GitHub catalog token
+### 11.1 GitHub platform and scaffolder token
 
-Create a dedicated GitHub token with the minimum permissions required to read the private repository. The current Backstage configuration reads it from `GITHUB_TOKEN`.
+Create a dedicated GitHub platform credential for Backstage. The current integration reads it from `GITHUB_TOKEN` and uses it for catalog access and golden-path provisioning.
+
+For the complete developer demo, the platform identity must be able to:
+
+- read the TuskerBlueprint repository;
+- create public repositories under the `stonetusker` organization;
+- add the organization member `subeeshlearn` as a collaborator;
+- write GitHub Actions workflow files;
+- create branches and pull requests in `stonetusker/tuskerblueprint`.
+
+Create or update the Secret interactively:
 
 ```bash
-read -r -s -p 'Backstage GitHub token: ' GITHUB_TOKEN
-echo
-
-kubectl -n backstage create secret generic backstage-github-credentials \
-  --from-literal=GITHUB_TOKEN="${GITHUB_TOKEN}" \
-  --dry-run=client -o yaml | kubectl apply -f -
-
-unset GITHUB_TOKEN
+scripts/backstage/configure-github-platform-secret.sh
 ```
+
+The script creates `backstage/backstage-github-credentials` with `GITHUB_TOKEN` and `GITHUB_SCAFFOLDER_TOKEN` without printing either value.
 
 Do not reuse the Argo CD deploy key or OAuth client secret.
 
@@ -386,6 +391,7 @@ The configured sign-in resolver expects the GitHub username to match the Backsta
 
 ```text
 catalog/users/subeesh.yaml
+catalog/users/subeeshlearn.yaml
 ```
 
 ### 11.3 Read-only Argo CD account

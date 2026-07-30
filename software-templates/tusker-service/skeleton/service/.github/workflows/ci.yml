@@ -12,6 +12,8 @@ on:
       - '.semgrep.yml'
       - 'requirements*.txt'
       - 'pyproject.toml'
+      - 'scripts/set-release.py'
+      - 'scripts/verify.sh'
       - '.github/workflows/ci.yml'
   push:
     branches:
@@ -25,6 +27,8 @@ on:
       - '.semgrep.yml'
       - 'requirements*.txt'
       - 'pyproject.toml'
+      - 'scripts/set-release.py'
+      - 'scripts/verify.sh'
       - '.github/workflows/ci.yml'
 
 permissions:
@@ -291,6 +295,16 @@ jobs:
           bootstrap_image=${MAIN_IMAGE}
           workflow_run=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
           META
+
+      - name: Make the public demo package anonymously pullable
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ '${{ secrets.GITHUB_TOKEN }}' }}
+        run: |
+          set -euo pipefail
+          PACKAGE_NAME="${GITHUB_REPOSITORY#*/}"
+
+          curl --fail-with-body --silent --show-error             --request PATCH             --header "Accept: application/vnd.github+json"             --header "Authorization: Bearer ${GH_TOKEN}"             --header "X-GitHub-Api-Version: 2022-11-28"             "${GITHUB_API_URL}/orgs/${GITHUB_REPOSITORY_OWNER}/packages/container/${PACKAGE_NAME}"             --data '{"visibility":"public"}'
 
       - name: Prepare GitOps release
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'

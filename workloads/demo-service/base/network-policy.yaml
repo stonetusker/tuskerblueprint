@@ -32,6 +32,34 @@ spec:
                   - traefik-production
                   - monitoring
                   - backstage
+        - namespaceSelector:
+            matchLabels:
+              platform.stonetusker.com/workload: "true"
       ports:
         - port: 8000
           protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: demo-service-allow-approved-egress
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: demo-service
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              platform.stonetusker.com/workload: "true"

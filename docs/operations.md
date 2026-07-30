@@ -7,7 +7,7 @@ Keep each command in a separate terminal:
 ```bash
 kubectl -n backstage port-forward svc/backstage 7007:7007
 kubectl -n argocd port-forward svc/argocd-server 8080:443
-kubectl -n demo-service-development port-forward svc/demo-service 8081:80
+scripts/demo/open-demo-ui.sh
 ```
 
 Browser endpoints:
@@ -15,7 +15,7 @@ Browser endpoints:
 ```text
 Backstage:    http://localhost:7007
 Argo CD:      https://localhost:8080
-Demo service: http://localhost:8081
+Demo application: http://localhost:8081/
 ```
 
 ## Platform health

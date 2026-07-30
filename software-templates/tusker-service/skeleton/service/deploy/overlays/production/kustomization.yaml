@@ -10,7 +10,9 @@ images:
 replicas:
   - name: ${{ values.name }}
     count: 3
-commonLabels:
-  app.kubernetes.io/environment: production
+labels:
+  - pairs:
+      app.kubernetes.io/environment: production
+    includeSelectors: true
 commonAnnotations:
   tuskerblueprint.io/release-sha: main

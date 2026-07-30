@@ -8,6 +8,8 @@ metadata:
     app.kubernetes.io/component: workload
     app.kubernetes.io/part-of: tuskerblueprint
     app.kubernetes.io/environment: development
+  annotations:
+    argocd.argoproj.io/sync-wave: "80"
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
@@ -19,12 +21,22 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: ${{ values.name }}-development
+  revisionHistoryLimit: 10
   syncPolicy:
+    managedNamespaceMetadata:
+      labels:
+        platform.stonetusker.com/workload: "true"
+        app.kubernetes.io/environment: development
     automated:
       prune: true
       selfHeal: true
     retry:
       limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
     syncOptions:
       - CreateNamespace=true
       - ApplyOutOfSyncOnly=true
+      - PrunePropagationPolicy=foreground

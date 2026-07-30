@@ -7,7 +7,10 @@ nav:
   - Setup from scratch: SETUP-FROM-SCRATCH.md
   - Architecture: architecture.md
   - Developer journey: developer-journey.md
+  - End-to-end developer demo: DEVELOPER-DEMO-WORKFLOW.md
   - Service onboarding: service-onboarding.md
+  - Service deployment and access: SERVICE-DEPLOYMENT-AND-ACCESS.md
+  - Demo UI and GitOps code review: CODE-REVIEW-DEMO-UI-AND-GITOPS.md
   - GitOps operating model: gitops.md
   - Backstage:
       - Implementation: backstage.md

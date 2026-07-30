@@ -513,13 +513,17 @@ Defines the `staging` YAML configuration and its declarative configuration.
 
 ## `workloads`
 
-### `workloads/demo-service/base/content/healthz`
+### `workloads/demo-service/app/static/index.html`
 
-Provides the static health response served by the demo container.
+Defines the browser-based Customer Notification demo interface served by FastAPI.
 
-### `workloads/demo-service/base/content/index.html`
+### `workloads/demo-service/app/static/styles.css`
 
-Provides the visible demo page changed during the Git-driven release demonstration.
+Defines the responsive, accessible visual styling for the demo interface.
+
+### `workloads/demo-service/app/static/app.js`
+
+Calls the status and notification APIs, displays correlation IDs, and renders recent activity without external frontend dependencies.
 
 ### `workloads/demo-service/base/deployment.yaml`
 
@@ -840,6 +844,10 @@ Defines the `workloads` AppProject and its declarative configuration.
 Defines the `kustomization` Kustomization and its declarative configuration.
 
 ## `scripts`
+
+### `scripts/demo/open-demo-ui.sh`
+
+Validates the demo Service and starts the standard `localhost:8081` port-forward for the browser UI.
 
 ### `scripts/backstage/bootstrap-custom-app.sh`
 
@@ -1277,6 +1285,10 @@ Provides executable shell automation.
 
 ## `docs`
 
+### `docs/SERVICE-DEPLOYMENT-AND-ACCESS.md`
+
+Explains Argo CD destinations, repository clone boundaries, Kubernetes DNS, NetworkPolicy labels, and browser access.
+
 ### `docs/COPILOT-INSTRUCTIONS.md`
 
 Learning and operating documentation: TuskerBlueprint AI Implementation Instructions.
@@ -1408,3 +1420,35 @@ Learning and operating documentation: Service onboarding.
 ### `docs/service-standards.md`
 
 Learning and operating documentation: Service standards.
+
+## End-to-end developer demo additions
+
+### `catalog/groups/developers.yaml`
+
+Defines the non-administrator developer Group used by the buyer demo and generated service ownership.
+
+### `catalog/users/subeeshlearn.yaml`
+
+Maps the GitHub login `subeeshlearn` to a Backstage User entity so the username-matching sign-in resolver can authenticate the developer.
+
+### `docs/DEVELOPER-DEMO-WORKFLOW.md`
+
+Provides the complete first-login, service creation, GitHub repository, clone, pull request, CI/CD, GitOps onboarding, Argo CD deployment, and Backstage runtime walkthrough.
+
+### `scripts/backstage/configure-github-platform-secret.sh`
+
+Creates or updates the Backstage GitHub platform/scaffolder credential without printing or committing the token.
+
+### Generated service repository assets
+
+The Tusker Service skeleton now includes:
+
+- `README.md`, `CONTRIBUTING.md`, and `SECURITY.md`;
+- `.gitignore`, pull-request guidance, Dependabot, and CODEOWNERS;
+- `.github/workflows/ci.yml` for application validation, security evidence, image publication, and immutable release pull requests;
+- `.github/workflows/platform-validation.yml` for catalog, TechDocs, OpenAPI, and Kustomize validation;
+- `scripts/verify.sh` for the local developer gate;
+- TechDocs pages for architecture, development, delivery, operations, observability, and security;
+- Backstage Component and API metadata;
+- hardened Kubernetes bases and environment overlays;
+- the Argo CD onboarding Application generated into `gitops/generated-workloads/<service>`.

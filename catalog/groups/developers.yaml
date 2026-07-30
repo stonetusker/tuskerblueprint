@@ -1,0 +1,11 @@
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: developers
+  title: StoneTusker Developers
+  description: Application developers who use TuskerBlueprint golden paths and delivery workflows
+spec:
+  type: team
+  profile:
+    displayName: StoneTusker Developers
+  children: []

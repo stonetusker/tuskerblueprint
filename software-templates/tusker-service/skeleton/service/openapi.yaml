@@ -1,15 +1,32 @@
 openapi: 3.0.3
 info:
   title: ${{ values.name }} API
-  version: 1.0.0
+  version: 1.1.0
   description: ${{ values.description }}
+servers:
+  - url: http://${{ values.name }}.${{ values.name }}-development.svc.cluster.local
+    description: Development cluster service
 paths:
   /:
+    get:
+      summary: Open the generated browser application
+      responses:
+        '200':
+          description: HTML application
+          content:
+            text/html:
+              schema:
+                type: string
+  /api/v1/status:
     get:
       summary: Service and release metadata
       responses:
         '200':
           description: Service metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceMetadata'
   /healthz:
     get:
       summary: Liveness endpoint
@@ -30,3 +47,19 @@ paths:
       responses:
         '200':
           description: Example response
+components:
+  schemas:
+    ServiceMetadata:
+      type: object
+      required: [service, environment, version, status, description]
+      properties:
+        service:
+          type: string
+        environment:
+          type: string
+        version:
+          type: string
+        status:
+          type: string
+        description:
+          type: string
