@@ -1,6 +1,6 @@
 name: Demo Service CI and Release
 
-on:
+"on":
   pull_request:
     paths:
       - "workloads/demo-service/app/**"
@@ -30,11 +30,9 @@ on:
   workflow_dispatch:
 
 permissions:
-  actions: read
   contents: write
   packages: write
   pull-requests: write
-  security-events: write
 
 concurrency:
   group: demo-service-${{ github.workflow }}-${{ github.ref }}
@@ -94,19 +92,55 @@ jobs:
             --cov-report=xml \
             --cov-fail-under=85
 
-      - name: Gitleaks OSS CLI scan
+      - name: Prepare current demo-service source for secret scanning
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SCAN_ROOT="${RUNNER_TEMP}/demo-service-gitleaks"
+          rm -rf "${SCAN_ROOT}"
+
+          mkdir -p \
+            "${SCAN_ROOT}/workloads" \
+            "${SCAN_ROOT}/scripts/demo" \
+            "${SCAN_ROOT}/.github/workflows" \
+            "${SCAN_ROOT}/apis/demo-service"
+
+          cp -R \
+            workloads/demo-service \
+            "${SCAN_ROOT}/workloads/demo-service"
+
+          cp \
+            scripts/demo/set-demo-release.py \
+            "${SCAN_ROOT}/scripts/demo/set-demo-release.py"
+
+          cp \
+            .github/workflows/demo-service-ci.yml \
+            "${SCAN_ROOT}/.github/workflows/demo-service-ci.yml"
+
+          cp \
+            apis/demo-service/openapi.yaml \
+            "${SCAN_ROOT}/apis/demo-service/openapi.yaml"
+
+      - name: Gitleaks current-source scan
         id: gitleaks
         shell: bash
         run: |
           set +e
 
+          SCAN_ROOT="${RUNNER_TEMP}/demo-service-gitleaks"
+          rm -f gitleaks-demo-service.sarif
+
           docker run --rm \
+            -v "${SCAN_ROOT}:/scan:ro" \
             -v "${PWD}:/repo" \
             zricethezav/gitleaks:v8.24.3 \
             detect \
-            --source=/repo \
+            --source=/scan \
+            --no-git \
             --redact \
             --verbose \
+            --exit-code 1 \
             --report-format sarif \
             --report-path /repo/gitleaks-demo-service.sarif
 
@@ -115,35 +149,38 @@ jobs:
 
           echo "exit_code=${exit_code}" >> "${GITHUB_OUTPUT}"
 
-          if [[ "${exit_code}" -eq 0 ]]; then
-            echo "Gitleaks completed successfully. No secrets detected."
-          elif [[ "${exit_code}" -eq 1 ]]; then
-            echo "::warning::Gitleaks detected one or more potential secrets."
-          else
-            echo "::warning::Gitleaks failed with exit code ${exit_code}."
-          fi
+          case "${exit_code}" in
+            0)
+              echo "Gitleaks completed successfully. No secrets detected."
+              ;;
+            1)
+              echo "::warning::Gitleaks detected one or more potential secrets."
+              ;;
+            *)
+              echo "::warning::Gitleaks failed with exit code ${exit_code}."
+              ;;
+          esac
 
-          # Do not fail here. Upload the report first, then enforce the result.
+          # Upload the redacted report before enforcing the result.
           exit 0
 
-      - name: Print Gitleaks findings
+      - name: Print redacted Gitleaks findings
         if: steps.gitleaks.outputs.exit_code == '1'
         shell: bash
         run: |
           set -euo pipefail
 
           if [[ ! -s gitleaks-demo-service.sarif ]]; then
-            echo "::warning::Gitleaks reported findings but no SARIF report was created."
+            echo "::warning::Gitleaks reported findings but did not create a SARIF report."
             exit 0
           fi
 
-          echo "Gitleaks findings:"
           jq -r '
             .runs[].results[]? |
             "\(.ruleId) | \(.locations[0].physicalLocation.artifactLocation.uri):\(.locations[0].physicalLocation.region.startLine) | \(.message.text)"
           ' gitleaks-demo-service.sarif
 
-      - name: Upload Gitleaks SARIF as workflow artifact
+      - name: Upload redacted Gitleaks report
         if: always() && hashFiles('gitleaks-demo-service.sarif') != ''
         uses: actions/upload-artifact@v4
         with:
@@ -151,20 +188,6 @@ jobs:
           path: gitleaks-demo-service.sarif
           if-no-files-found: warn
           retention-days: 14
-
-      - name: Upload Gitleaks SARIF to GitHub Code Scanning
-        if: >-
-          ${{
-            always() &&
-            hashFiles('gitleaks-demo-service.sarif') != '' &&
-            github.event_name != 'pull_request' &&
-            github.actor != 'dependabot[bot]'
-          }}
-        continue-on-error: true
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: gitleaks-demo-service.sarif
-          category: gitleaks-demo-service
 
       - name: Enforce Gitleaks result
         shell: bash
@@ -177,17 +200,14 @@ jobs:
             0)
               echo "Gitleaks passed."
               ;;
-
             1)
-              echo "::error::Gitleaks detected a potential secret. Review the printed findings and SARIF artifact."
+              echo "::error::Gitleaks detected a potential secret in the current demo-service delivery files."
               exit 1
               ;;
-
             "")
               echo "::error::Gitleaks did not report an exit code."
               exit 1
               ;;
-
             *)
               echo "::error::Gitleaks failed to execute correctly. Exit code: ${GITLEAKS_EXIT_CODE}"
               exit 1
@@ -376,7 +396,7 @@ jobs:
 
             - formatting, linting and type checking;
             - unit tests and coverage;
-            - Gitleaks scanning;
+            - current-source Gitleaks scanning;
             - Semgrep scanning;
             - Trivy filesystem and image scanning;
             - SPDX SBOM generation;
