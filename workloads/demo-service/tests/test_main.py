@@ -16,7 +16,9 @@ def test_ui_and_release_metadata(monkeypatch) -> None:
 
     ui_response = client.get("/")
     assert ui_response.status_code == 200
-    assert "StoneTusker Notification Center" in ui_response.text
+    assert "StoneTusker Customer Experience Hub" in ui_response.text
+    assert "Turn a customer message into" in ui_response.text
+    assert ui_response.headers["cache-control"] == "no-store, max-age=0"
     assert ui_response.headers["content-security-policy"]
     assert ui_response.headers["x-content-type-options"] == "nosniff"
 
@@ -33,6 +35,7 @@ def test_static_assets() -> None:
     js_response = client.get("/assets/app.js")
     assert css_response.status_code == 200
     assert "--brand" in css_response.text
+    assert "--coral" in css_response.text
     assert js_response.status_code == 200
     assert "submitNotification" in js_response.text
 

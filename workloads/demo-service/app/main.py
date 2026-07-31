@@ -84,12 +84,12 @@ class ServiceMetadata(BaseModel):
 NOTIFICATION_STORE: dict[str, NotificationRecord] = {}
 
 app = FastAPI(
-    title="StoneTusker Customer Notification API",
+    title="StoneTusker Customer Experience Hub",
     description=(
         "A deterministic reference workload used to demonstrate secure CI, GitOps, "
         "observability, failure detection, and rollback. It does not send real messages."
     ),
-    version="1.1.0",
+    version="1.2.0",
 )
 app.mount("/assets", StaticFiles(directory=STATIC_DIR), name="assets")
 
@@ -166,7 +166,11 @@ async def request_observability(request: Request, call_next):  # type: ignore[no
 
 @app.get("/", include_in_schema=False)
 def application_ui() -> FileResponse:
-    return FileResponse(STATIC_DIR / "index.html", media_type="text/html")
+    return FileResponse(
+        STATIC_DIR / "index.html",
+        media_type="text/html",
+        headers={"Cache-Control": "no-store, max-age=0"},
+    )
 
 
 @app.get("/api/v1/status", response_model=ServiceMetadata)

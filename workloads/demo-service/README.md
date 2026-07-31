@@ -1,11 +1,12 @@
 # StoneTusker buyer-demo application
 
-This directory contains the Customer Notification application, browser UI,
-FastAPI backend, tests, container build, Kubernetes manifests, environment
+This directory contains the Customer Experience Hub, a colorful executive-friendly browser UI,
+FastAPI notification backend, tests, container build, Kubernetes manifests, environment
 overlays, TechDocs, OpenAPI and controlled failure modes.
 
 The application records fictional notifications in memory. It does not send
-email, SMS or webhooks.
+email, SMS or webhooks. The dashboard presents live release metadata, runtime
+health, session activity, channel mix and the platform delivery journey.
 
 ## Run locally
 

@@ -36,17 +36,20 @@ async function loadStatus() {
       fetch("/readyz"),
     ]);
 
+    const ready = readinessResponse.ok;
     setText("service-name", metadata.service);
     setText("api-status", metadata.status === "ok" ? "Operational" : metadata.status);
-    setText("readiness-status", readinessResponse.ok ? "Ready" : "Unavailable");
+    setText("readiness-status", ready ? "Ready" : "Unavailable");
     setText("release-version", shortVersion(metadata.version));
     setText("release-environment", metadata.environment);
-    byId("release-dot")?.classList.toggle("online", readinessResponse.ok);
+    setText("health-label", ready ? "Healthy" : "Attention");
+    byId("release-dot")?.classList.toggle("online", ready);
   } catch (error) {
     setText("api-status", "Unavailable");
     setText("readiness-status", "Unavailable");
     setText("release-version", "Connection failed");
-    setText("release-environment", error.message);
+    setText("release-environment", "unknown");
+    setText("health-label", "Unavailable");
   }
 }
 
@@ -78,6 +81,27 @@ function notificationItem(record) {
   return item;
 }
 
+function updateChannelMix(records) {
+  const counts = { email: 0, sms: 0, webhook: 0 };
+  for (const record of records) {
+    if (Object.hasOwn(counts, record.channel)) {
+      counts[record.channel] += 1;
+    }
+  }
+
+  const total = records.length;
+  setText("notification-total", String(total));
+
+  for (const [channel, count] of Object.entries(counts)) {
+    setText(`${channel}-count`, String(count));
+    const width = total === 0 ? 0 : Math.max((count / total) * 100, count > 0 ? 8 : 0);
+    const bar = byId(`${channel}-bar`);
+    if (bar) {
+      bar.style.width = `${width}%`;
+    }
+  }
+}
+
 async function loadNotifications() {
   const list = byId("notification-list");
   const empty = byId("notifications-empty");
@@ -86,13 +110,21 @@ async function loadNotifications() {
   }
 
   try {
-    const { payload } = await requestJson("/api/v1/notifications?limit=8");
+    const { payload } = await requestJson("/api/v1/notifications?limit=20");
     list.replaceChildren(...payload.map(notificationItem));
     empty.hidden = payload.length > 0;
+    updateChannelMix(payload);
   } catch (error) {
     list.replaceChildren();
     empty.hidden = false;
-    empty.textContent = `Unable to load notifications: ${error.message}`;
+    empty.replaceChildren();
+
+    const title = document.createElement("strong");
+    title.textContent = "Unable to load activity";
+    const detail = document.createElement("p");
+    detail.textContent = error.message;
+    empty.append(title, detail);
+    updateChannelMix([]);
   }
 }
 
@@ -112,7 +144,7 @@ async function submitNotification(event) {
 
   button.disabled = true;
   result.classList.remove("error");
-  result.textContent = "Submitting request...";
+  result.textContent = "Submitting through the platform API...";
 
   try {
     const { response, payload: record } = await requestJson("/api/v1/notifications", {
@@ -120,14 +152,14 @@ async function submitNotification(event) {
       headers: {
         "Content-Type": "application/json",
         "X-Correlation-ID": requestId,
-        "X-Demo-Request": "browser-ui",
+        "X-Demo-Request": "executive-browser-ui",
       },
       body: JSON.stringify(payload),
     });
 
     const returnedCorrelation = response.headers.get("X-Correlation-ID") || record.correlation_id;
     setText("latest-correlation", returnedCorrelation);
-    result.textContent = `Accepted as ${record.id}. Use correlation ID ${returnedCorrelation} in Loki.`;
+    result.textContent = `Accepted. Correlation ID ${returnedCorrelation} can now be found in the application logs and Loki.`;
     await loadNotifications();
   } catch (error) {
     result.classList.add("error");
