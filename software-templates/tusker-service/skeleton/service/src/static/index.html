@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="${{ values.description }}">
+  <meta name="theme-color" content="#FACF0E">
   <title>${{ values.name }} | Stonetusker Service</title>
   <link rel="stylesheet" href="/assets/styles.css">
   <script src="/assets/app.js" defer></script>
@@ -11,13 +12,17 @@
 <body>
   <a class="skip-link" href="#main-content">Skip to content</a>
   <header class="topbar">
-    <div class="brand">
-      <span class="brand-mark" aria-hidden="true">ST</span>
-      <div>
+    <a class="brand" href="/" aria-label="${{ values.name }} home">
+      <img
+        class="brand-logo"
+        src="/assets/stonetusker-logo.svg"
+        alt="Stonetusker Systems"
+      >
+      <span class="brand-copy">
         <strong>${{ values.name }}</strong>
-        <span>Created through TuskerBlueprint</span>
-      </div>
-    </div>
+        <small>Created through TuskerBlueprint</small>
+      </span>
+    </a>
     <nav aria-label="Application links">
       <a href="/docs">API Docs</a>
       <a href="/metrics">Metrics</a>
