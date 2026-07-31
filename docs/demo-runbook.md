@@ -30,7 +30,7 @@
 5. Confirm the Backstage Catalog, Docs, APIs, Kubernetes, and Argo CD tabs load.
 6. Confirm the Argo CD tab shows `demo-service-development` without a certificate error.
 7. Keep a prepared Git change ready for the release demonstration.
-8. Confirm `subeeshlearn` is an accepted StoneTusker organization member and can sign in through GitHub OAuth.
+8. Confirm `subeeshlearn` is an accepted Stonetusker organization member and can sign in through GitHub OAuth.
 9. Confirm the Backstage platform GitHub credential can create repositories and open the onboarding pull request.
 
 ## Demo flow
@@ -64,7 +64,7 @@ Open `http://localhost:8081/`. Submit one fictional notification and retain the 
 
 ### 4. Documentation and API
 
-Open `StoneTusker Customer Notification API`, then show **Docs** and **APIs**.
+Open `Stonetusker Customer Notification API`, then show **Docs** and **APIs**.
 
 ### 5. Runtime and deployment
 

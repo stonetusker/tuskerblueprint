@@ -88,6 +88,6 @@ These are target-environment acceptance tests described in `NEXT_STEPS_AFTER_IMP
 
 ## Artifact recommendation
 
-Use `StoneTusker_Delivery_Platform_Demo_Corrected_Changes.zip` on top of the current Git repository. It preserves files that may exist in the user's live repository but were absent from the uploaded snapshot.
+Use `Stonetusker_Delivery_Platform_Demo_Corrected_Changes.zip` on top of the current Git repository. It preserves files that may exist in the user's live repository but were absent from the uploaded snapshot.
 
-Do not use the earlier `StoneTusker_Delivery_Platform_Demo_Changes_Only.zip` or `StoneTusker_Delivery_Platform_Demo_Enhanced_Sources.zip` artifacts.
+Do not use the earlier `Stonetusker_Delivery_Platform_Demo_Changes_Only.zip` or `Stonetusker_Delivery_Platform_Demo_Enhanced_Sources.zip` artifacts.

@@ -46,7 +46,7 @@ dashboardProviders:
     providers:
       - name: default
         orgId: 1
-        folder: StoneTusker Demo
+        folder: Stonetusker Demo
         type: file
         disableDeletion: false
         editable: true
@@ -143,7 +143,7 @@ dashboards:
           "time": {"from": "now-15m", "to": "now"},
           "timepicker": {},
           "timezone": "browser",
-          "title": "StoneTusker Demo Service Delivery",
+          "title": "Stonetusker Demo Service Delivery",
           "uid": "stonetusker-demo-service",
           "version": 1,
           "weekStart": ""

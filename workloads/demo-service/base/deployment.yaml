@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: demo-service
   annotations:
-    kubernetes.io/description: StoneTusker buyer-demo API reconciled by Argo CD
+    kubernetes.io/description: Stonetusker buyer-demo API reconciled by Argo CD
 spec:
   replicas: 1
   revisionHistoryLimit: 10

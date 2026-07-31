@@ -35,7 +35,7 @@
 
 ## Developer identity and provisioning
 
-- [ ] `subeeshlearn` accepted the StoneTusker organization invitation.
+- [ ] `subeeshlearn` accepted the Stonetusker organization invitation.
 - [ ] `catalog/users/subeeshlearn.yaml` resolves in Backstage.
 - [ ] `group:default/developers` is visible and owns the generated service.
 - [ ] The platform GitHub credential creates a public organization repository.

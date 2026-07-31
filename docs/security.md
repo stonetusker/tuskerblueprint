@@ -31,4 +31,4 @@ The repository must not contain:
 - Argo CD uses a dedicated read-only Backstage account.
 - The Backstage container runs as non-root where supported.
 - NetworkPolicy restricts ingress to the Backstage service and allows required egress.
-- Software Template write credentials should be scoped to the StoneTusker organization and audited.
+- Software Template write credentials should be scoped to the Stonetusker organization and audited.

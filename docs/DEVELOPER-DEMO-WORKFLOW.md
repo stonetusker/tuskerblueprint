@@ -20,7 +20,7 @@ The public-repository path is intentional for the live demo. It lets Argo CD rea
 
 ## One-time GitHub preparation
 
-Using the StoneTusker organization owner account:
+Using the Stonetusker organization owner account:
 
 1. Invite `subeeshlearn` to the organization.
 2. Ask the user to accept the invitation.

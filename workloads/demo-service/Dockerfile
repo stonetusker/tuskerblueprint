@@ -3,8 +3,8 @@ FROM python:3.12-slim-bookworm
 ARG VCS_REF=development
 ARG BUILD_DATE=unknown
 
-LABEL org.opencontainers.image.title="StoneTusker Customer Experience Hub" \
-      org.opencontainers.image.description="Reference workload for the StoneTusker delivery-platform demo" \
+LABEL org.opencontainers.image.title="Stonetusker Customer Experience Hub" \
+      org.opencontainers.image.description="Reference workload for the Stonetusker delivery-platform demo" \
       org.opencontainers.image.source="https://github.com/stonetusker/tuskerblueprint" \
       org.opencontainers.image.revision="${VCS_REF}" \
       org.opencontainers.image.created="${BUILD_DATE}"

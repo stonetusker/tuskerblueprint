@@ -1,4 +1,4 @@
-# StoneTusker buyer-demo application
+# Stonetusker buyer-demo application
 
 This directory contains the Customer Experience Hub, a colorful executive-friendly browser UI,
 FastAPI notification backend, tests, container build, Kubernetes manifests, environment

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Offline source validation for the StoneTusker delivery-platform demo.
+"""Offline source validation for the Stonetusker delivery-platform demo.
 
 The validator is intentionally safe to run from a normal working repository.
 It validates maintained source and ignores generated applications, dependency

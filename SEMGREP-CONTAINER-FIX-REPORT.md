@@ -1,4 +1,4 @@
-# StoneTusker Semgrep Container Workflow Fix
+# Stonetusker Semgrep Container Workflow Fix
 
 ## Root cause
 

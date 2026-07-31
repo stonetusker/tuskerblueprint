@@ -90,7 +90,7 @@ fi
 cat <<'CHECKS'
 
 Manual GitHub checks still required:
-- subeeshlearn accepted the StoneTusker organization invitation.
+- subeeshlearn accepted the Stonetusker organization invitation.
 - The platform token can create organization repositories and collaborators.
 - GitHub Actions is enabled for newly created repositories.
 - Workflows are allowed to create release pull requests.

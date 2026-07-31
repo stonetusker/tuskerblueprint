@@ -1,7 +1,7 @@
 # Customer Notification application
 
 The Customer Notification application is the reference workload used in the
-StoneTusker buyer-facing delivery-platform demonstration. It combines a small
+Stonetusker buyer-facing delivery-platform demonstration. It combines a small
 browser UI with a FastAPI backend. It accepts fictional notification requests,
 records them in memory and never sends real email, SMS or webhooks.
 
@@ -20,7 +20,7 @@ records them in memory and never sends real email, SMS or webhooks.
 
 ## Ownership
 
-- Owner: StoneTusker Platform Engineering
+- Owner: Stonetusker Platform Engineering
 - System: TuskerBlueprint
 - Lifecycle: Experimental reference workload
 
@@ -61,7 +61,7 @@ curl -sS http://localhost:8000/api/v1/notifications \
   -d '{
     "channel": "email",
     "recipient": "buyer@example.invalid",
-    "message": "StoneTusker delivery-platform demonstration"
+    "message": "Stonetusker delivery-platform demonstration"
   }'
 ```
 

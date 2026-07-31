@@ -2,7 +2,7 @@ apiVersion: backstage.io/v1alpha1
 kind: API
 metadata:
   name: demo-service-api
-  title: StoneTusker Customer Notification API
+  title: Stonetusker Customer Notification API
   description: Fictional notification API used to demonstrate secure delivery, GitOps, observability, and rollback
   tags:
     - openapi

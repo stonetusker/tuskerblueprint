@@ -220,7 +220,7 @@ http://localhost:7007
 Backstage
 → Sign in with GitHub
 → Catalog
-→ StoneTusker Customer Notification API
+→ Stonetusker Customer Notification API
 ```
 
 Verify:

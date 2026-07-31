@@ -270,7 +270,7 @@ Backstage UI:
 
 ```text
 Catalog
-→ StoneTusker Customer Notification API
+→ Stonetusker Customer Notification API
 → Docs
 ```
 

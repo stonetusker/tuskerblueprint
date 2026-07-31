@@ -2,7 +2,7 @@ apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   name: demo-service
-  title: StoneTusker Customer Notification API
+  title: Stonetusker Customer Notification API
   description: Buyer-demo workload showing secure CI, immutable delivery, GitOps, observability, and rollback
   annotations:
     backstage.io/techdocs-ref: dir:../../workloads/demo-service

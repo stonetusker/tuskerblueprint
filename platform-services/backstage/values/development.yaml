@@ -22,7 +22,7 @@ backstage:
       baseUrl: http://localhost:7007
 
     organization:
-      name: StoneTusker Systems
+      name: Stonetusker Systems
 
     backend:
       baseUrl: http://localhost:7007
