@@ -8,7 +8,7 @@ resources:
 images:
   - name: ghcr.io/stonetusker/tuskerblueprint-demo-service
     newName: ghcr.io/stonetusker/tuskerblueprint-demo-service
-    newTag: bd7fc052681f454fa3ec38e081786e50bbea49ef
+    newTag: f86cde313a49b7639826cb364831eaf756f40eb9
 
 replicas:
   - name: demo-service
@@ -25,4 +25,4 @@ commonLabels:
   app.kubernetes.io/environment: development
 
 commonAnnotations:
-  tuskerblueprint.io/release-sha: bd7fc052681f454fa3ec38e081786e50bbea49ef
+  tuskerblueprint.io/release-sha: f86cde313a49b7639826cb364831eaf756f40eb9
