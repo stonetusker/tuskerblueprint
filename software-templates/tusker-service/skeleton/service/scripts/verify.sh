@@ -2,11 +2,11 @@
 set -euo pipefail
 
 python -m pip install -r requirements-dev.txt
-ruff format --check src tests
-ruff check src tests
-mypy src
+ruff format --check app tests
+ruff check app tests
+mypy app
 pytest \
-  --cov=src \
+  --cov=app \
   --cov-branch \
   --cov-report=term-missing \
   --cov-fail-under=80

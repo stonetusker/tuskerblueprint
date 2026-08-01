@@ -17,3 +17,7 @@ htmlcov/
 dist/
 build/
 *.egg-info/
+
+site/
+*.sarif
+*.spdx.json

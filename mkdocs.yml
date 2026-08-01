@@ -1,24 +1,31 @@
 site_name: TuskerBlueprint Internal Developer Platform
-site_description: Architecture, installation, operating model, golden paths, and customer demo guidance
-repo_url: https://github.com/stonetusker/tuskerblueprint
-edit_uri: edit/main/docs/
+site_description: StoneTusker platform engineering, developer experience and GitOps documentation
+docs_dir: docs
 nav:
   - Home: index.md
-  - Setup from scratch: SETUP-FROM-SCRATCH.md
   - Architecture: architecture.md
-  - Developer journey: developer-journey.md
-  - End-to-end developer demo: DEVELOPER-DEMO-WORKFLOW.md
+  - Setup from scratch: SETUP-FROM-SCRATCH.md
+  - GitHub credentials and private access: GITHUB-CREDENTIALS-AND-PRIVATE-ACCESS.md
+  - Repository split: REPOSITORY-SPLIT-AND-DEVELOPER-FLOW.md
+  - Backstage: backstage.md
+  - GitOps: gitops.md
   - Service onboarding: service-onboarding.md
-  - Service deployment and access: SERVICE-DEPLOYMENT-AND-ACCESS.md
-  - Demo UI and GitOps code review: CODE-REVIEW-DEMO-UI-AND-GITOPS.md
-  - GitOps operating model: gitops.md
-  - Backstage:
-      - Implementation: backstage.md
-      - Argo CD integration: BACKSTAGE-ARGOCD-INTEGRATION.md
-      - Deployment and rollback: IDP-MIGRATION-RUNBOOK.md
-  - Security: security.md
+  - Developer journey: developer-journey.md
+  - Developer demo: DEVELOPER-DEMO-WORKFLOW.md
+  - Scaffolded service acceptance: SCAFFOLDED-SERVICE-ACCEPTANCE.md
+  - Demo runbook: demo-runbook.md
   - Operations: operations.md
-  - Service standards: service-standards.md
-  - Customer demo: demo-runbook.md
+  - Security: security.md
+  - Security history remediation: SECURITY-HISTORY-REMEDIATION.md
+  - Code review: CODE-REVIEW-AND-VALIDATION.md
+  - Migration: IDP-MIGRATION-RUNBOOK.md
+  - Standards:
+      - Engineering: ENGINEERING-STANDARDS.md
+      - Platform: PLATFORM-STANDARDS.md
+      - Repository: REPOSITORY-STANDARDS.md
+      - GitOps: GITOPS-STANDARDS.md
+      - Security: SECURITY-STANDARDS.md
+      - Validation: VALIDATION-STANDARDS.md
+  - Architecture decisions: architecture-decisions/README.md
 plugins:
   - techdocs-core

@@ -1,47 +1,22 @@
 #!/usr/bin/env python3
+"""Static validation for the split TuskerBlueprint platform repository."""
+
 from __future__ import annotations
 
-import re
-import subprocess
-import sys
 from pathlib import Path
 from typing import Any
 
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
-SKIP_PARTS = {
-    '.git',
-    '.generated',
-    '.venv',
-    '.yarn',
-    '__MACOSX',
-    '__pycache__',
-    '.pytest_cache',
-    '.mypy_cache',
-    '.ruff_cache',
-    'build',
-    'dist',
-    'node_modules',
-    'venv',
-}
-HYGIENE_TRAVERSAL_SKIP_PARTS = {
-    '.git',
-    '.generated',
-    '.venv',
-    '.yarn',
-    'build',
-    'dist',
-    'node_modules',
-    'venv',
-}
+errors: list[str] = []
 
 
 class UniqueKeyLoader(yaml.SafeLoader):
     """YAML loader that rejects duplicate mapping keys."""
 
 
-def _construct_mapping(
+def construct_unique_mapping(
     loader: UniqueKeyLoader,
     node: yaml.MappingNode,
     deep: bool = False,
@@ -51,9 +26,9 @@ def _construct_mapping(
         key = loader.construct_object(key_node, deep=deep)
         if key in mapping:
             raise yaml.constructor.ConstructorError(
-                'while constructing a mapping',
+                "while constructing a mapping",
                 node.start_mark,
-                f'duplicate key {key!r}',
+                f"found duplicate key {key!r}",
                 key_node.start_mark,
             )
         mapping[key] = loader.construct_object(value_node, deep=deep)
@@ -62,301 +37,326 @@ def _construct_mapping(
 
 UniqueKeyLoader.add_constructor(
     yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
-    _construct_mapping,
+    construct_unique_mapping,
 )
 
 
-def files(pattern: str):
-    for path in ROOT.rglob(pattern):
-        if not any(part in SKIP_PARTS for part in path.parts):
-            yield path
+def check(condition: bool, message: str) -> None:
+    if not condition:
+        errors.append(message)
 
 
-def load_yaml(path: Path) -> list[Any]:
-    return list(
-        yaml.load_all(
-            path.read_text(encoding='utf-8'),
-            Loader=UniqueKeyLoader,
-        )
-    )
+def load_documents(path: Path) -> list[Any]:
+    text = path.read_text(encoding="utf-8")
+    return list(yaml.load_all(text, Loader=UniqueKeyLoader))
 
 
-def is_jinja_template(path: Path) -> bool:
-    return '{%' in path.read_text(encoding='utf-8', errors='replace')
+# Parse every maintained YAML source with duplicate-key protection. Raw Backstage
+# template sources are rendered and validated separately.
+for path in sorted(ROOT.rglob("*.yaml")) + sorted(ROOT.rglob("*.yml")):
+    if any(part in {"__MACOSX", ".generated", "node_modules"} for part in path.parts):
+        continue
+    text = path.read_text(encoding="utf-8")
+    if "{%" in text or "${{ values." in text:
+        continue
+    try:
+        load_documents(path)
+    except Exception as error:  # noqa: BLE001 - validation must report every YAML error
+        errors.append(f"{path.relative_to(ROOT)}: {error}")
 
+required = [
+    ".gitleaks.toml",
+    ".github/workflows/idp-validation.yml",
+    ".github/workflows/backstage-image.yml",
+    "catalog-info.yaml",
+    "software-templates/tusker-service/template.yaml",
+    "software-templates/tusker-service/skeleton/service/app/main.py",
+    "software-templates/tusker-service/skeleton/service/.github/CODEOWNERS",
+    "software-templates/tusker-service/skeleton/service/.github/workflows/ci.yml",
+    "software-templates/tusker-service/skeleton/service/docs/index.md",
+    "software-templates/tusker-service/skeleton/service/docs/FIRST-RELEASE.md",
+    "software-templates/tusker-service/skeleton/service/scripts/validate_repository.py",
+    "software-templates/tusker-service/skeleton/service/deploy/base/external-secret.yaml",
+    "software-templates/tusker-service/skeleton/service/mkdocs.yml",
+    "software-templates/tusker-service/skeleton/service/catalog-info.yaml",
+    "gitops/applications/workloads/demo-service/application-development.yaml",
+    "gitops/applications/workloads/generated-workloads-application.yaml",
+    "gitops/applications/platform/security/github-access/application-development.yaml",
+    "platform-services/github-access/manifests/cluster-secret-store.yaml",
+    "platform-services/backstage/manifests/ghcr-pull-external-secret.yaml",
+    "scripts/backstage/configure-github-platform-secret.sh",
+    "scripts/backstage/verify-github-platform-secrets.sh",
+    "docs/GITHUB-CREDENTIALS-AND-PRIVATE-ACCESS.md",
+    "scripts/backstage/set-backstage-release.py",
+    "docs/REPOSITORY-SPLIT-AND-DEVELOPER-FLOW.md",
+    "docs/DEVELOPER-DEMO-WORKFLOW.md",
+    "docs/SETUP-FROM-SCRATCH.md",
+    "docs/SECURITY-HISTORY-REMEDIATION.md",
+    "docs/SCAFFOLDED-SERVICE-ACCEPTANCE.md",
+]
+for relative in required:
+    check((ROOT / relative).is_file(), f"missing {relative}")
 
-def validate_yaml() -> None:
-    count = 0
-    skipped_templates = 0
-    for path in list(files('*.yaml')) + list(files('*.yml')):
-        if is_jinja_template(path):
-            skipped_templates += 1
-            continue
-        try:
-            load_yaml(path)
-        except Exception as exc:
-            raise RuntimeError(f'Invalid YAML: {path.relative_to(ROOT)}: {exc}') from exc
-        count += 1
-    print(
-        f'YAML parsed with duplicate-key protection: {count} files; '
-        f'{skipped_templates} raw Jinja templates deferred to rendered validation'
-    )
+check(
+    not (ROOT / "workloads/demo-service").exists(),
+    "platform repository still contains demo application source",
+)
+check(
+    not (ROOT / "apis/demo-service").exists(),
+    "platform repository still contains demo application OpenAPI source",
+)
 
+for cache_name in ("__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache"):
+    for cache_path in ROOT.rglob(cache_name):
+        errors.append(f"generated cache directory committed: {cache_path.relative_to(ROOT)}")
+for artifact_name in (".coverage", "coverage.xml"):
+    for artifact_path in ROOT.rglob(artifact_name):
+        errors.append(f"generated test artifact committed: {artifact_path.relative_to(ROOT)}")
 
-def validate_required_files() -> None:
-    required = [
-        'catalog-info.yaml',
-        'mkdocs.yml',
-        'catalog/components/backstage.yaml',
-        'catalog/components/demo-service.yaml',
-        'software-templates/tusker-service/template.yaml',
-        'platform-services/backstage/values/development.yaml',
-        'platform-services/backstage/values/development-idp.yaml',
-        'platform-services/backstage/manifests/cluster-role.yaml',
-        'gitops/applications/workloads/demo-service/application-development.yaml',
-        'backstage-app/overrides/packages/backend/src/index.ts',
-        'backstage-app/overrides/packages/app/src/components/catalog/EntityPage.tsx',
-        'docs/IDP-MIGRATION-RUNBOOK.md',
-        'docs/DEVELOPER-DEMO-WORKFLOW.md',
-        'docs/SERVICE-DEPLOYMENT-AND-ACCESS.md',
-        'workloads/demo-service/app/static/index.html',
-        'workloads/demo-service/app/static/styles.css',
-        'workloads/demo-service/app/static/app.js',
-        'catalog/groups/developers.yaml',
-        'catalog/users/subeeshlearn.yaml',
-        '.github/workflows/idp-validation.yml',
-        '.github/workflows/backstage-image.yml',
-        '.github/workflows/demo-service-ci.yml',
-        'software-templates/tusker-service/skeleton/service/README.md',
-        'software-templates/tusker-service/skeleton/service/.github/workflows/ci.yml',
-        'software-templates/tusker-service/skeleton/service/.github/workflows/platform-validation.yml',
-        'software-templates/tusker-service/skeleton/service/mkdocs.yml',
-        'scripts/backstage/configure-github-platform-secret.sh',
-        'scripts/demo/developer-workflow-preflight.sh',
-        'scripts/demo/open-demo-ui.sh',
-        'software-templates/tusker-service/skeleton/service/src/static/index.html',
-        'software-templates/tusker-service/skeleton/service/src/static/styles.css',
-        'software-templates/tusker-service/skeleton/service/src/static/app.js',
-    ]
-    missing = [item for item in required if not (ROOT / item).is_file()]
-    if missing:
-        raise RuntimeError(f'Missing required files: {missing}')
-    print(f'Required IDP files: {len(required)} present')
-
-
-def validate_catalog_targets() -> None:
-    root_catalog = load_yaml(ROOT / 'catalog-info.yaml')[0]
-    targets = root_catalog.get('spec', {}).get('targets', [])
-    missing = []
-    for target in targets:
-        path = (ROOT / target).resolve()
-        if not path.is_file():
-            missing.append(target)
-    if missing:
-        raise RuntimeError(f'Missing catalog targets: {missing}')
-    print(f'Catalog targets: {len(targets)} present')
-
-
-
-def validate_catalog_relations() -> None:
-    entity_files = list((ROOT / 'catalog').rglob('*.yaml')) + [
-        ROOT / 'software-templates/tusker-service/template.yaml'
-    ]
-    entities: dict[str, tuple[Path, dict[str, Any]]] = {}
-    for path in entity_files:
-        for document in load_yaml(path):
-            if not isinstance(document, dict):
-                continue
-            kind = str(document.get('kind', '')).lower()
-            metadata = document.get('metadata') or {}
-            name = metadata.get('name') if isinstance(metadata, dict) else None
-            namespace = (
-                metadata.get('namespace', 'default')
-                if isinstance(metadata, dict)
-                else 'default'
-            )
-            if kind and name:
-                entities[f'{kind}:{namespace}/{name}'] = (path, document)
-
-    def normalize(reference: str, default_kind: str | None = None) -> str:
-        if ':' in reference:
-            kind, remainder = reference.split(':', 1)
-        else:
-            if default_kind is None:
-                raise ValueError(f'Reference lacks a kind: {reference}')
-            kind, remainder = default_kind, reference
-        if '/' not in remainder:
-            remainder = f'default/{remainder}'
-        return f'{kind.lower()}:{remainder}'
-
-    unresolved: list[str] = []
-    for _, (path, document) in entities.items():
-        spec = document.get('spec') or {}
-        references: list[tuple[str, str | None]] = []
-        if spec.get('owner'):
-            references.append((spec['owner'], 'group'))
-        if spec.get('system'):
-            references.append((spec['system'], 'system'))
-        if spec.get('domain'):
-            references.append((spec['domain'], 'domain'))
-        references.extend((item, 'group') for item in spec.get('memberOf', []) or [])
-        if spec.get('parent'):
-            references.append((spec['parent'], 'group'))
-        references.extend((item, 'group') for item in spec.get('children', []) or [])
-        references.extend((item, 'api') for item in spec.get('providesApis', []) or [])
-        references.extend((item, None) for item in spec.get('dependsOn', []) or [])
-        for reference, default_kind in references:
-            resolved = normalize(reference, default_kind)
-            if resolved not in entities:
-                unresolved.append(f'{path.relative_to(ROOT)}: {reference} -> {resolved}')
-    if unresolved:
-        raise RuntimeError('Unresolved catalog relations:\n' + '\n'.join(unresolved))
-    print(f'Catalog relations: {len(entities)} entities resolved')
-
-
-
-def validate_no_committed_secrets() -> None:
-    patterns = [
-        re.compile(r'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----'),
-        re.compile(r'gh[pousr]_[A-Za-z0-9_]{20,}'),
-        re.compile(
-            r'(?i)(?:password|clientSecret|token):\s*["\']?'
-            r'(?!\$\{|REPLACE_|<)[A-Za-z0-9+/=_-]{16,}'
-        ),
-    ]
-    findings = []
-    secret_manifests = []
-    for path in files('*'):
-        if not path.is_file() or path.suffix.lower() in {
-            '.zip',
-            '.png',
-            '.jpg',
-            '.jpeg',
-            '.gif',
-            '.pdf',
-        }:
-            continue
-        try:
-            text = path.read_text(encoding='utf-8')
-        except UnicodeDecodeError:
-            continue
-        for pattern in patterns:
-            if pattern.search(text):
-                findings.append(str(path.relative_to(ROOT)))
-                break
-        if path.suffix in {'.yaml', '.yml'} and not is_jinja_template(path):
-            for document in load_yaml(path):
-                if isinstance(document, dict) and document.get('kind') == 'Secret':
-                    secret_manifests.append(str(path.relative_to(ROOT)))
-    if findings:
-        raise RuntimeError(f'Potential committed secrets: {findings}')
-    if secret_manifests:
-        raise RuntimeError(f'Kubernetes Secret manifests must not be committed: {secret_manifests}')
-    print('Secret-pattern and Kubernetes Secret-manifest checks: passed')
 
 
 def validate_kustomize_references() -> None:
-    checked = 0
-    missing: list[str] = []
-    for path in files('kustomization.yaml'):
-        data = load_yaml(path)[0] or {}
-        for item in data.get('resources', []) or []:
-            if not isinstance(item, str) or item.startswith(('http://', 'https://')):
-                continue
-            target = (path.parent / item).resolve()
-            if target.is_dir():
-                if not (target / 'kustomization.yaml').is_file() and not (
-                    target / 'kustomization.yml'
-                ).is_file():
-                    missing.append(f'{path.relative_to(ROOT)} -> {item} (directory has no kustomization)')
-            elif not target.exists():
-                missing.append(f'{path.relative_to(ROOT)} -> {item} (missing)')
-        checked += 1
-    if missing:
-        raise RuntimeError('Invalid Kustomize references:\n' + '\n'.join(missing))
-    print(f'Kustomize references: {checked} files checked')
+    """Confirm local Kustomize references resolve before Argo CD sees them."""
 
-
-def validate_kustomize_render() -> None:
-    if (
-        subprocess.run(
-            ['bash', '-lc', 'command -v kubectl >/dev/null'],
-            capture_output=True,
-        ).returncode
-        != 0
-    ):
-        print('kubectl not installed; skipped executable Kustomize render checks')
-        return
-    paths = [
-        'gitops/environments/development',
-        'platform-services/backstage/manifests',
-        'workloads/demo-service/overlays/development',
-    ]
-    for item in paths:
-        subprocess.run(
-            ['kubectl', 'kustomize', str(ROOT / item)],
-            check=True,
-            stdout=subprocess.DEVNULL,
-        )
-    print(f'Kustomize rendered: {len(paths)} paths')
-
-
-def validate_hygiene() -> None:
-    """Reject committed artifacts without failing on ignored local build trees."""
-
-    forbidden = []
-    maintained_roots = [
-        ROOT / 'workloads',
-        ROOT / 'software-templates',
-        ROOT / 'scripts',
-        ROOT / 'catalog',
-        ROOT / 'gitops',
-        ROOT / 'platform-services',
-    ]
-    forbidden_dirs = {
-        '__MACOSX',
-        '__pycache__',
-        '.pytest_cache',
-        '.mypy_cache',
-        '.ruff_cache',
-    }
-    forbidden_names = {'.DS_Store', '.coverage', 'coverage.xml'}
-
-    for maintained_root in maintained_roots:
-        if not maintained_root.exists():
+    for kustomization in ROOT.rglob("kustomization.yaml"):
+        text = kustomization.read_text(encoding="utf-8")
+        if "{%" in text or "${{ values." in text:
             continue
-        for path in maintained_root.rglob('*'):
-            if any(
-                part in HYGIENE_TRAVERSAL_SKIP_PARTS
-                for part in path.relative_to(ROOT).parts
-            ):
+        document = load_documents(kustomization)[0] or {}
+        base = kustomization.parent
+        references: list[str] = []
+        for field in ("resources", "components", "patchesStrategicMerge"):
+            references.extend(str(item) for item in document.get(field, []) or [])
+        for item in document.get("patches", []) or []:
+            if isinstance(item, dict) and item.get("path"):
+                references.append(str(item["path"]))
+        for generator in ("configMapGenerator", "secretGenerator"):
+            for item in document.get(generator, []) or []:
+                if not isinstance(item, dict):
+                    continue
+                for field in ("files", "envs"):
+                    references.extend(str(value) for value in item.get(field, []) or [])
+        for reference in references:
+            if reference.startswith(("http://", "https://", "git::")):
                 continue
-            if path.is_dir() and path.name in forbidden_dirs:
-                forbidden.append(str(path.relative_to(ROOT)))
-            elif path.is_file() and (path.name in forbidden_names or path.suffix == '.pyc'):
-                forbidden.append(str(path.relative_to(ROOT)))
-
-    if forbidden:
-        raise RuntimeError(f'Forbidden generated files: {forbidden[:20]}')
-    print('Repository hygiene: passed')
+            local_reference = reference.split("=", 1)[-1]
+            check(
+                (base / local_reference).resolve().exists(),
+                f"{kustomization.relative_to(ROOT)} references missing {reference}",
+            )
 
 
-def main() -> int:
-    validate_yaml()
-    validate_required_files()
-    validate_catalog_targets()
-    validate_catalog_relations()
-    validate_no_committed_secrets()
-    validate_kustomize_references()
-    validate_kustomize_render()
-    validate_hygiene()
-    print('TuskerBlueprint IDP validation passed')
-    return 0
+validate_kustomize_references()
+
+# Root catalog locations must either resolve locally or be explicit HTTPS URLs.
+root_catalog_documents = load_documents(ROOT / "catalog-info.yaml")
+root_location = root_catalog_documents[0]
+for target in root_location.get("spec", {}).get("targets", []):
+    if str(target).startswith("https://"):
+        continue
+    check((ROOT / str(target)).resolve().is_file(), f"catalog target does not exist: {target}")
+
+# Local catalog references should resolve to a local entity.
+entities: dict[tuple[str, str, str], Path] = {}
+for path in sorted((ROOT / "catalog").rglob("*.yaml")):
+    for document in load_documents(path):
+        if not isinstance(document, dict) or not document.get("kind"):
+            continue
+        metadata = document.get("metadata", {})
+        key = (
+            str(document["kind"]).lower(),
+            str(metadata.get("namespace", "default")).lower(),
+            str(metadata.get("name", "")).lower(),
+        )
+        check(bool(key[2]), f"catalog entity has no metadata.name: {path.relative_to(ROOT)}")
+        check(key not in entities, f"duplicate catalog entity {key}: {path.relative_to(ROOT)}")
+        entities[key] = path
 
 
-if __name__ == '__main__':
+def normalize_ref(value: str, default_kind: str) -> tuple[str, str, str]:
+    kind = default_kind
+    namespace = "default"
+    name = value
+    if ":" in value:
+        kind, name = value.split(":", 1)
+    if "/" in name:
+        namespace, name = name.split("/", 1)
+    return kind.lower(), namespace.lower(), name.lower()
+
+
+for key, path in entities.items():
+    document = load_documents(path)[0]
+    spec = document.get("spec", {}) if isinstance(document, dict) else {}
+    scalar_relations = {
+        "owner": "group",
+        "system": "system",
+        "domain": "domain",
+    }
+    for field, default_kind in scalar_relations.items():
+        value = spec.get(field)
+        if value:
+            ref = normalize_ref(str(value), default_kind)
+            check(ref in entities, f"{path.relative_to(ROOT)} unresolved {field}: {value}")
+    for field, default_kind in (("dependsOn", "component"), ("providesApis", "api")):
+        for value in spec.get(field, []) or []:
+            ref = normalize_ref(str(value), default_kind)
+            check(ref in entities, f"{path.relative_to(ROOT)} unresolved {field}: {value}")
+
+manifest = (ROOT / "gitops/applications/workloads/demo-service/application-development.yaml").read_text(
+    encoding="utf-8"
+)
+check(
+    "https://github.com/stonetusker/tusker-demo-notification-service.git" in manifest,
+    "demo Argo CD Application does not use external repository",
+)
+check("path: deploy/overlays/development" in manifest, "demo Argo CD path is incorrect")
+check("project: workloads" in manifest, "demo Argo CD Application uses the wrong project")
+
+root_catalog = (ROOT / "catalog-info.yaml").read_text(encoding="utf-8")
+check(
+    "tusker-demo-notification-service/blob/main/catalog-info.yaml" in root_catalog,
+    "external demo catalog location missing",
+)
+
+template = (ROOT / "software-templates/tusker-service/template.yaml").read_text(encoding="utf-8")
+for marker in (
+    "fetch:template",
+    "publish:github",
+    "catalog:register",
+    "publish:github:pull-request",
+    "collaborators:",
+    "developerUsername",
+):
+    check(marker in template, f"template missing {marker}")
+
+for marker in (
+    "repositoryVisibility",
+    "default: private",
+    "repoVisibility: ${{ parameters.repositoryVisibility }}",
+):
+    check(marker in template, f"template visibility support missing {marker}")
+
+ci = (
+    ROOT / "software-templates/tusker-service/skeleton/service/.github/workflows/ci.yml"
+).read_text(encoding="utf-8")
+for marker in (
+    "--no-git",
+    "docker push",
+    "scripts/set-release.py",
+    "create-pull-request@v8",
+    "actions/checkout@v6",
+    "aquasec/trivy:0.70.0",
+    "semgrep/semgrep:1.162.0",
+    "zricethezav/gitleaks:v8.30.1",
+):
+    check(marker in ci, f"generated CI missing {marker}")
+check("upload-sarif" not in ci, "generated CI requires GitHub Advanced Security")
+check("security-events:" not in ci, "generated CI requests unused Advanced Security permission")
+check("verify-public-package" not in ci, "generated CI still contains the public-only GHCR gate")
+
+generated_sa = (ROOT / "software-templates/tusker-service/skeleton/service/deploy/base/service-account.yaml").read_text(encoding="utf-8")
+check("name: ghcr-pull-secret" in generated_sa, "generated ServiceAccount lacks GHCR pull Secret")
+generated_external_secret = (ROOT / "software-templates/tusker-service/skeleton/service/deploy/base/external-secret.yaml").read_text(encoding="utf-8")
+check("kind: ExternalSecret" in generated_external_secret, "generated ExternalSecret missing")
+check("kubernetes-platform-secrets" in generated_external_secret, "generated ExternalSecret uses wrong store")
+
+backstage_sa = (ROOT / "platform-services/backstage/manifests/service-account.yaml").read_text(encoding="utf-8")
+check("name: ghcr-pull-secret" in backstage_sa, "Backstage ServiceAccount lacks GHCR pull Secret")
+backstage_external_secret = (ROOT / "platform-services/backstage/manifests/ghcr-pull-external-secret.yaml").read_text(encoding="utf-8")
+check("kind: ExternalSecret" in backstage_external_secret, "Backstage GHCR ExternalSecret missing")
+cluster_store = (ROOT / "platform-services/github-access/manifests/cluster-secret-store.yaml").read_text(encoding="utf-8")
+check("remoteNamespace: platform-secrets" in cluster_store, "GitHub access store uses wrong source namespace")
+for required_store_marker in (
+    "conditions:",
+    "platform.stonetusker.com/workload",
+    "- backstage",
+):
+    check(
+        required_store_marker in cluster_store,
+        f"ClusterSecretStore is missing access restriction: {required_store_marker}",
+    )
+check(
+    'resourceNames: ["ghcr-pull-credentials"]'
+    in (ROOT / "platform-services/github-access/manifests/role.yaml").read_text(encoding="utf-8"),
+    "GHCR source Secret RBAC is not name-scoped",
+)
+check(
+    (ROOT / "software-templates/tusker-service/skeleton/service/deploy/base/external-secret.yaml").is_file(),
+    "generated GHCR ExternalSecret missing",
+)
+
+credential_script = (ROOT / "scripts/backstage/configure-github-platform-secret.sh").read_text(encoding="utf-8")
+for marker in (
+    "GHCR PAT classic with read:packages",
+    "--from-file=GITHUB_TOKEN",
+    "--type=kubernetes.io/dockerconfigjson",
+    "GHCR_PULL_TOKEN",
+    "umask 077",
+):
+    check(marker in credential_script, f"credential bootstrap script missing {marker}")
+check("--from-literal" not in credential_script, "credential bootstrap exposes values through command-line literals")
+
+credential_verifier = (ROOT / "scripts/backstage/verify-github-platform-secrets.sh").read_text(encoding="utf-8")
+for marker in (
+    "repo-creds",
+    "kubernetes.io/dockerconfigjson",
+    "ClusterSecretStore",
+    "externalsecret.external-secrets.io",
+):
+    check(marker in credential_verifier, f"credential verifier missing {marker}")
+
+backstage_ci = (ROOT / ".github/workflows/backstage-image.yml").read_text(encoding="utf-8")
+for marker in (
+    "packages: write",
+    "pull-requests: write",
+    'NODE_VERSION: "22.21.0"',
+    "aquasec/trivy:0.70.0",
+    "actions/upload-artifact@v7",
+    "docker/login-action@v4",
+    "scripts/backstage/set-backstage-release.py",
+    "create-pull-request@v8",
+):
+    check(marker in backstage_ci, f"Backstage workflow missing {marker}")
+check("Verify anonymous Backstage image pull" not in backstage_ci, "Backstage CI still requires a public package")
+check(
+    not (ROOT / "scripts/demo/configure-ghcr-pull-secret.sh").exists(),
+    "legacy namespace-by-namespace GHCR Secret helper must not be present",
+)
+demo_preflight = (ROOT / "scripts/demo/preflight.sh").read_text(encoding="utf-8")
+check(
+    "demo-service-development/ghcr-pull-secret is missing" in demo_preflight,
+    "demo preflight does not require the platform-managed pull Secret",
+)
+check(
+    "expected when the package is public" not in demo_preflight,
+    "demo preflight still allows the old public-only bypass",
+)
+
+requirements = (
+    ROOT / "software-templates/tusker-service/skeleton/service/requirements.txt"
+).read_text(encoding="utf-8")
+check("fastapi==0.141.1" in requirements, "generated dependency baseline is incorrect")
+check("starlette==1.3.1" in requirements, "generated Starlette security baseline is incorrect")
+
+# Persistent Secret manifests are not allowed in either repository.
+for path in sorted(ROOT.rglob("*.yaml")) + sorted(ROOT.rglob("*.yml")):
+    if "skeleton" in path.parts:
+        continue
+    text = path.read_text(encoding="utf-8")
+    if "{%" in text or "${{ values." in text:
+        continue
     try:
-        raise SystemExit(main())
-    except Exception as exc:
-        print(f'ERROR: {exc}', file=sys.stderr)
-        raise SystemExit(1)
+        documents = load_documents(path)
+    except Exception:
+        continue
+    for document in documents:
+        if isinstance(document, dict) and document.get("kind") == "Secret":
+            errors.append(
+                f"Kubernetes Secret manifest must not be committed: {path.relative_to(ROOT)}"
+            )
+
+if errors:
+    for error in errors:
+        print(f"ERROR: {error}")
+    raise SystemExit(1)
+print("TuskerBlueprint split-repository validation passed")

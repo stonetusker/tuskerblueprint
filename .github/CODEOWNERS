@@ -1,16 +1,8 @@
-# Default ownership
-* @stonetusker
+* @stonetusker/platform-team
 
-# Platform and GitOps
-/gitops/ @stonetusker
-/platform-services/ @stonetusker
-/infrastructure/ @stonetusker
-
-# Developer portal and catalog
-/backstage-app/ @stonetusker
-/catalog/ @stonetusker
-/software-templates/ @stonetusker
-
-# Reference workload and documentation
-/workloads/ @stonetusker
-/docs/ @stonetusker
+/software-templates/ @stonetusker/platform-team
+/gitops/ @stonetusker/platform-team
+/platform-services/ @stonetusker/platform-team
+/infrastructure/ @stonetusker/platform-team
+/backstage-app/ @stonetusker/platform-team
+/.github/workflows/ @stonetusker/platform-team

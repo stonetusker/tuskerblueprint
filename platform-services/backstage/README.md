@@ -7,7 +7,7 @@ This directory contains the Kubernetes deployment configuration and runtime-acce
 - `values/development-idp.yaml`: active plugin-enabled custom-image deployment for development.
 - `values/development.yaml`: stock-image rollback values.
 - `values/development-stock.yaml`: retained stock configuration copy.
-- `manifests/`: ServiceAccount, read-only RBAC, NetworkPolicy, and Argo CD public CA ConfigMap.
+- `manifests/`: ServiceAccount, GHCR `ExternalSecret`, read-only RBAC, NetworkPolicy, and Argo CD public CA ConfigMap.
 - `examples/`: External Secret contracts that are intentionally not applied until a real secret store is selected.
 
 The active values file is selected in:
@@ -27,7 +27,7 @@ backstage/backstage-argocd-credentials
 backstage/backstage-argocd-ca
 ```
 
-The first three are Secrets and must never be committed. `backstage-argocd-ca` is a ConfigMap containing only the public Argo CD certificate.
+The first three are Secrets and must never be committed. The Backstage ServiceAccount also references `backstage/ghcr-pull-secret`, materialized from `platform-secrets/ghcr-pull-credentials`. `backstage-argocd-ca` is a ConfigMap containing only the public Argo CD certificate.
 
 
 ## GitHub provisioning credential

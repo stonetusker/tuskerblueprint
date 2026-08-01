@@ -69,6 +69,7 @@ spec:
     - title: Repository
       required:
         - repoUrl
+        - repositoryVisibility
       properties:
         repoUrl:
           title: Repository location
@@ -80,6 +81,17 @@ spec:
               - github.com
             allowedOwners:
               - stonetusker
+        repositoryVisibility:
+          title: Repository visibility
+          type: string
+          description: Public and private repositories use the same Kubernetes-managed GitHub credentials
+          default: private
+          enum:
+            - private
+            - public
+          enumNames:
+            - Private (recommended)
+            - Public
 
   steps:
     - id: fetch-service
@@ -96,7 +108,7 @@ spec:
           developerUsername: ${{ parameters.developerUsername }}
           port: ${{ parameters.port }}
           repoUrl: ${{ parameters.repoUrl }}
-          repoVisibility: public
+          repoVisibility: ${{ parameters.repositoryVisibility }}
 
     - id: publish-service
       name: Create GitHub repository and grant developer access
@@ -106,7 +118,7 @@ spec:
         repoUrl: ${{ parameters.repoUrl }}
         description: ${{ parameters.description }}
         defaultBranch: main
-        repoVisibility: public
+        repoVisibility: ${{ parameters.repositoryVisibility }}
         protectDefaultBranch: true
         requireCodeOwnerReviews: false
         collaborators:
@@ -147,13 +159,17 @@ spec:
         description: |
           Registers `${{ parameters.name }}` with the TuskerBlueprint generated-workloads controller.
 
-          The generated service repository owns its Kubernetes base and development overlay. After this pull request is merged, Argo CD follows the service repository and deploys validated immutable releases.
+          The generated service repository owns its Kubernetes base and development overlay. Merge the service release pull request first, then merge this onboarding pull request. Argo CD then follows the service repository and deploys validated immutable releases.
 
-          Review ownership, namespace, public repository visibility, image policy, and resource settings before merging.
+          Review ownership, namespace, selected repository visibility, image policy, and resource settings before merging. Kubernetes-managed Argo CD and GHCR credentials support both public and private repositories.
         sourcePath: ./gitops-registration
         targetPath: gitops/generated-workloads/${{ parameters.name }}
 
   output:
+    text:
+      - title: Complete the first immutable release
+        content: |
+          Open the new repository Actions page, confirm the image is published, and merge the one-file release PR. The cluster-managed GHCR pull Secret supports either a public or private package. Then merge the GitOps onboarding PR.
     links:
       - title: Service repository
         url: ${{ steps['publish-service'].output.remoteUrl }}

@@ -58,6 +58,13 @@ Every platform component upgrade must update this document as part of the same p
 | kubectl                   | TBD           | Kubernetes CLI              |
 | GitHub Actions            | GitHub Hosted | CI/CD                       |
 | GitHub Container Registry | GitHub Hosted | OCI Registry                |
+| Node.js                    | 22.21.0      | Backstage build/runtime baseline |
+| Python                     | 3.12         | Generated FastAPI service baseline |
+| FastAPI                    | 0.141.1      | Generated application framework |
+| Starlette                  | 1.3.1        | Security-reviewed ASGI baseline |
+| Trivy                      | 0.70.0       | Filesystem, image and SBOM checks |
+| Semgrep                    | 1.162.0      | SAST baseline |
+| Gitleaks                   | 8.30.1       | Current-source secret scanning |
 
 ---
 

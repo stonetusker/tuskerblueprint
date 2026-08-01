@@ -1,21 +1,12 @@
-# CI/CD and GitOps delivery
+# Delivery and GitOps
 
-## Pull request
+The application repository owns code, testing, image publication and environment overlays. The platform repository owns the Argo CD Application object and shared cluster services.
 
-The workflow performs:
+1. A developer opens a pull request.
+2. CI runs quality and security gates.
+3. A merge to `main` publishes `ghcr.io/${{ values.repoUrl | parseRepoUrl | pick('owner') }}/${{ values.repoUrl | parseRepoUrl | pick('repo') }}:<full-sha>`.
+4. CI opens a release pull request in this repository.
+5. A maintainer reviews and merges the immutable image update.
+6. Argo CD detects the overlay change and reconciles `${{ values.name }}-development`.
 
-1. Formatting, linting, and strict type checking.
-2. Unit tests and an 80 percent coverage gate.
-3. Gitleaks secret scanning.
-4. Semgrep static analysis.
-5. Trivy filesystem and dependency scanning.
-6. Container build and image vulnerability scanning.
-7. SPDX SBOM generation.
-
-## Main branch
-
-After merge, the workflow publishes immutable and bootstrap image tags to GHCR. It then opens a release pull request that changes only the development image tag and release annotation.
-
-## Deployment
-
-After the release pull request is approved and merged, Argo CD detects the Git change and reconciles the development namespace. Manual cluster changes are corrected back to the approved Git state.
+The workflow intentionally uses normal artifacts instead of GitHub Code Scanning uploads so it works on GitHub Free private repositories.

@@ -16,7 +16,7 @@ if ! kubectl -n "${namespace}" get service "${service}" >/dev/null 2>&1; then
 fi
 
 cat <<MESSAGE
-Stonetusker demo UI
+StoneTusker demo UI
 
 Open: http://localhost:${local_port}/
 API:  http://localhost:${local_port}/docs

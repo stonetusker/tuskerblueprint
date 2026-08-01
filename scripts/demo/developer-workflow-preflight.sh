@@ -61,6 +61,7 @@ check_application() {
 check_application backstage
 check_application backstage-platform-resources
 check_application generated-workloads
+check_application github-access
 
 if ! kubectl -n backstage rollout status deployment/backstage --timeout=120s; then
   fail=1
@@ -87,14 +88,35 @@ else
   warn=1
 fi
 
+for item in \
+  argocd/argocd-github-org-repo-creds \
+  platform-secrets/ghcr-pull-credentials; do
+  namespace="${item%%/*}"
+  secret="${item#*/}"
+  if kubectl -n "${namespace}" get secret "${secret}" >/dev/null 2>&1; then
+    echo "OK: ${namespace}/${secret}"
+  else
+    echo "ERROR: missing ${namespace}/${secret}" >&2
+    fail=1
+  fi
+done
+
+if kubectl get clustersecretstore kubernetes-platform-secrets >/dev/null 2>&1; then
+  echo "OK: ClusterSecretStore kubernetes-platform-secrets"
+else
+  echo "ERROR: missing ClusterSecretStore kubernetes-platform-secrets" >&2
+  fail=1
+fi
+
 cat <<'CHECKS'
 
 Manual GitHub checks still required:
-- subeeshlearn accepted the Stonetusker organization invitation.
+- subeeshlearn accepted the StoneTusker organization invitation.
 - The platform token can create organization repositories and collaborators.
 - GitHub Actions is enabled for newly created repositories.
 - Workflows are allowed to create release pull requests.
-- Public GHCR packages are allowed for the demo path.
+- Kubernetes Secrets are configured for Backstage, Argo CD private Git access and GHCR pulls.
+- The GHCR token identity can read private packages when private visibility is selected.
 CHECKS
 
 if [[ ${fail} -ne 0 ]]; then

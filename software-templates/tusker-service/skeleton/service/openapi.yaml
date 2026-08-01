@@ -1,15 +1,22 @@
 openapi: 3.0.3
 info:
   title: ${{ values.name }} API
-  version: 1.1.0
-  description: ${{ values.description }}
+  version: 1.2.0
+  description: >-
+    ${{ values.description }} This reference application demonstrates a browser UI, secure delivery,
+    GitOps, observability, failure detection, rollback, and Backstage API
+    discovery. The service records fictional notifications in memory and never
+    sends email, SMS, or webhooks.
 servers:
   - url: http://${{ values.name }}.${{ values.name }}-development.svc.cluster.local
     description: Development cluster service
+  - url: http://localhost:8081
+    description: Developer workstation after Kubernetes port-forward
 paths:
   /:
     get:
-      summary: Open the generated browser application
+      summary: Open the browser-based notification demo
+      operationId: getApplicationUi
       responses:
         '200':
           description: HTML application
@@ -19,10 +26,18 @@ paths:
                 type: string
   /api/v1/status:
     get:
-      summary: Service and release metadata
+      summary: Return service and release metadata
+      operationId: getServiceMetadata
       responses:
         '200':
           description: Service metadata
+          headers:
+            X-Correlation-ID:
+              schema:
+                type: string
+            X-Service-Version:
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -30,28 +45,111 @@ paths:
   /healthz:
     get:
       summary: Liveness endpoint
+      operationId: getHealth
       responses:
         '200':
-          description: Service is alive
+          description: Process is alive
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
   /readyz:
     get:
       summary: Readiness endpoint
+      operationId: getReadiness
       responses:
         '200':
-          description: Service is ready
+          description: Service can receive traffic
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
         '503':
-          description: Service is not ready
-  /api/v1/example:
+          description: Controlled readiness failure or unavailable dependency
+  /api/v1/notifications:
     get:
-      summary: Example product endpoint
+      summary: Return recent in-memory notification records
+      operationId: listNotifications
+      parameters:
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
       responses:
         '200':
-          description: Example response
+          description: Most recent notifications, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NotificationRecord'
+    post:
+      summary: Accept a fictional notification request
+      operationId: createNotification
+      parameters:
+        - in: header
+          name: X-Demo-Request
+          required: false
+          schema:
+            type: string
+        - in: header
+          name: X-Correlation-ID
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationRequest'
+      responses:
+        '202':
+          description: Notification accepted for the demonstration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationRecord'
+        '422':
+          description: Invalid request
+        '500':
+          description: Controlled demo error mode
+  /api/v1/notifications/{notificationId}:
+    get:
+      summary: Return one in-memory notification record
+      operationId: getNotification
+      parameters:
+        - in: path
+          name: notificationId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Notification record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationRecord'
+        '404':
+          description: Notification not found
 components:
   schemas:
+    Status:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
     ServiceMetadata:
       type: object
-      required: [service, environment, version, status, description]
+      required: [service, environment, version, status]
       properties:
         service:
           type: string
@@ -61,5 +159,35 @@ components:
           type: string
         status:
           type: string
-        description:
+    NotificationRequest:
+      type: object
+      required: [channel, recipient, message]
+      properties:
+        channel:
           type: string
+          enum: [email, sms, webhook]
+        recipient:
+          type: string
+          minLength: 3
+          maxLength: 200
+        message:
+          type: string
+          minLength: 1
+          maxLength: 2000
+    NotificationRecord:
+      allOf:
+        - $ref: '#/components/schemas/NotificationRequest'
+        - type: object
+          required: [id, state, accepted_at, correlation_id]
+          properties:
+            id:
+              type: string
+              format: uuid
+            state:
+              type: string
+              example: accepted
+            accepted_at:
+              type: string
+              format: date-time
+            correlation_id:
+              type: string

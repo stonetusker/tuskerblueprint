@@ -15,9 +15,9 @@ metadata:
 spec:
   project: workloads
   source:
-    repoURL: git@github.com:stonetusker/tuskerblueprint.git
+    repoURL: https://github.com/stonetusker/tusker-demo-notification-service.git
     targetRevision: main
-    path: workloads/demo-service/overlays/production
+    path: deploy/overlays/production
   destination:
     server: https://kubernetes.default.svc
     namespace: demo-service-production

@@ -2,88 +2,139 @@ name: Backstage IDP Image
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
+  pull_request:
     paths:
-      - 'backstage-app/**'
-      - 'scripts/backstage/bootstrap-custom-app.sh'
-      - '.github/workflows/backstage-image.yml'
+      - "backstage-app/**"
+      - "scripts/backstage/bootstrap-custom-app.sh"
+      - "scripts/backstage/set-backstage-release.py"
+      - ".github/workflows/backstage-image.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "backstage-app/**"
+      - "scripts/backstage/bootstrap-custom-app.sh"
+      - "scripts/backstage/set-backstage-release.py"
+      - ".github/workflows/backstage-image.yml"
 
 permissions:
-  contents: read
+  contents: write
   packages: write
-  security-events: write
+  pull-requests: write
 
 concurrency:
-  group: backstage-image-${{ github.ref }}
+  group: backstage-image-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
-  COREPACK_ENABLE_DOWNLOAD_PROMPT: '0'
-  YARN_ENABLE_IMMUTABLE_INSTALLS: 'false'
-  YARN_ENABLE_SCRIPTS: 'false'
-  IMAGE_NAME: ghcr.io/stonetusker/tuskerblueprint-backstage
-  TRIVY_IMAGE: aquasec/trivy:0.58.1
+  BACKSTAGE_IMAGE: ghcr.io/stonetusker/tuskerblueprint-backstage
+  NODE_VERSION: "22.21.0"
+  TRIVY_IMAGE: aquasec/trivy:0.70.0
 
 jobs:
-  build-and-scan:
+  build-test-publish:
+    name: Build, test and publish Backstage
     runs-on: ubuntu-latest
     timeout-minutes: 60
-
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: '20.19.0'
-
-      - name: Install rsync
-        run: sudo apt-get update && sudo apt-get install -y rsync
+          node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
 
       - name: Enable Corepack
         run: corepack enable
 
-      - name: Generate custom Backstage application
-        run: scripts/backstage/bootstrap-custom-app.sh
+      - name: Generate the custom Backstage application
+        run: scripts/backstage/bootstrap-custom-app.sh .generated/backstage
 
-      - name: Validate generated application
+      - name: Type-check Backstage
         working-directory: .generated/backstage
-        run: |
-          corepack yarn tsc
-          corepack yarn workspace app test --ci --runInBand --passWithNoTests
-          corepack yarn workspace backend build
+        run: corepack yarn tsc
+
+      - name: Test Backstage frontend
+        working-directory: .generated/backstage
+        run: corepack yarn workspace app test --ci --watchAll=false
+
+      - name: Build Backstage backend bundle
+        working-directory: .generated/backstage
+        run: corepack yarn build:backend
 
       - name: Build Backstage image
-        working-directory: .generated/backstage
         run: |
+          set -euo pipefail
           docker build \
-            --file packages/backend/Dockerfile \
-            --tag "${IMAGE_NAME}:${GITHUB_SHA}" \
-            .
+            --file .generated/backstage/packages/backend/Dockerfile \
+            --tag "${BACKSTAGE_IMAGE}:${GITHUB_SHA}" \
+            .generated/backstage
 
       - name: Scan Backstage image
         run: |
-          trivy() {
-            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-              --entrypoint trivy "${TRIVY_IMAGE}" "$@"
-          }
-          trivy image \
-            --exit-code 1 \
-            --severity HIGH,CRITICAL \
-            --ignore-unfixed \
-            "${IMAGE_NAME}:${GITHUB_SHA}"
+          set -euo pipefail
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+            --entrypoint trivy "${TRIVY_IMAGE}" \
+            image --scanners vuln --vuln-type os,library \
+            --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 \
+            "${BACKSTAGE_IMAGE}:${GITHUB_SHA}"
+
+      - name: Generate Backstage SPDX SBOM
+        run: |
+          set -euo pipefail
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "${GITHUB_WORKSPACE}:/work" --entrypoint trivy "${TRIVY_IMAGE}" \
+            image --format spdx-json --output /work/backstage.spdx.json \
+            "${BACKSTAGE_IMAGE}:${GITHUB_SHA}"
+
+      - name: Upload Backstage delivery evidence
+        uses: actions/upload-artifact@v7
+        with:
+          name: backstage-sbom-${{ github.sha }}
+          path: backstage.spdx.json
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Log in to GHCR
-        uses: docker/login-action@v3
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Publish immutable and main tags
+      - name: Publish immutable and main Backstage tags
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          docker tag "${IMAGE_NAME}:${GITHUB_SHA}" "${IMAGE_NAME}:main"
-          docker push "${IMAGE_NAME}:${GITHUB_SHA}"
-          docker push "${IMAGE_NAME}:main"
+          set -euo pipefail
+          docker tag "${BACKSTAGE_IMAGE}:${GITHUB_SHA}" "${BACKSTAGE_IMAGE}:main"
+          docker push "${BACKSTAGE_IMAGE}:${GITHUB_SHA}"
+          docker push "${BACKSTAGE_IMAGE}:main"
+          docker manifest inspect "${BACKSTAGE_IMAGE}:${GITHUB_SHA}" >/dev/null
+
+      - name: Update development Backstage release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: python scripts/backstage/set-backstage-release.py "${GITHUB_SHA}"
+
+      - name: Create immutable Backstage release pull request
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "release(backstage): deploy ${{ github.sha }} to development"
+          branch: release/backstage-${{ github.sha }}
+          delete-branch: true
+          title: "release(backstage): deploy ${{ github.sha }} to development"
+          body: |
+            Automated immutable Backstage development release.
+
+            Published image: `ghcr.io/stonetusker/tuskerblueprint-backstage:${{ github.sha }}`
+
+            Review that only `platform-services/backstage/values/development-idp.yaml` changed.
+          add-paths: platform-services/backstage/values/development-idp.yaml
+          labels: |
+            automated
+            backstage
+            release

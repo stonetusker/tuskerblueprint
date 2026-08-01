@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: github-access
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: github-access
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: tuskerblueprint
+    app.kubernetes.io/environment: development
+  annotations:
+    argocd.argoproj.io/sync-wave: "30"
+spec:
+  project: platform
+  source:
+    repoURL: git@github.com:stonetusker/tuskerblueprint.git
+    targetRevision: main
+    path: platform-services/github-access/manifests
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: platform-secrets
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true
+      - PrunePropagationPolicy=foreground
+      - SkipDryRunOnMissingResource=true

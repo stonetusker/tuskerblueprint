@@ -1,93 +1,40 @@
 # ${{ values.name }}
 
-[![Service CI and Release](https://github.com/${{ values.repoUrl | parseRepoUrl | pick('owner') }}/${{ values.repoUrl | parseRepoUrl | pick('repo') }}/actions/workflows/ci.yml/badge.svg)](https://github.com/${{ values.repoUrl | parseRepoUrl | pick('owner') }}/${{ values.repoUrl | parseRepoUrl | pick('repo') }}/actions/workflows/ci.yml)
+${{ values.description }} It owns the FastAPI service, executive browser UI, tests, OpenAPI definition, TechDocs, CI/CD and Kubernetes overlays. The platform and Argo CD registration live in `stonetusker/tuskerblueprint`.
 
-${{ values.description }}
-
-This repository was created through the TuskerBlueprint Backstage golden path.
-It includes a small browser UI, FastAPI source, tests, CI/CD, container packaging,
-security scans, TechDocs, an OpenAPI definition and Kubernetes GitOps manifests.
-
-## Developer owner
-
-- GitHub developer: `@${{ values.developerUsername }}`
-- Backstage owner: `${{ values.owner }}`
-- Backstage system: `${{ values.system }}`
-
-## Local development
+## Local developer workflow
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
+python -m pip install --upgrade pip
 python -m pip install -r requirements-dev.txt
-uvicorn src.main:app --reload --port ${{ values.port }}
+make validate
+make lint
+make test
+make run
 ```
 
-Open:
-
-```text
-Application UI: http://localhost:${{ values.port }}/
-OpenAPI UI:     http://localhost:${{ values.port }}/docs
-```
-
-In another terminal:
-
-```bash
-curl http://localhost:${{ values.port }}/healthz
-curl http://localhost:${{ values.port }}/readyz
-curl http://localhost:${{ values.port }}/api/v1/status
-curl http://localhost:${{ values.port }}/api/v1/example
-```
-
-## Validate before pushing
-
-```bash
-scripts/verify.sh
-```
+Open `http://localhost:8000/`.
 
 ## Delivery workflow
 
-Pull requests run formatting, linting, type checks, tests, coverage, secret
-scanning, SAST, dependency and image vulnerability scans, an image build and
-SPDX SBOM generation.
+Pull requests run formatting, linting, type checks, unit tests, current-source secret scanning, Semgrep and Trivy. A merge to `main` builds, scans and publishes immutable and `main` GHCR tags, verifies the authenticated remote manifest, and opens a release PR changing only `deploy/overlays/development/kustomization.yaml`.
 
-A successful build on `main` publishes:
+This repository was requested with `${{ values.repoVisibility }}` visibility. The GHCR package can be public or private. Kubernetes uses the platform-managed `ghcr-pull-secret` in either case, and Argo CD uses organization-level repository credentials when this repository is private.
 
-```text
-ghcr.io/${{ values.repoUrl | parseRepoUrl | pick('owner') }}/${{ values.repoUrl | parseRepoUrl | pick('repo') }}:<full-git-sha>
-```
+After the release PR is approved and merged, Argo CD deploys the development overlay into `${{ values.name }}-development`.
 
-The workflow then opens a release pull request that updates
-`deploy/overlays/development/kustomization.yaml`. After approval and merge, Argo
-CD deploys the immutable release.
-
-## Kubernetes access
-
-After Argo CD reports the Application `Synced` and `Healthy`:
+## Runtime access
 
 ```bash
-kubectl -n ${{ values.name }}-development port-forward \
-  service/${{ values.name }} 8082:80
+kubectl -n ${{ values.name }}-development port-forward service/${{ values.name }} 8081:80
 ```
 
-Open `http://localhost:8082/`.
+## Ownership
 
-In-cluster callers use:
+- Application team: `${{ values.owner }}`
+- Platform and Argo CD registration: `stonetusker/tuskerblueprint`
+- Container image: `ghcr.io/${{ values.repoUrl | parseRepoUrl | pick('owner') }}/${{ values.repoUrl | parseRepoUrl | pick('repo') }}`
 
-```text
-http://${{ values.name }}.${{ values.name }}-development.svc.cluster.local
-```
-
-Argo CD reads only this generated service repository and the explicit overlay
-path declared by its Application. It does not clone unrelated services.
-
-## Documentation
-
-TechDocs source is under `docs/` and is registered through `catalog-info.yaml`.
-
-- [Architecture](docs/architecture.md)
-- [Development](docs/development.md)
-- [Delivery](docs/delivery.md)
-- [Operations runbook](docs/runbook.md)
-- [Observability](docs/observability.md)
-- [Security](docs/security.md)
+See `SETUP.md`, `docs/FIRST-RELEASE.md`, `docs/runbook.md` and `docs/CODE-REVIEW.md`.

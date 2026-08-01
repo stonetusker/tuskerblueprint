@@ -2,10 +2,10 @@ apiVersion: backstage.io/v1alpha1
 kind: Group
 metadata:
   name: platform-team
-  title: Stonetusker Platform Team
+  title: StoneTusker Platform Team
   description: Team responsible for the TuskerBlueprint platform, golden paths, and developer experience
 spec:
   type: team
   profile:
-    displayName: Stonetusker Platform Team
+    displayName: StoneTusker Platform Team
   children: []

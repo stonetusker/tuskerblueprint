@@ -32,8 +32,17 @@ check_application() {
 check_application backstage
 check_application demo-service-development
 
-if ! kubectl -n demo-service-development get secret ghcr-pull-secret >/dev/null 2>&1; then
-  echo "ERROR: ghcr-pull-secret is missing from demo-service-development" >&2
+if kubectl -n demo-service-development get secret ghcr-pull-secret >/dev/null 2>&1; then
+  secret_type="$(kubectl -n demo-service-development get secret ghcr-pull-secret -o jsonpath='{.type}')"
+  if [[ "${secret_type}" == "kubernetes.io/dockerconfigjson" ]]; then
+    echo "GHCR pull Secret: configured through the platform credential flow"
+  else
+    echo "ERROR: demo-service-development/ghcr-pull-secret has unexpected type ${secret_type}" >&2
+    fail=1
+  fi
+else
+  echo "ERROR: demo-service-development/ghcr-pull-secret is missing" >&2
+  echo "Sync external-secrets and github-access, then verify the workload ExternalSecret." >&2
   fail=1
 fi
 

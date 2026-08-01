@@ -17,7 +17,6 @@ spec:
     - ./catalog/resources/tuskerblueprint-repository.yaml
     - ./catalog/components/backstage.yaml
     - ./catalog/components/argocd.yaml
-    - ./catalog/components/demo-service.yaml
     - ./catalog/components/traefik.yaml
     - ./catalog/components/cert-manager.yaml
     - ./catalog/components/external-secrets.yaml
@@ -25,5 +24,5 @@ spec:
     - ./catalog/components/prometheus.yaml
     - ./catalog/components/grafana.yaml
     - ./catalog/components/loki.yaml
-    - ./catalog/apis/demo-service-api.yaml
     - ./software-templates/tusker-service/template.yaml
+    - https://github.com/stonetusker/tusker-demo-notification-service/blob/main/catalog-info.yaml

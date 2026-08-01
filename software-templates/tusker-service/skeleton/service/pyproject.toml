@@ -3,7 +3,7 @@ addopts = "-q --strict-markers --disable-warnings"
 testpaths = ["tests"]
 
 [tool.coverage.run]
-source = ["src"]
+source = ["app"]
 branch = true
 
 [tool.coverage.report]

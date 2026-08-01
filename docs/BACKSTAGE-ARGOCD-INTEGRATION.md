@@ -242,7 +242,7 @@ This direct test omits the token. The response proves the certificate is trusted
 ```text
 Backstage
 → Catalog
-→ Stonetusker Customer Notification API
+→ StoneTusker Customer Notification API
 → Argo CD
 → Refresh
 ```

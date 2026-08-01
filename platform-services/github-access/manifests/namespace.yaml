@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: platform-secrets
+  labels:
+    app.kubernetes.io/name: github-access
+    app.kubernetes.io/part-of: tuskerblueprint

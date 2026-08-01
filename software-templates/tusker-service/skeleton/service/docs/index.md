@@ -2,28 +2,6 @@
 
 ${{ values.description }}
 
-This service was created through the TuskerBlueprint golden path and includes a
-small browser UI at `/`, a FastAPI backend, CI/CD, GitOps, OpenAPI, TechDocs,
-metrics, structured logs and Kubernetes runtime controls.
+This repository was provisioned through the TuskerBlueprint golden path. It includes a responsive browser UI, FastAPI endpoints, structured logs, Prometheus metrics, current-source security scanning, immutable container releases, TechDocs, OpenAPI and Kustomize overlays.
 
-## Local experience
-
-```bash
-uvicorn src.main:app --reload --port ${{ values.port }}
-```
-
-Open:
-
-```text
-Application UI: http://localhost:${{ values.port }}/
-API docs:       http://localhost:${{ values.port }}/docs
-```
-
-## Deployed experience
-
-```bash
-kubectl -n ${{ values.name }}-development port-forward \
-  service/${{ values.name }} 8082:80
-```
-
-Open `http://localhost:8082/`.
+The application repository owns source, tests, CI/CD, documentation and Kubernetes overlays. The TuskerBlueprint platform repository owns Backstage, shared platform services and the Argo CD `Application` registration.

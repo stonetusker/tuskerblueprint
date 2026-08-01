@@ -42,7 +42,7 @@ backstage:
                 title: Create an issue
 
     organization:
-      name: Stonetusker Systems
+      name: StoneTusker Systems
 
     backend:
       baseUrl: http://localhost:7007

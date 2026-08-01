@@ -1,15 +1,10 @@
 # Security
 
-The default workload uses:
+The container runs as UID/GID 10001, drops all capabilities, uses a read-only root filesystem and does not receive a Kubernetes API token. NetworkPolicies default-deny traffic and allow only approved ingress, DNS and workload-to-workload egress.
 
-- a non-root UID and GID;
-- a read-only root filesystem;
-- dropped Linux capabilities;
-- `RuntimeDefault` seccomp;
-- disabled service-account token mounting;
-- resource requests and limits;
-- liveness, readiness, and startup probes;
-- a default-deny NetworkPolicy with explicit HTTP ingress;
-- a PodDisruptionBudget.
+CI uses current-source Gitleaks, Semgrep, Trivy and an SPDX SBOM artifact. GitHub Advanced Security is not required.
 
-No secrets are included in the generated repository. Add runtime secrets through an approved Kubernetes secret-management path.
+The ServiceAccount references `ghcr-pull-secret`. TuskerBlueprint creates that Secret from a centrally stored Kubernetes credential through External Secrets Operator. No GitHub token or Docker configuration is committed to this repository.
+
+
+Kubernetes Secret data is not a substitute for encryption at rest. Production clusters should enable API-server Secret encryption, apply least-privilege RBAC to `platform-secrets`, use a dedicated GHCR read-only machine credential, and rotate the source Secret regularly.

@@ -31,7 +31,8 @@ if [[ "${ready}" -ne 1 ]]; then
   exit 1
 fi
 
-curl -fsS "http://127.0.0.1:${port}/" | python3 -m json.tool
+curl -fsS "http://127.0.0.1:${port}/" | grep -F "<!doctype html>" >/dev/null
 curl -fsS "http://127.0.0.1:${port}/readyz" | python3 -m json.tool
+curl -fsS "http://127.0.0.1:${port}/api/v1/status" | python3 -m json.tool
 
 echo "Recovery verification passed"

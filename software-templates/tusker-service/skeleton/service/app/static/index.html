@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="${{ values.description }}">
+  <meta name="theme-color" content="#FACF0E">
+  <title>${{ values.name }} | StoneTusker Customer Experience Hub</title>
+  <link rel="stylesheet" href="/assets/styles.css">
+  <script src="/assets/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="${{ values.name }} home">
+      <span class="brand-logo-frame">
+        <img
+          class="brand-logo"
+          src="/assets/stonetusker-logo.svg"
+          alt="StoneTusker Systems"
+          width="32"
+          height="32"
+        >
+      </span>
+      <span class="brand-copy">
+        <strong>${{ values.name }}</strong>
+        <small>Created through TuskerBlueprint</small>
+      </span>
+    </a>
+
+    <nav aria-label="Application links">
+      <a class="nav-link" href="#experience">Experience</a>
+      <a class="nav-link" href="#platform">Platform</a>
+      <a class="nav-button" href="/docs">API Docs</a>
+    </nav>
+  </header>
+
+  <main id="main-content">
+    <section class="hero" aria-labelledby="page-title">
+      <div class="hero-copy-wrap">
+        <div class="hero-kicker">
+          <span class="live-dot" aria-hidden="true"></span>
+          Live IDP reference application
+        </div>
+        <h1 id="page-title">Turn a customer message into <span>platform evidence.</span></h1>
+        <p class="hero-copy">
+          A simple business application demonstrating how StoneTusker standardizes delivery,
+          security, GitOps and operations without slowing development teams.
+        </p>
+        <div class="hero-actions">
+          <a class="primary-action" href="#experience">Try the experience</a>
+          <a class="secondary-action" href="#platform">See the delivery flow</a>
+        </div>
+        <div class="hero-proof" aria-label="Platform capabilities">
+          <span>✓ Golden path</span>
+          <span>✓ Secure CI/CD</span>
+          <span>✓ GitOps deployment</span>
+          <span>✓ Observable runtime</span>
+        </div>
+      </div>
+
+      <aside class="hero-console" aria-label="Live release summary">
+        <div class="console-header">
+          <span class="console-title">Live release</span>
+          <span class="health-badge" id="health-badge">
+            <span class="status-dot" id="release-dot" aria-hidden="true"></span>
+            <span id="health-label">Checking</span>
+          </span>
+        </div>
+        <div class="release-visual" aria-hidden="true">
+          <span class="release-orbit orbit-one"></span>
+          <span class="release-orbit orbit-two"></span>
+          <span class="release-core">SS</span>
+        </div>
+        <dl class="release-facts">
+          <div>
+            <dt>Service</dt>
+            <dd id="service-name">Loading...</dd>
+          </div>
+          <div>
+            <dt>Environment</dt>
+            <dd id="release-environment">Loading...</dd>
+          </div>
+          <div>
+            <dt>Version</dt>
+            <dd class="mono" id="release-version">Loading...</dd>
+          </div>
+        </dl>
+      </aside>
+    </section>
+
+    <section class="outcome-grid" aria-label="Business and platform outcomes">
+      <article class="outcome-card violet">
+        <div class="outcome-icon" aria-hidden="true">01</div>
+        <div>
+          <span class="outcome-label">Delivery health</span>
+          <strong id="api-status">Checking...</strong>
+          <small>Runtime and API availability</small>
+        </div>
+      </article>
+      <article class="outcome-card cyan">
+        <div class="outcome-icon" aria-hidden="true">02</div>
+        <div>
+          <span class="outcome-label">Session activity</span>
+          <strong id="notification-total">0</strong>
+          <small>Notifications accepted by this pod</small>
+        </div>
+      </article>
+      <article class="outcome-card coral">
+        <div class="outcome-icon" aria-hidden="true">03</div>
+        <div>
+          <span class="outcome-label">Active channels</span>
+          <strong>3</strong>
+          <small>Email, SMS and webhook</small>
+        </div>
+      </article>
+      <article class="outcome-card green">
+        <div class="outcome-icon" aria-hidden="true">04</div>
+        <div>
+          <span class="outcome-label">Readiness</span>
+          <strong id="readiness-status">Checking...</strong>
+          <small>Kubernetes readiness state</small>
+        </div>
+      </article>
+    </section>
+
+    <section class="section-heading" id="experience">
+      <div>
+        <p class="eyebrow">Interactive customer experience</p>
+        <h2>Send a message. Watch the platform respond.</h2>
+      </div>
+      <p>
+        Nothing is sent externally. The request is accepted in memory and produces API,
+        log, metric and correlation evidence for the demo.
+      </p>
+    </section>
+
+    <section class="workspace">
+      <article class="panel composer-panel">
+        <div class="panel-heading">
+          <div>
+            <span class="panel-index">Create</span>
+            <h3>Customer notification</h3>
+          </div>
+          <span class="demo-pill">Safe demo</span>
+        </div>
+
+        <form id="notification-form">
+          <fieldset class="channel-picker">
+            <legend>Choose a channel</legend>
+            <label class="channel-option">
+              <input type="radio" name="channel" value="email" checked>
+              <span class="channel-card">
+                <span class="channel-symbol" aria-hidden="true">@</span>
+                <span><strong>Email</strong><small>Rich customer updates</small></span>
+              </span>
+            </label>
+            <label class="channel-option">
+              <input type="radio" name="channel" value="sms">
+              <span class="channel-card">
+                <span class="channel-symbol" aria-hidden="true">#</span>
+                <span><strong>SMS</strong><small>Time-sensitive alerts</small></span>
+              </span>
+            </label>
+            <label class="channel-option">
+              <input type="radio" name="channel" value="webhook">
+              <span class="channel-card">
+                <span class="channel-symbol" aria-hidden="true">{ }</span>
+                <span><strong>Webhook</strong><small>System integration</small></span>
+              </span>
+            </label>
+          </fieldset>
+
+          <label for="recipient">Recipient</label>
+          <input
+            id="recipient"
+            name="recipient"
+            type="text"
+            value="customer@example.invalid"
+            minlength="3"
+            maxlength="200"
+            required
+          >
+          <p class="field-help">Use fictional data only. This reference application sends nothing externally.</p>
+
+          <label for="message">Message</label>
+          <textarea id="message" name="message" rows="5" maxlength="2000" required>Your order is ready. Thank you for choosing StoneTusker.</textarea>
+
+          <button id="submit-button" type="submit">
+            <span>Send demo notification</span>
+            <span aria-hidden="true">→</span>
+          </button>
+          <p id="form-result" class="form-result" role="status" aria-live="polite"></p>
+        </form>
+      </article>
+
+      <article class="panel activity-panel">
+        <div class="panel-heading">
+          <div>
+            <span class="panel-index">Observe</span>
+            <h3>Live activity</h3>
+          </div>
+          <button class="icon-button" id="refresh-button" type="button" aria-label="Refresh activity">↻</button>
+        </div>
+
+        <div class="channel-mix" aria-label="Notification channel mix">
+          <div class="mix-heading">
+            <span>Channel mix</span>
+            <small>Current pod session</small>
+          </div>
+          <div class="mix-row">
+            <span>Email</span>
+            <div class="mix-track"><span class="mix-fill email" id="email-bar"></span></div>
+            <strong id="email-count">0</strong>
+          </div>
+          <div class="mix-row">
+            <span>SMS</span>
+            <div class="mix-track"><span class="mix-fill sms" id="sms-bar"></span></div>
+            <strong id="sms-count">0</strong>
+          </div>
+          <div class="mix-row">
+            <span>Webhook</span>
+            <div class="mix-track"><span class="mix-fill webhook" id="webhook-bar"></span></div>
+            <strong id="webhook-count">0</strong>
+          </div>
+        </div>
+
+        <div class="activity-header">
+          <span>Recent requests</span>
+          <span class="correlation-chip">ID: <strong id="latest-correlation">waiting</strong></span>
+        </div>
+        <div id="notifications-empty" class="empty-state">
+          <span class="empty-symbol" aria-hidden="true">✦</span>
+          <strong>No activity yet</strong>
+          <p>Send the first demo notification to populate this live view.</p>
+        </div>
+        <ol id="notification-list" class="notification-list" aria-live="polite"></ol>
+      </article>
+    </section>
+
+    <section class="platform-section" id="platform" aria-labelledby="platform-title">
+      <div class="platform-copy">
+        <p class="eyebrow">What the audience should notice</p>
+        <h2 id="platform-title">A simple product experience, backed by an enterprise delivery path.</h2>
+        <p>
+          The application is intentionally small. The value is the repeatable path around it:
+          governed creation, automated quality controls, immutable release, GitOps deployment
+          and operational visibility.
+        </p>
+        <div class="platform-links">
+          <a href="/docs">Explore the API</a>
+          <a href="/metrics">Inspect metrics</a>
+        </div>
+      </div>
+
+      <div class="delivery-flow" aria-label="Delivery workflow">
+        <article>
+          <span class="flow-number">1</span>
+          <div><strong>Backstage</strong><small>Golden-path creation</small></div>
+        </article>
+        <span class="flow-line" aria-hidden="true"></span>
+        <article>
+          <span class="flow-number">2</span>
+          <div><strong>GitHub</strong><small>Code and secure CI</small></div>
+        </article>
+        <span class="flow-line" aria-hidden="true"></span>
+        <article>
+          <span class="flow-number">3</span>
+          <div><strong>Argo CD</strong><small>GitOps reconciliation</small></div>
+        </article>
+        <span class="flow-line" aria-hidden="true"></span>
+        <article>
+          <span class="flow-number">4</span>
+          <div><strong>Kubernetes</strong><small>Healthy runtime</small></div>
+        </article>
+        <span class="flow-line" aria-hidden="true"></span>
+        <article>
+          <span class="flow-number">5</span>
+          <div><strong>Observability</strong><small>Metrics and logs</small></div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div>
+      <strong>StoneTusker Systems</strong>
+      <span>Platform engineering that improves the developer and customer experience.</span>
+    </div>
+    <span>Reference workload · No real notifications are sent</span>
+  </footer>
+</body>
+</html>

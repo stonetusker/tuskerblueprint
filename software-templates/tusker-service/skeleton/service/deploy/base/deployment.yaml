@@ -27,10 +27,6 @@ spec:
     spec:
       serviceAccountName: ${{ values.name }}
       automountServiceAccountToken: false
-{% if values.repoVisibility != 'public' %}
-      imagePullSecrets:
-        - name: ghcr-pull-secret
-{% endif %}
       securityContext:
         runAsNonRoot: true
         runAsUser: 10001

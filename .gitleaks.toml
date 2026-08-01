@@ -1,0 +1,14 @@
+title = "TuskerBlueprint current-source Gitleaks configuration"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Allow public certificates and explicit non-secret placeholders only"
+paths = [
+  '''platform-services/backstage/manifests/argocd-ca-configmap\.yaml'''
+]
+regexes = [
+  '''\$\{[A-Z][A-Z0-9_]*\}''',
+  '''REPLACE_WITH_[A-Z0-9_]+'''
+]

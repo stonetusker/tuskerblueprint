@@ -18,7 +18,7 @@ if [[ ! -d "${OVERRIDES_DIR}" ]]; then
   exit 1
 fi
 
-REQUIRED_NODE_VERSION="20.19.0"
+REQUIRED_NODE_VERSION="22.21.0"
 CURRENT_NODE_VERSION="$(node -p "process.versions.node")"
 
 node - "${REQUIRED_NODE_VERSION}" <<'NODE'
@@ -156,7 +156,7 @@ echo "Aligning official Backstage packages to ${GENERATED_RELEASE}"
 corepack yarn backstage-cli versions:bump \
   --release "${GENERATED_RELEASE}"
 
-echo "Pinning the Node.js 20-compatible native build toolchain"
+echo "Pinning the Node.js 22-compatible native build toolchain"
 
 node <<'NODE'
 const fs = require('fs');
