@@ -144,6 +144,7 @@ corepack yarn --cwd packages/backend add \
   @backstage/plugin-kubernetes-backend \
   @backstage/plugin-permission-common \
   @backstage/plugin-permission-node \
+  @backstage/plugin-catalog-backend-module-scaffolder-entity-model \
   @roadiehq/backstage-plugin-argo-cd-backend
 
 #

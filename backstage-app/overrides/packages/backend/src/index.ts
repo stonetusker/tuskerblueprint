@@ -18,6 +18,11 @@ backend.add(
 );
 
 backend.add(import('@backstage/plugin-catalog-backend'));
+backend.add(
+  import(
+    '@backstage/plugin-catalog-backend-module-scaffolder-entity-model'
+  ),
+);
 
 backend.add(import('@backstage/plugin-permission-backend/alpha'));
 backend.add(import('./modules/permissionPolicy'));
