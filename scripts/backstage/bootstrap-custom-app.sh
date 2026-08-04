@@ -2,7 +2,15 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-APP_DIR="${1:-${ROOT_DIR}/.generated/backstage}"
+INVOCATION_DIR="$(pwd)"
+if [[ -n "${1:-}" ]]; then
+  case "$1" in
+    /*) APP_DIR="$1" ;;
+    *) APP_DIR="${INVOCATION_DIR}/$1" ;;
+  esac
+else
+  APP_DIR="${ROOT_DIR}/.generated/backstage"
+fi
 OVERRIDES_DIR="${ROOT_DIR}/backstage-app/overrides"
 APP_NAME="${BACKSTAGE_APP_NAME:-tuskerblueprint-backstage}"
 
