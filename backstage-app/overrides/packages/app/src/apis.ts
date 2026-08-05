@@ -4,6 +4,7 @@ import {
 } from '@backstage/core-plugin-api';
 
 import {
+  ScmAuth,
   ScmIntegrationsApi,
   scmIntegrationsApiRef,
 } from '@backstage/integration-react';
@@ -17,4 +18,5 @@ export const apis = [
     factory: ({ configApi }) =>
       ScmIntegrationsApi.fromConfig(configApi),
   }),
+  ScmAuth.createDefaultApiFactory(),
 ];

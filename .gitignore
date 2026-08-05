@@ -50,3 +50,4 @@ reports/
 *.spdx.json
 /tmp/
 *.venv*
+CHANGES.md
