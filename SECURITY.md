@@ -2,7 +2,7 @@
 
 ## Reporting a vulnerability
 
-Do not open a public issue for a suspected vulnerability or exposed credential. Contact StoneTusker Systems through a private company channel and include the affected component, reproduction information, impact, and any proposed mitigation.
+Do not open a public issue for a suspected vulnerability or exposed credential. Contact Stonetusker Systems through a private company channel and include the affected component, reproduction information, impact, and any proposed mitigation.
 
 ## Supported scope
 

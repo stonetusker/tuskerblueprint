@@ -1,5 +1,5 @@
 site_name: TuskerBlueprint Internal Developer Platform
-site_description: StoneTusker platform engineering, developer experience and GitOps documentation
+site_description: Stonetusker platform engineering, developer experience and GitOps documentation
 docs_dir: docs
 nav:
   - Home: index.md

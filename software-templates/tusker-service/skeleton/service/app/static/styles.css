@@ -1,5 +1,5 @@
 :root {
-  /* StoneTusker gold brand system */
+  /* Stonetusker gold brand system */
   --brand-primary: #facf0e;
   --brand-primary-hover: #e8bc00;
   --brand-primary-active: #d3a700;
@@ -1186,7 +1186,7 @@ footer strong {
 }
 
 
-/* StoneTusker logo and gold-theme refinements */
+/* Stonetusker logo and gold-theme refinements */
 .brand-logo {
   display: block;
   width: 50px;
@@ -1234,7 +1234,7 @@ footer strong {
   }
 }
 
-/* Small, bounded StoneTusker logo.
+/* Small, bounded Stonetusker logo.
    The fixed frame prevents large intrinsic SVG/PNG dimensions from expanding the header. */
 .brand {
   min-width: 0;

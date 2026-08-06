@@ -17,7 +17,7 @@ def test_ui_and_release_metadata(monkeypatch) -> None:
 
     ui_response = client.get("/")
     assert ui_response.status_code == 200
-    assert "StoneTusker Customer Experience Hub" in ui_response.text
+    assert "Stonetusker Customer Experience Hub" in ui_response.text
     assert "Turn a customer message into" in ui_response.text
     assert ui_response.headers["cache-control"] == "no-store, max-age=0"
     assert ui_response.headers["content-security-policy"]

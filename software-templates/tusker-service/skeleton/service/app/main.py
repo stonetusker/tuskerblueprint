@@ -1,4 +1,4 @@
-"""Customer Notification API used in the StoneTusker delivery-platform demo."""
+"""Customer Notification API used in the Stonetusker delivery-platform demo."""
 
 from __future__ import annotations
 

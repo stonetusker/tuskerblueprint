@@ -42,7 +42,7 @@ backstage:
                 title: Create an issue
 
     organization:
-      name: StoneTusker Systems
+      name: Stonetusker Systems
 
     backend:
       baseUrl: http://localhost:7007
@@ -97,7 +97,7 @@ backstage:
     scaffolder:
       defaultAuthor:
         name: TuskerBlueprint Platform
-        email: platform@stonetusker.com
+        email: contact@stonetusker.com
       defaultCommitMessage: "chore: scaffold service from TuskerBlueprint golden path"
 
     techdocs:

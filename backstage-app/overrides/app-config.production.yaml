@@ -3,7 +3,7 @@ app:
   baseUrl: ${BACKSTAGE_BASE_URL}
 
 organization:
-  name: StoneTusker Systems
+  name: Stonetusker Systems
 
 backend:
   baseUrl: ${BACKSTAGE_BACKEND_URL}

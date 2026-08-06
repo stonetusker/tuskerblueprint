@@ -13,7 +13,7 @@ for i in $(seq 1 "${requests}"); do
     -H 'Content-Type: application/json' \
     -H "X-Correlation-ID: ${correlation_id}" \
     -H 'X-Demo-Request: generated-traffic' \
-    -d "{\"channel\":\"email\",\"recipient\":\"buyer-${i}@example.invalid\",\"message\":\"StoneTusker delivery demo request ${i}\"}" \
+    -d "{\"channel\":\"email\",\"recipient\":\"buyer-${i}@example.invalid\",\"message\":\"Stonetusker delivery demo request ${i}\"}" \
     >/dev/null; then
     succeeded=$((succeeded + 1))
   else

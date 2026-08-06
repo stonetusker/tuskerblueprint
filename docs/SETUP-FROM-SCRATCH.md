@@ -2,7 +2,7 @@
 
 ## 1. Prepare GitHub
 
-Create the StoneTusker GitHub OAuth application used for sign-in. Prepare credentials with least privilege:
+Create the Stonetusker GitHub OAuth application used for sign-in. Prepare credentials with least privilege:
 
 - Backstage/scaffolder token: create repositories, manage collaborators and open pull requests in `stonetusker`.
 - Argo CD token: read repository contents for private service repositories. It may explicitly reuse the platform token for a small demo, but a separate read-only machine credential is preferred.
