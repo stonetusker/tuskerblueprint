@@ -7,16 +7,16 @@
 replicaCount: 1
 
 crds:
-  install: false
+  install: true
 
 admissionController:
-  enabled: false
+  enabled: true
 
 reportsController:
-  enabled: false
+  enabled: true
 
 cleanupController:
-  enabled: false
+  enabled: true
 
 resources:
   requests:
