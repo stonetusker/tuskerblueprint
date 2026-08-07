@@ -1,1 +1,1 @@
-* @${{ values.developerUsername }}
+* @${{ values.developerUsername }} @${{ values.repoUrl | parseRepoUrl | pick('owner') }}/${{ values.developerTeam }}

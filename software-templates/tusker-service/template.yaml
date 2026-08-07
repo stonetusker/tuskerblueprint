@@ -24,6 +24,7 @@ spec:
         - owner
         - system
         - developerUsername
+        - developerTeam
       properties:
         name:
           title: Service name
@@ -59,6 +60,15 @@ spec:
           description: GitHub user that receives push access to the generated repository
           default: subeeshlearn
           pattern: '^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$'
+        developerTeam:
+          title: GitHub team slug
+          type: string
+          description: >-
+            An existing GitHub team in the stonetusker org (Settings ->
+            Teams). Every member gets push access, so the whole team can
+            work on branches in this repo directly instead of forking it.
+            Create the team first if it doesn't exist yet.
+          pattern: '^[a-z0-9](?:[a-z0-9-]{0,37}[a-z0-9])?$'
         port:
           title: Application port
           type: integer
@@ -124,6 +134,8 @@ spec:
         collaborators:
           - user: ${{ parameters.developerUsername }}
             access: push
+          - team: ${{ parameters.developerTeam }}
+            access: push
         topics:
           - backstage
           - fastapi
@@ -155,7 +167,7 @@ spec:
       input:
         repoUrl: github.com?owner=stonetusker&repo=tuskerblueprint
         branchName: onboard-${{ parameters.name }}
-        title: 'feature(gitops): onboard ${{ parameters.name }}'
+        title: 'feat(gitops): onboard ${{ parameters.name }}'
         description: |
           Registers `${{ parameters.name }}` with the TuskerBlueprint generated-workloads controller.
 
