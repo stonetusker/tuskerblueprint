@@ -6,7 +6,7 @@ backstage:
   image:
     registry: ghcr.io
     repository: stonetusker/tuskerblueprint-backstage
-    tag: "a25d1b4cc46a9f7f9cb48e66f9425369a17fa2a8"
+    tag: "0b6dc2a71afea74e943f143426c9a9d86bd7f90c"
     pullPolicy: Always
 
   extraEnvVarsSecrets:
