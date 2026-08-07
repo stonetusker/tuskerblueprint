@@ -132,7 +132,6 @@ rsync -a \
   --exclude='yarn.lock' \
   --exclude='backstage.json' \
   --exclude='.yarnrc.yml' \
-  --exclude='packages/backend/Dockerfile' \
   "${OVERRIDES_DIR}/" \
   "${APP_DIR}/"
 
