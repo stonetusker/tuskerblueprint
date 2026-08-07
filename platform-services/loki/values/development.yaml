@@ -6,6 +6,14 @@
 
 loki:
   auth_enabled: false
+  
+  # Added to prevent Helm template 'nil pointer' crashes in Loki 6.x
+  storage:
+    type: filesystem
+    bucketNames:
+      chunks: chunks
+      ruler: ruler
+      admin: admin
 
 singleBinary:
   replicas: 1
