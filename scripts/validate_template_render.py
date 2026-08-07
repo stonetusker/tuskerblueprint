@@ -26,6 +26,7 @@ REPLACEMENTS = {
     "${{ values.owner }}": "group:default/developers",
     "${{ values.system }}": "system:default/tuskerblueprint",
     "${{ values.developerUsername }}": "subeeshlearn",
+    "${{ values.developerTeam }}": "platform-devs",
     "${{ values.port }}": "8000",
     "${{ values.repoUrl | parseRepoUrl | pick('owner') }}": "stonetusker",
     "${{ values.repoUrl | parseRepoUrl | pick('repo') }}": "sample-service",
