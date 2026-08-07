@@ -9,6 +9,9 @@ deploymentMode: SingleBinary
 loki:
   auth_enabled: false
   
+  # Tells Loki to use the default local TSDB schema for development
+  useTestSchema: true
+  
   storage:
     type: filesystem
     bucketNames:
