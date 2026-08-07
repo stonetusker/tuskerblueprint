@@ -3,7 +3,6 @@
 # Kyverno Helm Values
 # Environment: Development
 # ==============================================================================
-
 replicaCount: 1
 
 crds:
@@ -17,6 +16,9 @@ reportsController:
 
 cleanupController:
   enabled: true
+
+policyReportsCleanup:
+  enabled: false
 
 resources:
   requests:
