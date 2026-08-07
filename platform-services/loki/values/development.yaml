@@ -4,10 +4,13 @@
 # Environment: Development
 # ==============================================================================
 
+# Explicitly set SingleBinary mode so Helm doesn't spin up SimpleScalable targets
+deploymentMode: SingleBinary
+
 loki:
   auth_enabled: false
   
-  # Added to prevent Helm template 'nil pointer' crashes in Loki 6.x
+  # Prevents 'nil pointer' storage template errors in Loki 6.x
   storage:
     type: filesystem
     bucketNames:
