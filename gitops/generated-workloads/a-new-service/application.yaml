@@ -1,0 +1,42 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: a-new-service-development
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: a-new-service
+    app.kubernetes.io/component: workload
+    app.kubernetes.io/part-of: tuskerblueprint
+    app.kubernetes.io/environment: development
+  annotations:
+    argocd.argoproj.io/sync-wave: "80"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: workloads
+  source:
+    repoURL: https://github.com/stonetusker/a-new-service.git
+    targetRevision: main
+    path: deploy/overlays/development
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: a-new-service-development
+  revisionHistoryLimit: 10
+  syncPolicy:
+    managedNamespaceMetadata:
+      labels:
+        platform.stonetusker.com/workload: "true"
+        app.kubernetes.io/environment: development
+    automated:
+      prune: true
+      selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true
+      - PrunePropagationPolicy=foreground
