@@ -167,7 +167,7 @@ spec:
       input:
         repoUrl: github.com?owner=stonetusker&repo=tuskerblueprint
         branchName: onboard-${{ parameters.name }}
-        title: 'feat(gitops): onboard ${{ parameters.name }}'
+        title: 'feature(gitops): onboard ${{ parameters.name }} project'
         description: |
           Registers `${{ parameters.name }}` with the TuskerBlueprint generated-workloads controller.
 
