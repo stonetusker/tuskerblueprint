@@ -1,96 +1,44 @@
-# TuskerBlueprint Platform Roadmap
+# TuskerBlueprint platform roadmap
 
-## Purpose
+This file describes repository implementation status. It does not assert the
+health of a particular cluster; use scripts/demo/preflight.sh for live evidence.
 
-This document tracks the implementation status of all platform capabilities defined by the Tusker Platform Reference Architecture (TPRA).
+## Current implementation
 
-It provides a single view of platform maturity and implementation progress.
+| Capability | Repository status | Acceptance needed |
+| --- | --- | --- |
+| VPS provisioning | Scaffold only | Add a real Terraform provider and managed resources, or document the external provisioning boundary |
+| Ubuntu, user, kernel and k3s bootstrap | Ansible implementation present | Run idempotence and recovery tests on a clean host |
+| Argo CD bootstrap and root application | Implementation present | Rebuild a cluster from scratch and record the result |
+| Backstage catalog and Tusker Service template | Implementation present | Complete public and private disposable-service acceptance tests |
+| Immutable application delivery | Implemented in the generated service | Verify CI gates, GHCR publication, release PR and Argo CD deployment |
+| External Secrets and GitHub access | Implementation present | Verify namespace restrictions, rotation and recovery |
+| Prometheus and Grafana | Implementation present | Verify live scrape targets and the provisioned service dashboard |
+| Loki | Implementation present | Resolve any Argo CD Unknown state and test retention/recovery |
+| Alloy log collection | Optional, not activated by the root application | Validate on the target architecture before activation |
+| Kyverno | Implementation present | Resolve all degraded policies and add enforcement acceptance tests |
+| Public ingress and TLS | Environment-specific | Configure DNS, certificates and edge exposure for the selected host |
 
----
+## Before the recorded demo
 
-# Platform Status
+- Make every application required by scripts/demo/preflight.sh Synced and Healthy.
+- Create a disposable service from Backstage and complete its first immutable release.
+- Verify two ready application replicas, Prometheus data and the Grafana dashboard.
+- Use Alloy only after it passes target-cluster validation; otherwise demonstrate
+  kubectl logs and state that centralized log collection is the next step.
+- Remove disposable repositories and generated workload registrations after rehearsal.
 
-| Capability                  | Status         | Owner     | Deployment | Notes                   |
-| --------------------------- | -------------- | --------- | ---------- | ----------------------- |
-| Infrastructure Provisioning | ✅ Complete     | Terraform | Terraform  | VPS provisioning        |
-| Ubuntu Bootstrap            | ✅ Complete     | Ansible   | Ansible    | Ubuntu Server 24.04 LTS |
-| User Management             | ✅ Complete     | Ansible   | Ansible    | Bootstrap               |
-| SSH Configuration           | ✅ Complete     | Ansible   | Ansible    | Bootstrap               |
-| Firewall                    | ✅ Complete     | Ansible   | Ansible    | Bootstrap               |
-| Kernel Configuration        | ✅ Complete     | Ansible   | Ansible    | Bootstrap               |
-| k3s                         | ✅ Complete     | Ansible   | Ansible    | Bootstrap               |
-| kubectl                     | ✅ Complete     | Ansible   | Ansible    | Bootstrap               |
-| Argo CD Installation        | ✅ Complete     | Ansible   | Ansible    | Bootstrap               |
-| Repository Registration     | ✅ Complete     | Ansible   | Ansible    | Bootstrap               |
-| Root Application            | ✅ Complete     | Ansible   | Ansible    | GitOps handoff complete |
-| Traefik                     | ✅ Complete    | Git       | Argo CD    | GitOps implementation   |
-| cert-manager                | ✅ Complete     | Git       | Argo CD    | GitOps implementation   |
-| External Secrets Operator   | ✅ Implemented (scaffolded) | Git       | Argo CD    | GitOps implementation   |
-| Doppler Integration         | ✅ Implemented (scaffolded) | Git       | Argo CD    | GitOps implementation   |
-| Kyverno                     | ✅ Implemented (scaffolded) | Git       | Argo CD    | GitOps implementation   |
-| Prometheus                  | ✅ Implemented (scaffolded) | Git       | Argo CD    | GitOps implementation   |
-| Grafana                     | ✅ Implemented (scaffolded) | Git       | Argo CD    | GitOps implementation   |
-| Loki                        | ✅ Implemented (scaffolded) | Git       | Argo CD    | GitOps implementation   |
-| Backstage                   | ✅ Implemented (scaffolded) | Git       | Argo CD    | GitOps implementation   |
-| Reference Workloads         | ✅ Implemented (scaffolded) | Git       | Argo CD    | GitOps implementation   |
+## Post-demo priorities
 
----
+1. Make Backstage generation reproducible by pinning the generator and committing a
+   reviewed lockfile/runtime source.
+2. Implement real infrastructure provisioning and clean-room disaster-recovery tests.
+3. Add signed image attestations and Kyverno verification after policy health is stable.
+4. Add staging/production promotion with approvals, rollback evidence and SLOs.
+5. Add a self-service service-retirement workflow with audited GitHub and GitOps cleanup.
 
-# Milestones
+## Production-readiness gate
 
-## Phase 1 – Platform Bootstrap
-
-Status: ✅ Complete
-
-Deliverables:
-
-* Infrastructure provisioned
-* Kubernetes installed
-* Argo CD installed
-* Repository registered
-* Root Application deployed
-* GitOps handoff completed
-
----
-
-## Phase 2 – Platform Services
-
-Status: 🚧 In Progress
-
-Deliverables:
-
-* Traefik
-* cert-manager
-* External Secrets Operator
-* Doppler
-* Kyverno
-* Prometheus
-* Grafana
-* Loki
-* Backstage
-
----
-
-## Phase 3 – Platform Workloads
-
-Status: ⏳ Planned
-
-Deliverables:
-
-* Reference applications
-* Developer onboarding
-* Self-service platform
-
----
-
-# Success Criteria
-
-The platform is considered production-ready when:
-
-* All platform services are GitOps managed.
-* All workloads are deployed via Argo CD.
-* Observability is fully operational.
-* Security policies are enforced.
-* Secrets are externally managed.
-* Documentation is synchronized with implementation.
-
+Production readiness requires clean-room provisioning, enforced security policy,
+tested backup/restore, documented SLOs and on-call ownership, capacity testing,
+credential rotation and repeatable rollback. A successful sales demo is not that gate.

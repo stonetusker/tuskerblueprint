@@ -1,8 +1,12 @@
-# Stonetusker delivery-platform demo implementation
+# Stonetusker delivery-platform demo
 
-This directory contains implementation-focused demo guidance. The separate master
-brief stored outside the repository remains the commercial and strategic source.
+Use these maintained sources when preparing or recording the buyer demo:
 
-- `SOURCE-REVIEW.md`: changes and validation boundaries
-- `DEMO-READINESS-CHECKLIST.md`: final acceptance gate
-- `../../NEXT_STEPS_AFTER_IMPORT.md`: exact implementation order
+- [Buyer demo readiness checklist](DEMO-READINESS-CHECKLIST.md)
+- [Presenter runbook](../demo-runbook.md)
+- [Developer golden-path workflow](../DEVELOPER-DEMO-WORKFLOW.md)
+- [Generated-service acceptance](../SCAFFOLDED-SERVICE-ACCEPTANCE.md)
+- [Demo preflight script](../../scripts/demo/preflight.sh), the executable final gate
+
+Run the preflight immediately before recording. Do not proceed while any required
+Argo CD application is not both Synced and Healthy.

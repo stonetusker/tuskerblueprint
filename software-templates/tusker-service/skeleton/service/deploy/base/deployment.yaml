@@ -27,6 +27,7 @@ spec:
     spec:
       serviceAccountName: ${{ values.name }}
       automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 30
       securityContext:
         runAsNonRoot: true
         runAsUser: 10001
@@ -41,6 +42,7 @@ spec:
           ports:
             - name: http
               containerPort: ${{ values.port }}
+              protocol: TCP
           env:
             - name: SERVICE_NAME
               value: ${{ values.name }}
@@ -57,6 +59,7 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
+            runAsNonRoot: true
             capabilities:
               drop:
                 - ALL
@@ -73,16 +76,21 @@ spec:
               port: http
             failureThreshold: 30
             periodSeconds: 2
+            timeoutSeconds: 2
           readinessProbe:
             httpGet:
               path: /readyz
               port: http
             periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
           livenessProbe:
             httpGet:
               path: /healthz
               port: http
             periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
           volumeMounts:
             - name: tmp
               mountPath: /tmp

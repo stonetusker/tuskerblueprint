@@ -1,12 +1,10 @@
 ---
 all:
   children:
-
     k3s_servers:
       hosts:
-        vps8:
-          ansible_host: 72.60.30.149
-
+        tusker-dev:
+          ansible_host: YOUR_VPS_IP
     platform:
       children:
         k3s_servers:

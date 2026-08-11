@@ -27,6 +27,7 @@ if [[ ! -d "${OVERRIDES_DIR}" ]]; then
 fi
 
 REQUIRED_NODE_VERSION="22.21.0"
+BACKSTAGE_CREATE_APP_VERSION="0.9.0"
 CURRENT_NODE_VERSION="$(node -p "process.versions.node")"
 
 node - "${REQUIRED_NODE_VERSION}" <<'NODE'
@@ -63,6 +64,7 @@ if (!supported) {
 NODE
 
 echo "Node version requirement satisfied: ${CURRENT_NODE_VERSION}"
+echo "Backstage create-app version: ${BACKSTAGE_CREATE_APP_VERSION}"
 
 
 export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
@@ -79,7 +81,7 @@ printf '%s\n' "${APP_NAME}" |
     COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
     YARN_ENABLE_IMMUTABLE_INSTALLS=false \
     YARN_ENABLE_SCRIPTS=false \
-    npx --yes @backstage/create-app@latest \
+    npx --yes "@backstage/create-app@${BACKSTAGE_CREATE_APP_VERSION}" \
       --path "${APP_DIR}"
 
 pushd "${APP_DIR}" >/dev/null

@@ -58,7 +58,6 @@ spec:
           title: GitHub developer username
           type: string
           description: GitHub user that receives push access to the generated repository
-          default: subeeshlearn
           pattern: '^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$'
         developerTeam:
           title: GitHub team slug

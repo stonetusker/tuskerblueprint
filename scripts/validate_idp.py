@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -84,6 +85,7 @@ required = [
     "gitops/applications/platform/security/github-access/application-development.yaml",
     "platform-services/github-access/manifests/cluster-secret-store.yaml",
     "platform-services/backstage/manifests/ghcr-pull-external-secret.yaml",
+    "platform-services/grafana/values/development.yaml",
     "scripts/backstage/configure-github-platform-secret.sh",
     "scripts/backstage/verify-github-platform-secrets.sh",
     "docs/GITHUB-CREDENTIALS-AND-PRIVATE-ACCESS.md",
@@ -93,6 +95,7 @@ required = [
     "docs/SETUP-FROM-SCRATCH.md",
     "docs/SECURITY-HISTORY-REMEDIATION.md",
     "docs/SCAFFOLDED-SERVICE-ACCEPTANCE.md",
+    "infrastructure/ansible/inventories/dev/hosts.example.yml",
 ]
 for relative in required:
     check((ROOT / relative).is_file(), f"missing {relative}")
@@ -105,6 +108,19 @@ check(
     not (ROOT / "apis/demo-service").exists(),
     "platform repository still contains demo application OpenAPI source",
 )
+check(
+    "/infrastructure/ansible/inventories/*/hosts.yml"
+    in (ROOT / ".gitignore").read_text(encoding="utf-8"),
+    "real Ansible inventory is not ignored",
+)
+kubectl_role = (
+    ROOT / "infrastructure/ansible/roles/kubectl/tasks/main.yml"
+).read_text(encoding="utf-8")
+check("{{ ansible_host }}" in kubectl_role, "kubeconfig endpoint is hard-coded")
+k3s_defaults = (
+    ROOT / "infrastructure/ansible/roles/k3s/defaults/main.yml"
+).read_text(encoding="utf-8")
+check("--write-kubeconfig-mode=600" in k3s_defaults, "k3s kubeconfig mode is not private")
 
 for cache_name in ("__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache"):
     for cache_path in ROOT.rglob(cache_name):
@@ -244,7 +260,7 @@ for marker in (
     "docker push",
     "scripts/set-release.py",
     "create-pull-request@v8",
-    "actions/checkout@v6",
+    "actions/checkout@v7",
     "aquasec/trivy:0.70.0",
     "semgrep/semgrep:1.162.0",
     "zricethezav/gitleaks:v8.30.1",
@@ -318,6 +334,14 @@ for marker in (
 ):
     check(marker in backstage_ci, f"Backstage workflow missing {marker}")
 check("Verify anonymous Backstage image pull" not in backstage_ci, "Backstage CI still requires a public package")
+backstage_bootstrap = (
+    ROOT / "scripts/backstage/bootstrap-custom-app.sh"
+).read_text(encoding="utf-8")
+check("@backstage/create-app@latest" not in backstage_bootstrap, "Backstage generator is unpinned")
+check(
+    'BACKSTAGE_CREATE_APP_VERSION="0.9.0"' in backstage_bootstrap,
+    "Backstage generator baseline is unexpected",
+)
 check(
     not (ROOT / "scripts/demo/configure-ghcr-pull-secret.sh").exists(),
     "legacy namespace-by-namespace GHCR Secret helper must not be present",
@@ -332,11 +356,54 @@ check(
     "demo preflight still allows the old public-only bypass",
 )
 
+grafana_values = load_documents(
+    ROOT / "platform-services/grafana/values/development.yaml"
+)[0]
+dashboard_json = grafana_values.get("dashboards", {}).get("default", {}).get(
+    "tusker-service-overview", {}
+).get("json")
+check(isinstance(dashboard_json, str), "Grafana service dashboard is not provisioned")
+if isinstance(dashboard_json, str):
+    try:
+        dashboard = json.loads(dashboard_json)
+    except json.JSONDecodeError as error:
+        errors.append(f"Grafana service dashboard JSON is invalid: {error}")
+    else:
+        check(
+            dashboard.get("uid") == "tusker-service-overview",
+            "Grafana service dashboard UID is unstable",
+        )
+        variable_names = {
+            item.get("name")
+            for item in dashboard.get("templating", {}).get("list", [])
+            if isinstance(item, dict)
+        }
+        check(
+            {"environment", "service"}.issubset(variable_names),
+            "Grafana service dashboard variables are incomplete",
+        )
+        panel_titles = {
+            panel.get("title")
+            for panel in dashboard.get("panels", [])
+            if isinstance(panel, dict)
+        }
+        for title in (
+            "Replica availability",
+            "Request rate",
+            "5xx error percentage",
+            "p95 latency",
+            "Running release",
+            "Application logs",
+        ):
+            check(title in panel_titles, f"Grafana service dashboard missing {title}")
+
 requirements = (
     ROOT / "software-templates/tusker-service/skeleton/service/requirements.txt"
 ).read_text(encoding="utf-8")
 check("fastapi==0.141.1" in requirements, "generated dependency baseline is incorrect")
-check("starlette==1.3.1" in requirements, "generated Starlette security baseline is incorrect")
+check("prometheus-client==0.26.0" in requirements, "generated Prometheus client baseline is incorrect")
+check("starlette==1.4.1" in requirements, "generated Starlette baseline is incorrect")
+check("uvicorn[standard]==0.52.1" in requirements, "generated Uvicorn baseline is incorrect")
 
 # Persistent Secret manifests are not allowed in either repository.
 for path in sorted(ROOT.rglob("*.yaml")) + sorted(ROOT.rglob("*.yml")):

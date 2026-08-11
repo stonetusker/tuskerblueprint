@@ -35,6 +35,7 @@ crash.log
 # Kubernetes and credentials
 *.kubeconfig
 kubeconfig
+/infrastructure/ansible/inventories/*/hosts.yml
 *.pem
 *.key
 *.p12

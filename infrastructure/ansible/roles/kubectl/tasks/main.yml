@@ -20,7 +20,7 @@
   ansible.builtin.replace:
     path: /home/github-runner/.kube/config
     regexp: 'https://127\.0\.0\.1:6443'
-    replace: 'https://72.60.30.149:6443'
+    replace: 'https://{{ ansible_host }}:6443'
 
 - name: Verify kubectl connectivity
   become: true

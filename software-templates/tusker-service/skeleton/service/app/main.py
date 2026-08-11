@@ -8,7 +8,7 @@ import time
 import uuid
 from collections import OrderedDict
 from datetime import UTC, datetime
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from threading import Lock
 from typing import Annotated
@@ -54,7 +54,7 @@ APPLICATION_INFO.labels(
 ).set(1)
 
 
-class NotificationChannel(str, Enum):
+class NotificationChannel(StrEnum):
     email = "email"
     sms = "sms"
     webhook = "webhook"
@@ -90,7 +90,8 @@ NOTIFICATION_STORE_LOCK = Lock()
 app = FastAPI(
     title="${{ values.name }}",
     description=(
-        "${{ values.description }}. This reference workload demonstrates secure CI, GitOps, "
+        "${{ values.description }}. "
+        "This reference workload demonstrates secure CI, GitOps, "
         "observability, failure detection, and rollback. It does not send real messages."
     ),
     version="1.2.0",

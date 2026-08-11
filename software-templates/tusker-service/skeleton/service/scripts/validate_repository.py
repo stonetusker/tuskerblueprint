@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import re
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -110,6 +111,7 @@ required = [
     ".github/workflows/platform-validation.yml",
     "deploy/base/kustomization.yaml",
     "scripts/set-release.py",
+    "scripts/verify.sh",
     "docs/CODE-REVIEW.md",
     "docs/FIRST-RELEASE.md",
 ]
@@ -150,8 +152,8 @@ for marker in (
     "docker push",
     "scripts/set-release.py",
     "create-pull-request@v8",
-    "actions/checkout@v6",
-    "actions/setup-python@v6",
+    "actions/checkout@v7",
+    "actions/setup-python@v7",
     "actions/upload-artifact@v7",
     "docker/login-action@v4",
     "aquasec/trivy:0.70.0",
@@ -164,7 +166,9 @@ check("security-events:" not in ci, "CI requests unused GitHub Advanced Security
 
 requirements = (ROOT / "requirements.txt").read_text(encoding="utf-8")
 check("fastapi==0.141.1" in requirements, "FastAPI pin is not the reviewed version")
-check("starlette==1.3.1" in requirements, "Starlette pin is not the reviewed version")
+check("prometheus-client==0.26.0" in requirements, "Prometheus client pin is not the reviewed version")
+check("starlette==1.4.1" in requirements, "Starlette pin is not the reviewed version")
+check("uvicorn[standard]==0.52.1" in requirements, "Uvicorn pin is not the reviewed version")
 
 dockerfile = (ROOT / "Dockerfile").read_text(encoding="utf-8")
 for marker in ("USER 10001:10001", "--no-cache-dir", "HEALTHCHECK"):
@@ -194,12 +198,33 @@ for path in sorted(ROOT.rglob("*.yaml")) + sorted(ROOT.rglob("*.yml")):
                 f"Kubernetes Secret manifest must not be committed: {path.relative_to(ROOT)}"
             )
 
-for cache_name in ("__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache"):
-    for cache_path in ROOT.rglob(cache_name):
-        errors.append(f"generated cache directory committed: {cache_path.relative_to(ROOT)}")
-for artifact_name in (".coverage", "coverage.xml", "gitleaks.sarif", "semgrep.sarif", "sbom.spdx.json"):
-    for artifact_path in ROOT.rglob(artifact_name):
-        errors.append(f"generated test artifact committed: {artifact_path.relative_to(ROOT)}")
+tracked_files: set[Path] = set()
+if (ROOT / ".git").exists():
+    tracked = subprocess.run(
+        ["git", "-C", str(ROOT), "ls-files", "-z"],
+        check=True,
+        capture_output=True,
+    ).stdout
+    tracked_files = {
+        Path(item.decode("utf-8"))
+        for item in tracked.split(b"\0")
+        if item
+    }
+
+for tracked_path in tracked_files:
+    if any(
+        part in {"__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache"}
+        for part in tracked_path.parts
+    ):
+        errors.append(f"generated cache path committed: {tracked_path}")
+    if tracked_path.name in {
+        ".coverage",
+        "coverage.xml",
+        "gitleaks.sarif",
+        "semgrep.sarif",
+        "sbom.spdx.json",
+    }:
+        errors.append(f"generated test artifact committed: {tracked_path}")
 
 if errors:
     for error in errors:
