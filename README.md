@@ -1,6 +1,6 @@
 # TuskerBlueprint Internal Developer Platform
 
-TuskerBlueprint is Stonetusker Systems' reference Internal Developer Platform built with Backstage, Argo CD, Kubernetes, GitHub Actions and platform observability/security services.
+TuskerBlueprint is Stonetusker Systems' reference Internal Developer Platform built with Backstage, Argo CD, Kubernetes, GitHub Actions and platform observability/security services. Watch Demo here: https://www.youtube.com/watch?v=QRbdIQswjL4
 
 ## Repository model
 
