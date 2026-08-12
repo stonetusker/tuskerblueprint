@@ -8,6 +8,7 @@ rules:
       - namespaces
       - nodes
       - pods
+      - pods/log
     verbs:
       - get
       - list

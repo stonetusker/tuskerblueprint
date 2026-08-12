@@ -4,17 +4,29 @@ metadata:
   name: alloy
   namespace: monitoring
 spec:
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
   selector:
     matchLabels:
       app.kubernetes.io/name: alloy
   template:
     metadata:
+      annotations:
+        tuskerblueprint.io/config-revision: kubernetes-api-logs-v1
       labels:
         app.kubernetes.io/name: alloy
         app.kubernetes.io/component: log-collector
     spec:
       serviceAccountName: alloy
+      automountServiceAccountToken: true
+      terminationGracePeriodSeconds: 30
       securityContext:
+        runAsNonRoot: true
+        runAsUser: 473
+        runAsGroup: 473
+        fsGroup: 473
         seccompProfile:
           type: RuntimeDefault
       containers:
@@ -37,7 +49,7 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
-            runAsNonRoot: false
+            runAsNonRoot: true
             capabilities:
               drop:
                 - ALL
@@ -52,27 +64,31 @@ spec:
             - name: config
               mountPath: /etc/alloy
               readOnly: true
-            - name: pod-logs
-              mountPath: /var/log/pods
-              readOnly: true
             - name: data
               mountPath: /var/lib/alloy/data
             - name: tmp
               mountPath: /tmp
+          startupProbe:
+            httpGet:
+              path: /-/ready
+              port: http
+            failureThreshold: 30
+            periodSeconds: 2
+            timeoutSeconds: 2
           readinessProbe:
             httpGet:
               path: /-/ready
               port: http
-            periodSeconds: 10
+            periodSeconds: 5
             timeoutSeconds: 3
+            failureThreshold: 3
+      tolerations:
+        - operator: Exists
+          effect: NoSchedule
       volumes:
         - name: config
           configMap:
             name: alloy-config
-        - name: pod-logs
-          hostPath:
-            path: /var/log/pods
-            type: Directory
         - name: data
           emptyDir:
             sizeLimit: 128Mi

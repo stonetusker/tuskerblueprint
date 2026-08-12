@@ -37,7 +37,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "# TuskerBlueprint Golden Path\nLive evidence from commit to customer: immutable release identity, traffic, reliability, runtime health, product activity and searchable logs. **Demo tip:** keep `DEMO_CONTINUOUS=1 ./scripts/demo/generate-traffic.sh` running while presenting.",
+        "content": "# TuskerBlueprint Golden Path",
         "mode": "markdown"
       },
       "transparent": true,
@@ -1292,7 +1292,7 @@
         {
           "direction": "backward",
           "editorMode": "code",
-          "expr": "{namespace=\"$namespace\", app=\"$service\", container=\"app\"} | json",
+          "expr": "{namespace=\"$namespace\", app=\"$service\"} | json | message=\"request_completed\" | line_format \"{{.method}} {{.path}}  HTTP {{.status_code}}  {{.duration_ms}} ms  correlation={{.correlation_id}}  release={{.version}}\"",
           "queryType": "range",
           "refId": "A"
         }
@@ -1399,6 +1399,6 @@
   "timezone": "browser",
   "title": "Stonetusker Demo Service | Golden Path",
   "uid": "stonetusker-demo-service",
-  "version": 2,
+  "version": 3,
   "weekStart": ""
 }

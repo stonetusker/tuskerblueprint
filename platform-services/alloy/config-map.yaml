@@ -13,8 +13,8 @@ data:
     discovery.kubernetes "pods" {
       role = "pod"
 
-      # A DaemonSet instance only needs targets whose log files exist on its
-      # node. This avoids every Alloy Pod watching every Pod in the cluster.
+      # Keep one collector responsible for each Pod. The DaemonSet instance on
+      # a node only tails Pods scheduled to that node, avoiding duplicate logs.
       selectors {
         role  = "pod"
         field = "spec.nodeName=" + sys.env("NODE_NAME")
@@ -45,29 +45,19 @@ data:
       }
 
       rule {
-        source_labels = ["__meta_kubernetes_pod_uid", "__meta_kubernetes_pod_container_name"]
-        separator     = "/"
-        action        = "replace"
-        target_label  = "__path__"
-        replacement   = "/var/log/pods/*$1/*.log"
+        source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_environment"]
+        target_label  = "environment"
       }
     }
 
-    local.file_match "pod_logs" {
-      path_targets = discovery.relabel.pod_logs.output
-    }
-
-    loki.source.file "pod_logs" {
-      targets    = local.file_match.pod_logs.targets
+    loki.source.kubernetes "pod_logs" {
+      targets    = discovery.relabel.pod_logs.output
       forward_to = [loki.process.pod_logs.receiver]
     }
 
     loki.process "pod_logs" {
-      # Kubernetes writes container output using the CRI envelope. Remove that
-      # envelope before Loki receives the line so application JSON can be
-      # parsed in LogQL and expanded cleanly in Grafana.
-      stage.cri {}
-
+      # The Kubernetes API returns the application line without the CRI file
+      # envelope, so structured JSON reaches Loki unchanged.
       forward_to = [loki.write.default.receiver]
     }
 

@@ -16,7 +16,53 @@ for command_name in kubectl curl jq; do
 done
 
 failed=0
+alloy_health_status=""
 applications=(prometheus loki alloy grafana demo-service-development)
+
+print_alloy_diagnostics() {
+  local pod_name restart_count
+  local -a alloy_pods=()
+
+  echo "Alloy rollout diagnostics" >&2
+  kubectl -n monitoring get daemonset alloy -o wide >&2 || true
+  kubectl -n monitoring get pods \
+    -l app.kubernetes.io/name=alloy \
+    -o wide >&2 || true
+
+  mapfile -t alloy_pods < <(
+    kubectl -n monitoring get pods \
+      -l app.kubernetes.io/name=alloy \
+      -o name 2>/dev/null || true
+  )
+
+  if [[ ${#alloy_pods[@]} -eq 0 ]]; then
+    echo "  No Alloy Pods were scheduled." >&2
+  fi
+
+  for pod_name in "${alloy_pods[@]}"; do
+    printf '\nEvents for %s\n' "${pod_name}" >&2
+    kubectl -n monitoring describe "${pod_name}" \
+      | sed -n '/Events:/,$p' >&2 || true
+
+    printf '\nCurrent Alloy log for %s\n' "${pod_name}" >&2
+    kubectl -n monitoring logs "${pod_name}" -c alloy --tail=120 >&2 || true
+
+    restart_count="$(
+      kubectl -n monitoring get "${pod_name}" \
+        -o jsonpath='{.status.containerStatuses[?(@.name=="alloy")].restartCount}' \
+        2>/dev/null || true
+    )"
+    if [[ "${restart_count:-0}" =~ ^[1-9][0-9]*$ ]]; then
+      printf '\nPrevious Alloy log for %s\n' "${pod_name}" >&2
+      kubectl -n monitoring logs "${pod_name}" -c alloy \
+        --previous --tail=120 >&2 || true
+    fi
+  done
+
+  printf '\nAlloy service-account permission for pods/log: ' >&2
+  kubectl auth can-i get pods/log \
+    --as=system:serviceaccount:monitoring:alloy >&2 || true
+}
 
 printf 'Argo CD observability applications\n'
 for application_name in "${applications[@]}"; do
@@ -24,7 +70,13 @@ for application_name in "${applications[@]}"; do
   health_status="$(kubectl -n argocd get application "${application_name}" -o jsonpath='{.status.health.status}' 2>/dev/null || true)"
   printf '  %-28s sync=%-10s health=%s\n' \
     "${application_name}" "${sync_status:-missing}" "${health_status:-missing}"
-  if [[ "${sync_status}" != "Synced" || "${health_status}" != "Healthy" ]]; then
+
+  if [[ "${application_name}" == "alloy" ]]; then
+    alloy_health_status="${health_status}"
+    if [[ "${sync_status}" != "Synced" ]]; then
+      failed=1
+    fi
+  elif [[ "${sync_status}" != "Synced" || "${health_status}" != "Healthy" ]]; then
     failed=1
   fi
 done
@@ -32,6 +84,19 @@ done
 if [[ "${failed}" -ne 0 ]]; then
   echo "ERROR: reconcile the applications above before checking dashboard data" >&2
   exit 1
+fi
+
+printf '\nChecking the Alloy collector rollout\n'
+alloy_rollout_timeout="${DEMO_ALLOY_ROLLOUT_TIMEOUT:-180s}"
+if ! kubectl -n monitoring rollout status daemonset/alloy \
+  --timeout="${alloy_rollout_timeout}"; then
+  echo "ERROR: Alloy did not become ready within ${alloy_rollout_timeout}" >&2
+  print_alloy_diagnostics
+  exit 1
+fi
+
+if [[ "${alloy_health_status}" != "Healthy" ]]; then
+  echo "WARNING: Alloy Pods are ready but Argo CD health has not refreshed yet" >&2
 fi
 
 work_dir="$(mktemp -d /tmp/tusker-observability.XXXXXX)"
@@ -62,9 +127,8 @@ wait_for_http() {
   local url="$1"
   local label="$2"
   local log_file="$3"
-  local attempt
 
-  for attempt in $(seq 1 30); do
+  for _ in $(seq 1 30); do
     if curl -fsS "${url}" >/dev/null 2>&1; then
       printf '  %-28s ready\n' "${label}"
       return 0
@@ -109,9 +173,8 @@ prometheus_has_result() {
 wait_for_prometheus_result() {
   local label="$1"
   local query="$2"
-  local attempt
 
-  for attempt in $(seq 1 40); do
+  for _ in $(seq 1 40); do
     if prometheus_has_result "${query}"; then
       printf '  %-28s data present\n' "${label}"
       return 0
@@ -151,7 +214,7 @@ loki_has_result() {
     >/dev/null <<<"${response}"
 }
 
-log_query="{namespace=\"${workload_namespace}\", app=\"${workload_service}\", container=\"app\"} | json | correlation_id=\"${correlation_id}\""
+log_query="{namespace=\"${workload_namespace}\", app=\"${workload_service}\"} | json | message=\"request_completed\" | correlation_id=\"${correlation_id}\""
 
 printf '\nChecking correlated application logs\n'
 logs_found=0
@@ -166,8 +229,7 @@ done
 if [[ "${logs_found}" -ne 1 ]]; then
   echo "ERROR: Loki did not return the verification request" >&2
   echo "       ${log_query}" >&2
-  echo "Alloy diagnostics:" >&2
-  kubectl -n monitoring logs daemonset/alloy --tail=80 >&2 || true
+  print_alloy_diagnostics
   exit 1
 fi
 echo "  Correlation ID               searchable in Loki"
