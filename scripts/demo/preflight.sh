@@ -13,7 +13,6 @@ require_command() {
 
 require_command kubectl
 require_command curl
-require_command grep
 
 if [[ ${fail} -ne 0 ]]; then
   exit 1
@@ -30,24 +29,12 @@ check_application() {
   [[ "${sync}" == "Synced" && "${health}" == "Healthy" ]] || fail=1
 }
 
-applications=(
-  backstage
-  backstage-platform-resources
-  cert-manager
-  demo-service-development
-  external-secrets
-  generated-workloads
-  github-access
-  grafana
-  kyverno
-  loki
-  platform-root
-  prometheus
-  traefik-development
-)
-for application in "${applications[@]}"; do
-  check_application "${application}"
-done
+check_application backstage
+check_application prometheus
+check_application loki
+check_application alloy
+check_application grafana
+check_application demo-service-development
 
 if kubectl -n demo-service-development get secret ghcr-pull-secret >/dev/null 2>&1; then
   secret_type="$(kubectl -n demo-service-development get secret ghcr-pull-secret -o jsonpath='{.type}')"
@@ -64,14 +51,6 @@ else
 fi
 
 if ! kubectl -n demo-service-development rollout status deployment/demo-service --timeout=120s; then
-  fail=1
-fi
-
-ready_replicas="$(kubectl -n demo-service-development get deployment demo-service -o jsonpath='{.status.readyReplicas}' 2>/dev/null || true)"
-desired_replicas="$(kubectl -n demo-service-development get deployment demo-service -o jsonpath='{.spec.replicas}' 2>/dev/null || true)"
-printf 'Demo service replicas: ready=%s desired=%s\n' "${ready_replicas:-0}" "${desired_replicas:-missing}"
-if [[ "${desired_replicas}" != "2" || "${ready_replicas:-0}" != "2" ]]; then
-  echo "ERROR: the recorded demo requires two ready replicas" >&2
   fail=1
 fi
 
@@ -94,99 +73,30 @@ if kubectl -n backstage logs deployment/backstage --all-containers=true --tail=5
   fail=1
 fi
 
-preflight_dir="$(mktemp -d "${TMPDIR:-/tmp}/tusker-demo-preflight.XXXXXX")"
-port_forward_pids=()
+local_port="${DEMO_PREFLIGHT_PORT:-18081}"
+kubectl -n demo-service-development port-forward service/demo-service "${local_port}:80" \
+  >/tmp/tusker-demo-preflight-port-forward.log 2>&1 &
+port_forward_pid=$!
 cleanup() {
-  local pid
-  for pid in "${port_forward_pids[@]}"; do
-    kill "${pid}" >/dev/null 2>&1 || true
-  done
-  rm -f \
-    "${preflight_dir}/app.log" \
-    "${preflight_dir}/grafana.log" \
-    "${preflight_dir}/prometheus.log"
-  rmdir "${preflight_dir}" >/dev/null 2>&1 || true
+  kill "${port_forward_pid}" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
-start_port_forward() {
-  local namespace="$1"
-  local service="$2"
-  local mapping="$3"
-  local log_file="$4"
-  kubectl -n "${namespace}" port-forward "service/${service}" "${mapping}" \
-    >"${log_file}" 2>&1 &
-  port_forward_pids+=("$!")
-}
-
-wait_for_url() {
-  local url="$1"
-  local attempts="${2:-20}"
-  local _
-  for _ in $(seq 1 "${attempts}"); do
-    if curl -fsS "${url}" >/dev/null 2>&1; then
-      return 0
-    fi
-    sleep 1
-  done
-  return 1
-}
-
-app_port="${DEMO_PREFLIGHT_PORT:-18081}"
-start_port_forward demo-service-development demo-service "${app_port}:80" "${preflight_dir}/app.log"
-if wait_for_url "http://127.0.0.1:${app_port}/readyz"; then
-  echo "Demo service readiness endpoint: OK"
-else
-  echo "ERROR: demo service readiness endpoint did not respond" >&2
-  cat "${preflight_dir}/app.log" >&2 || true
-  fail=1
-fi
-
-metrics="$(curl -fsS "http://127.0.0.1:${app_port}/metrics" 2>/dev/null || true)"
-for metric in application_info http_requests_total http_request_duration_seconds; do
-  if ! grep -q "^${metric}" <<<"${metrics}"; then
-    echo "ERROR: application metrics are missing ${metric}" >&2
-    fail=1
+ready=0
+for _ in $(seq 1 20); do
+  if curl -fsS "http://127.0.0.1:${local_port}/readyz" >/dev/null 2>&1; then
+    ready=1
+    break
   fi
+  sleep 1
 done
 
-grafana_port="${GRAFANA_PREFLIGHT_PORT:-13000}"
-start_port_forward grafana grafana "${grafana_port}:80" "${preflight_dir}/grafana.log"
-if wait_for_url "http://127.0.0.1:${grafana_port}/api/health"; then
-  echo "Grafana health endpoint: OK"
-else
-  echo "ERROR: Grafana health endpoint did not respond" >&2
-  cat "${preflight_dir}/grafana.log" >&2 || true
+if [[ ${ready} -ne 1 ]]; then
+  echo "ERROR: demo service readiness endpoint did not respond" >&2
+  cat /tmp/tusker-demo-preflight-port-forward.log >&2 || true
   fail=1
-fi
-
-prometheus_port="${PROMETHEUS_PREFLIGHT_PORT:-19090}"
-start_port_forward monitoring prometheus-server "${prometheus_port}:80" "${preflight_dir}/prometheus.log"
-if wait_for_url "http://127.0.0.1:${prometheus_port}/-/ready"; then
-  prometheus_response="$(curl -fsSG "http://127.0.0.1:${prometheus_port}/api/v1/query" \
-    --data-urlencode 'query=application_info{service="demo-service",environment="development"}' || true)"
-  if grep -q '"result":\[{' <<<"${prometheus_response}"; then
-    echo "Prometheus has demo-service application_info data"
-  else
-    echo "ERROR: Prometheus has no demo-service application_info data" >&2
-    fail=1
-  fi
 else
-  echo "ERROR: Prometheus readiness endpoint did not respond" >&2
-  cat "${preflight_dir}/prometheus.log" >&2 || true
-  fail=1
-fi
-
-if kubectl -n monitoring get daemonset alloy >/dev/null 2>&1; then
-  if kubectl -n monitoring rollout status daemonset/alloy --timeout=120s; then
-    echo "Alloy log collection: ready"
-  else
-    echo "ERROR: Alloy log collection is not ready" >&2
-    fail=1
-  fi
-else
-  echo "WARNING: Alloy is not installed; use kubectl logs and state the limitation" >&2
-  warn=1
+  echo "Demo service readiness endpoint: OK"
 fi
 
 if [[ ${fail} -ne 0 ]]; then

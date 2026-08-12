@@ -8,6 +8,11 @@ deploymentMode: SingleBinary
 
 loki:
   auth_enabled: false
+
+  # Development runs one Loki binary. Matching the replication factor to that
+  # topology prevents writes from waiting for replicas that do not exist.
+  commonConfig:
+    replication_factor: 1
   
   # Tells Loki to use the default local TSDB schema for development
   useTestSchema: true

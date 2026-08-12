@@ -26,6 +26,9 @@ spec:
     - repoURL: git@github.com:stonetusker/tuskerblueprint.git
       targetRevision: main
       ref: values
+    - repoURL: git@github.com:stonetusker/tuskerblueprint.git
+      targetRevision: main
+      path: platform-services/grafana/dashboards/development
   syncPolicy:
     automated:
       prune: true

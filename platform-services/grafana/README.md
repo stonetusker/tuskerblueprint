@@ -20,24 +20,22 @@ It is intended to be deployed through Argo CD using a pinned Helm chart and envi
 - It should provide dashboards for cluster and workload visibility.
 - Authentication and ingress should be handled through the platform security and networking stacks.
 
-## Development service dashboard
+## Development demo dashboard
 
-values/development.yaml provisions **Stonetusker Demo / Tusker Service
-Overview** from Git. The environment and service variables make one dashboard
-work for the hand-built demo and every service produced by the golden path.
+The development Application combines the Grafana Helm release with a
+Git-controlled dashboard ConfigMap from:
 
-The service must expose these Prometheus series and labels:
-
-- application_info with service, environment and version labels
-- http_requests_total with service, environment, method, route and status labels
-- http_request_duration_seconds_bucket with service, environment, route and le labels
-- notification_requests_total with service, environment and channel labels
-
-For local demo access:
-
-```bash
-kubectl -n grafana port-forward service/grafana 3000:80
+```text
+platform-services/grafana/dashboards/development/
 ```
 
-Then open **Grafana → Dashboards → Stonetusker Demo → Tusker Service Overview**.
-The logs panel additionally requires Loki and a validated log collector such as Alloy.
+The provisioned dashboard uses UID `stonetusker-demo-service` and appears under
+the **Stonetusker Demo** folder. Its Prometheus queries use
+`$__rate_interval`, and zero-result expressions explicitly return zero so an
+idle healthy service is not shown as `No data`.
+
+Validate the complete Prometheus, Grafana, Alloy and Loki path with:
+
+```bash
+./scripts/demo/verify-observability.sh
+```

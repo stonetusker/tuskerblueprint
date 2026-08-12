@@ -6,17 +6,26 @@
 
 server:
   replicaCount: 1
+  global:
+    # The dashboard refreshes every five seconds. A 15-second scrape interval
+    # provides enough samples for Grafana's $__rate_interval without creating
+    # the gaps caused by the chart's one-minute default.
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    evaluation_interval: 15s
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
 
 alertmanager:
   enabled: false
 
-pushgateway:
+prometheus-pushgateway:
   enabled: false
 
-resources:
-  requests:
-    cpu: 100m
-    memory: 128Mi
-  limits:
-    cpu: 500m
-    memory: 512Mi
+kube-state-metrics:
+  enabled: true

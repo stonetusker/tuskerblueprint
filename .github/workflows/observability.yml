@@ -1,0 +1,70 @@
+---
+name: Observability
+
+on:
+  pull_request:
+    paths:
+      - "platform-services/alloy/**"
+      - "platform-services/grafana/**"
+      - "platform-services/loki/**"
+      - "platform-services/prometheus/**"
+      - "gitops/applications/platform/observability/**"
+      - "scripts/demo/**"
+      - "scripts/validate_observability.py"
+      - ".github/workflows/observability.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "platform-services/alloy/**"
+      - "platform-services/grafana/**"
+      - "platform-services/loki/**"
+      - "platform-services/prometheus/**"
+      - "gitops/applications/platform/observability/**"
+      - "scripts/demo/**"
+      - "scripts/validate_observability.py"
+      - ".github/workflows/observability.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install validation dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "PyYAML==6.0.3" "promql-parser==0.10.0"
+          python -m pip check
+
+      - name: Validate dashboard and data collection contract
+        run: python scripts/validate_observability.py
+
+      - name: Validate demo scripts
+        run: |
+          bash -n scripts/demo/generate-traffic.sh
+          bash -n scripts/demo/preflight.sh
+          bash -n scripts/demo/verify-observability.sh
+
+      - uses: azure/setup-kubectl@v5
+        with:
+          version: v1.31.4
+
+      - name: Render observability Kustomizations
+        run: |
+          set -euo pipefail
+          kubectl kustomize gitops/applications/platform/observability >/tmp/observability-applications.yaml
+          kubectl kustomize platform-services/alloy >/tmp/alloy.yaml
+          kubectl kustomize platform-services/grafana/dashboards/development >/tmp/grafana-dashboard.yaml
+          test -s /tmp/observability-applications.yaml
+          test -s /tmp/alloy.yaml
+          test -s /tmp/grafana-dashboard.yaml
