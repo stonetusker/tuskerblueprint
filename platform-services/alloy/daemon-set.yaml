@@ -14,7 +14,7 @@ spec:
   template:
     metadata:
       annotations:
-        tuskerblueprint.io/config-revision: kubernetes-api-logs-v1
+        tuskerblueprint.io/config-revision: kubernetes-api-logs-v3
       labels:
         app.kubernetes.io/name: alloy
         app.kubernetes.io/component: log-collector
@@ -36,6 +36,9 @@ spec:
           args:
             - run
             - /etc/alloy/config.alloy
+            # loki.source.kubernetes is public preview in Alloy v1.7.5. Keep
+            # the gate explicit while this repository remains pinned there.
+            - --stability.level=public-preview
             - --storage.path=/var/lib/alloy/data
             - --server.http.listen-addr=0.0.0.0:12345
           ports:

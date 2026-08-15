@@ -22,6 +22,7 @@ OBSERVABILITY_KUSTOMIZATION_PATH = (
     ROOT / "gitops/applications/platform/observability/kustomization.yaml"
 )
 ALLOY_CONFIG_MAP_PATH = ROOT / "platform-services/alloy/config-map.yaml"
+ALLOY_DAEMON_SET_PATH = ROOT / "platform-services/alloy/daemon-set.yaml"
 
 
 def load_yaml(path: Path) -> dict[str, Any]:
@@ -88,10 +89,12 @@ def validate_dashboard() -> None:
         for target in panel.get("targets", [])
         if target.get("expr")
     ]
-    expected_selector = (
-        '{namespace="$namespace", app="$service", container="app"} | json'
-    )
-    if expected_selector not in log_queries:
+    if not any(
+        '{namespace="$namespace", app="$service"}' in query
+        and "| json" in query
+        and 'message="request_completed"' in query
+        for query in log_queries
+    ):
         raise ValueError("The dashboard does not contain the expected Loki query")
 
 
@@ -123,15 +126,43 @@ def validate_collection_contract() -> None:
 
     alloy_config_map = load_yaml(ALLOY_CONFIG_MAP_PATH)
     alloy_config = alloy_config_map["data"]["config.alloy"]
+    invalid_comment_lines = [
+        line_number
+        for line_number, line in enumerate(alloy_config.splitlines(), start=1)
+        if line.lstrip().startswith("#")
+    ]
+    if invalid_comment_lines:
+        rendered_lines = ", ".join(str(line) for line in invalid_comment_lines)
+        raise ValueError(
+            "Alloy River configuration uses invalid '#' comments on line(s): "
+            f"{rendered_lines}; use '//' comments"
+        )
+
     required_fragments = (
         'field = "spec.nodeName=" + sys.env("NODE_NAME")',
-        'replacement   = "/var/log/pods/*$1/*.log"',
-        "stage.cri {}",
+        'loki.source.kubernetes "pod_logs"',
+        "targets    = discovery.relabel.pod_logs.output",
         "forward_to = [loki.process.pod_logs.receiver]",
+        'url = "http://loki-gateway.monitoring.svc.cluster.local/loki/api/v1/push"',
     )
     for fragment in required_fragments:
         if fragment not in alloy_config:
             raise ValueError(f"Alloy collection contract is missing: {fragment}")
+
+    alloy_daemon_set = load_yaml(ALLOY_DAEMON_SET_PATH)
+    containers = alloy_daemon_set["spec"]["template"]["spec"]["containers"]
+    alloy_container = next(
+        container for container in containers if container.get("name") == "alloy"
+    )
+    if "--stability.level=public-preview" not in alloy_container.get("args", []):
+        raise ValueError(
+            "Alloy v1.7.5 requires --stability.level=public-preview for "
+            "loki.source.kubernetes"
+        )
+
+    pod_spec = alloy_daemon_set["spec"]["template"]["spec"]
+    if any("hostPath" in volume for volume in pod_spec.get("volumes", [])):
+        raise ValueError("Kubernetes API log collection must not mount hostPath")
 
 
 def main() -> None:

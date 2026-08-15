@@ -13,8 +13,8 @@ data:
     discovery.kubernetes "pods" {
       role = "pod"
 
-      # Keep one collector responsible for each Pod. The DaemonSet instance on
-      # a node only tails Pods scheduled to that node, avoiding duplicate logs.
+      // Keep one collector responsible for each Pod. The DaemonSet instance on
+      // a node only tails Pods scheduled to that node, avoiding duplicate logs.
       selectors {
         role  = "pod"
         field = "spec.nodeName=" + sys.env("NODE_NAME")
@@ -56,8 +56,8 @@ data:
     }
 
     loki.process "pod_logs" {
-      # The Kubernetes API returns the application line without the CRI file
-      # envelope, so structured JSON reaches Loki unchanged.
+      // The Kubernetes API returns the application line without the CRI file
+      // envelope, so structured JSON reaches Loki unchanged.
       forward_to = [loki.write.default.receiver]
     }
 
