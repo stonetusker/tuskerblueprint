@@ -154,10 +154,17 @@ def validate_collection_contract() -> None:
     alloy_container = next(
         container for container in containers if container.get("name") == "alloy"
     )
-    if "--stability.level=public-preview" not in alloy_container.get("args", []):
+    args = alloy_container.get("args", [])
+    # Accept either public-preview or experimental gates for Alloy stability level.
+    if not any(a.startswith("--stability.level=") for a in args):
         raise ValueError(
-            "Alloy v1.7.5 requires --stability.level=public-preview for "
-            "loki.source.kubernetes"
+            "Alloy container must include a --stability.level=... argument"
+        )
+    stability_values = [a.split("=", 1)[1] for a in args if a.startswith("--stability.level=")]
+    allowed = {"public-preview", "experimental"}
+    if not any(s in allowed for s in stability_values):
+        raise ValueError(
+            "Alloy requires --stability.level to be one of: public-preview, experimental"
         )
 
     pod_spec = alloy_daemon_set["spec"]["template"]["spec"]
