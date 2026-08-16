@@ -356,13 +356,11 @@ check(
     "demo preflight still allows the old public-only bypass",
 )
 
-grafana_values = load_documents(
-    ROOT / "platform-services/grafana/values/development.yaml"
-)[0]
+grafana_values = load_documents(ROOT / "platform-services/grafana/values/development.yaml")[0]
 dashboard_json = grafana_values.get("dashboards", {}).get("default", {}).get(
     "tusker-service-overview", {}
 ).get("json")
-check(isinstance(dashboard_json, str), "Grafana service dashboard is not provisioned")
+
 if isinstance(dashboard_json, str):
     try:
         dashboard = json.loads(dashboard_json)
@@ -396,6 +394,27 @@ if isinstance(dashboard_json, str):
             "Application logs",
         ):
             check(title in panel_titles, f"Grafana service dashboard missing {title}")
+else:
+    # Allow dashboards to be provisioned via a ConfigMap generator (kustomize)
+    kustomize_path = ROOT / "platform-services/grafana/dashboards/development/kustomization.yaml"
+    if not kustomize_path.exists():
+        errors.append("Grafana service dashboard is not provisioned")
+    else:
+        try:
+            kdoc = load_documents(kustomize_path)[0]
+        except Exception as error:
+            errors.append(f"{kustomize_path.relative_to(ROOT)}: {error}")
+            kdoc = {}
+        config_generators = kdoc.get("configMapGenerator", []) or []
+        # Expect a generator that produces the dashboard ConfigMap
+        generator_names = {g.get("name") for g in config_generators if isinstance(g, dict)}
+        check(
+            "grafana-dashboard-demo-service" in generator_names,
+            "Grafana dashboard ConfigMap generator not found",
+        )
+        # Ensure the dashboard file exists
+        dashboard_file = ROOT / "platform-services/grafana/dashboards/development/demo-service-delivery.json"
+        check(dashboard_file.is_file(), "Grafana dashboard file demo-service-delivery.json is missing")
 
 requirements = (
     ROOT / "software-templates/tusker-service/skeleton/service/requirements.txt"
