@@ -279,7 +279,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum(increase(http_requests_total{service=\"$service\",environment=\"$environment\",route=~\"/api/.*\"}[$__range])) or vector(0)",
+          "expr": "sum(increase(http_requests_total{service=\"$service\",environment=\"$environment\"}[$__range])) or vector(0)",
           "instant": true,
           "legendFormat": "Requests",
           "range": false,
@@ -346,7 +346,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "100 * (1 - ((sum(increase(http_requests_total{service=\"$service\",environment=\"$environment\",route=~\"/api/.*\",status=~\"5..\"}[$__range])) or vector(0)) / clamp_min((sum(increase(http_requests_total{service=\"$service\",environment=\"$environment\",route=~\"/api/.*\"}[$__range])) or vector(0)), 1)))",
+          "expr": "100 * (1 - ((sum(increase(http_requests_total{service=\"$service\",environment=\"$environment\",status=~\"5..\"}[$__range])) or vector(0)) / clamp_min((sum(increase(http_requests_total{service=\"$service\",environment=\"$environment\"}[$__range])) or vector(0)), 1)))",
           "instant": true,
           "legendFormat": "Success",
           "range": false,
@@ -411,7 +411,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "1000 * (histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{service=\"$service\",environment=\"$environment\",route=~\"/api/.*\"}[$__rate_interval]))) or vector(0))",
+          "expr": "1000 * (histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{service=\"$service\",environment=\"$environment\"}[$__rate_interval]))) or vector(0))",
           "legendFormat": "p95",
           "refId": "A"
         }
@@ -485,7 +485,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum by (method, route) (rate(http_requests_total{service=\"$service\",environment=\"$environment\",route=~\"/api/.*\"}[$__rate_interval])) or on() vector(0)",
+          "expr": "sum by (method, route) (rate(http_requests_total{service=\"$service\",environment=\"$environment\"}[$__rate_interval])) or on() vector(0)",
           "legendFormat": "{{method}} {{route}}",
           "refId": "A"
         }
@@ -560,19 +560,19 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "1000 * (histogram_quantile(0.50, sum by (le) (rate(http_request_duration_seconds_bucket{service=\"$service\",environment=\"$environment\",route=~\"/api/.*\"}[$__rate_interval]))) or vector(0))",
+          "expr": "1000 * (histogram_quantile(0.50, sum by (le) (rate(http_request_duration_seconds_bucket{service=\"$service\",environment=\"$environment\"}[$__rate_interval]))) or vector(0))",
           "legendFormat": "p50",
           "refId": "A"
         },
         {
           "editorMode": "code",
-          "expr": "1000 * (histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{service=\"$service\",environment=\"$environment\",route=~\"/api/.*\"}[$__rate_interval]))) or vector(0))",
+          "expr": "1000 * (histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{service=\"$service\",environment=\"$environment\"}[$__rate_interval]))) or vector(0))",
           "legendFormat": "p95",
           "refId": "B"
         },
         {
           "editorMode": "code",
-          "expr": "1000 * (histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{service=\"$service\",environment=\"$environment\",route=~\"/api/.*\"}[$__rate_interval]))) or vector(0))",
+          "expr": "1000 * (histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{service=\"$service\",environment=\"$environment\"}[$__rate_interval]))) or vector(0))",
           "legendFormat": "p99",
           "refId": "C"
         }
@@ -655,7 +655,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum by (status) (increase(http_requests_total{service=\"$service\",environment=\"$environment\",route=~\"/api/.*\"}[$__range])) or on() vector(0)",
+          "expr": "sum by (status) (increase(http_requests_total{service=\"$service\",environment=\"$environment\"}[$__range])) or on() vector(0)",
           "instant": true,
           "legendFormat": "HTTP {{status}}",
           "range": false,
@@ -802,7 +802,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "100 * ((sum(rate(http_requests_total{service=\"$service\",environment=\"$environment\",route=~\"/api/.*\",status=~\"5..\"}[$__rate_interval])) or vector(0)) / clamp_min((sum(rate(http_requests_total{service=\"$service\",environment=\"$environment\",route=~\"/api/.*\"}[$__rate_interval])) or vector(0)), 0.001))",
+          "expr": "100 * ((sum(rate(http_requests_total{service=\"$service\",environment=\"$environment\",status=~\"5..\"}[$__rate_interval])) or vector(0)) / clamp_min((sum(rate(http_requests_total{service=\"$service\",environment=\"$environment\"}[$__rate_interval])) or vector(0)), 0.001))",
           "legendFormat": "5xx error rate",
           "refId": "A"
         }
