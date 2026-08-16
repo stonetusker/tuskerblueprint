@@ -38,7 +38,7 @@ spec:
             - /etc/alloy/config.alloy
             # loki.source.kubernetes is public preview in Alloy v1.7.5. Keep
             # the gate explicit while this repository remains pinned there.
-            - --stability.level=public-preview
+            - --stability.level=experimental
             - --storage.path=/var/lib/alloy/data
             - --server.http.listen-addr=0.0.0.0:12345
           ports:
