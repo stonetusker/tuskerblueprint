@@ -139,7 +139,7 @@ def validate_collection_contract() -> None:
         )
 
     required_fragments = (
-        'field = "spec.nodeName=" + sys.env("NODE_NAME")',
+        'field = "spec.nodeName=" + env("NODE_NAME")',
         'loki.source.kubernetes "pod_logs"',
         "targets    = discovery.relabel.pod_logs.output",
         "forward_to = [loki.process.pod_logs.receiver]",
