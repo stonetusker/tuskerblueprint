@@ -5,6 +5,14 @@
 # ==============================================================================
 
 adminUser: admin
+# 1. Define a static password so Helm doesn't inject a random one on restart
+adminPassword: "admin123"
+
+# 2. Enable persistence so the SQLite database (users, custom dashboards) survives reboots
+persistence:
+  enabled: true
+  size: 5Gi
+  # storageClassName: local-path # Uncomment if your K3s uses a specific storage class
 
 service:
   type: ClusterIP
