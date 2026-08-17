@@ -1,0 +1,18 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: demo-service-ingress
+  namespace: demo-service-development
+  annotations:
+    argocd.argoproj.io/sync-wave: "85"
+    app.kubernetes.io/name: demo-service
+    app.kubernetes.io/component: ingress
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`demo.local`) && PathPrefix(`/`)
+      kind: Rule
+      services:
+        - name: demo-service
+          port: 80
