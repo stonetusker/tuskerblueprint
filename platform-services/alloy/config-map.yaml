@@ -65,4 +65,8 @@ data:
       endpoint {
         url = "http://loki-gateway.monitoring.svc.cluster.local/loki/api/v1/push"
       }
+      wal {
+        enabled = true
+        max_segment_age = "1h"
+      }
     }
