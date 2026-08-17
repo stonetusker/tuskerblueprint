@@ -11,7 +11,8 @@ spec:
   entryPoints:
     - web
   routes:
-    - match: Host(`demo.local`) && PathPrefix(`/`)
+    # Notice we removed the Host() matcher completely!
+    - match: PathPrefix(`/`)
       kind: Rule
       services:
         - name: demo-service
