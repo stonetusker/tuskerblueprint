@@ -17,7 +17,7 @@ data:
       // a node only tails Pods scheduled to that node, avoiding duplicate logs.
       selectors {
         role  = "pod"
-        field = "spec.nodeName=" + sys.env("NODE_NAME")
+        field = "spec.nodeName=" + env("NODE_NAME")
       }
     }
 
