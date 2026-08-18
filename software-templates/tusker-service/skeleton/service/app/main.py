@@ -86,6 +86,25 @@ class ServiceMetadata(BaseModel):
 MAX_NOTIFICATION_RECORDS = 500
 NOTIFICATION_STORE: OrderedDict[str, NotificationRecord] = OrderedDict()
 NOTIFICATION_STORE_LOCK = Lock()
+NOTIFICATION_STORE_RECORDS = Gauge(
+    "notification_store_records",
+    "Current number of retained demo notification records",
+    ["service", "environment"],
+)
+
+
+def sync_notification_store_metric() -> None:
+    """Keep the retained-record gauge aligned with the bounded in-memory store."""
+    with NOTIFICATION_STORE_LOCK:
+        current_size = len(NOTIFICATION_STORE)
+    NOTIFICATION_STORE_RECORDS.labels(
+        service=settings.service_name,
+        environment=settings.environment,
+    ).set(current_size)
+
+
+sync_notification_store_metric()
+
 
 app = FastAPI(
     title="${{ values.name }}",
@@ -261,6 +280,8 @@ def create_notification(
         NOTIFICATION_STORE.move_to_end(notification_id)
         while len(NOTIFICATION_STORE) > MAX_NOTIFICATION_RECORDS:
             NOTIFICATION_STORE.popitem(last=False)
+
+    sync_notification_store_metric()
 
     NOTIFICATIONS.labels(
         service=settings.service_name,

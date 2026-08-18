@@ -196,7 +196,7 @@ wait_for_prometheus_result \
   "http_requests_total{service=\"${workload_service}\",environment=\"development\"}"
 wait_for_prometheus_result \
   "Product activity metric" \
-  "notification_store_records{service=\"${workload_service}\",environment=\"development\"}"
+  "notification_requests_total{service=\"${workload_service}\",environment=\"development\"}"
 wait_for_prometheus_result \
   "Kubernetes deployment state" \
   "kube_deployment_status_replicas_available{namespace=\"${workload_namespace}\",deployment=\"${workload_service}\"}"

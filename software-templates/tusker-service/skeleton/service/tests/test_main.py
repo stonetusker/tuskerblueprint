@@ -131,3 +131,18 @@ def test_metrics_endpoint(monkeypatch) -> None:
     assert response.status_code == 200
     assert "application_info" in response.text
     assert "http_requests_total" in response.text
+    assert "notification_store_records" in response.text
+
+    created = client.post(
+        "/api/v1/notifications",
+        headers={"X-Demo-Request": "pytest", "X-Correlation-ID": "pytest-metric-correlation"},
+        json={
+            "channel": "sms",
+            "recipient": "+15550000001",
+            "message": "Metric verification",
+        },
+    )
+    assert created.status_code == 202
+    response_after = client.get("/metrics")
+    assert "notification_store_records" in response_after.text
+    assert 'notification_store_records{environment="local",service="${{ values.name }}"}' in response_after.text
