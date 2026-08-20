@@ -3,7 +3,7 @@ set -euo pipefail
 
 namespace="${DEMO_NAMESPACE:-demo-service-development}"
 service="${DEMO_SERVICE:-demo-service}"
-local_port="${DEMO_UI_PORT:-8081}"
+local_port="${DEMO_UI_PORT:-8082}"
 
 if ! command -v kubectl >/dev/null 2>&1; then
   echo "ERROR: kubectl is required" >&2

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-base_url="${DEMO_BASE_URL:-http://127.0.0.1:8081}"
+base_url="${DEMO_BASE_URL:-http://127.0.0.1:8082}"
 requests_per_round="${DEMO_REQUESTS:-60}"
 request_delay="${DEMO_REQUEST_DELAY_SECONDS:-0.25}"
 round_delay="${DEMO_ROUND_DELAY_SECONDS:-5}"
