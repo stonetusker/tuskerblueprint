@@ -145,4 +145,7 @@ def test_metrics_endpoint(monkeypatch) -> None:
     assert created.status_code == 202
     # response_after = client.get("/metrics")
     # assert "notification_store_records" in response_after.text
-    # assert 'notification_store_records{environment="local",service="${{ values.name }}"}' in response_after.text
+    # assert (
+    #     'notification_store_records{environment="local",service="${{ values.name }}"}'
+    #     in response_after.text
+    # )
