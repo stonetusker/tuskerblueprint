@@ -3,11 +3,62 @@
 from __future__ import annotations
 
 import importlib
+import io
+import json
+import logging
 
 from fastapi.testclient import TestClient
 from opentelemetry import trace
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+
+from app.logging_config import JsonFormatter
+
+
+def test_json_logs_include_trace_and_correlation_ids() -> None:
+    """Verify the JSON log contract carries fields used by Alloy ingest parsing."""
+    record = logging.LogRecord(
+        name="test-service",
+        level=logging.INFO,
+        pathname=__file__,
+        lineno=1,
+        msg="request_completed",
+        args=(),
+        exc_info=None,
+    )
+    record.correlation_id = "correlation-123"
+    record.trace_id = "trace-123"
+
+    payload = json.loads(JsonFormatter().format(record))
+
+    assert payload["level"] == "info"
+    assert payload["correlation_id"] == "correlation-123"
+    assert payload["trace_id"] == "trace-123"
+
+
+def test_request_log_contains_trace_and_correlation_ids(monkeypatch) -> None:
+    """Verify a real request log contains the fields parsed by Alloy."""
+    monkeypatch.setenv("DEMO_FAILURE_MODE", "none")
+
+    import app.main as app_main
+
+    stream = io.StringIO()
+    handler = logging.StreamHandler(stream)
+    handler.setFormatter(JsonFormatter())
+    app_main.logger.addHandler(handler)
+    try:
+        response = TestClient(app_main.app).get(
+            "/api/v1/status",
+            headers={"X-Correlation-ID": "request-log-correlation-id"},
+        )
+    finally:
+        app_main.logger.removeHandler(handler)
+
+    assert response.status_code == 200
+    logs = [json.loads(line) for line in stream.getvalue().splitlines()]
+    request_log = next(log for log in logs if log["message"] == "request_completed")
+    assert request_log["correlation_id"] == "request-log-correlation-id"
+    assert request_log["trace_id"]
 
 
 def test_request_produces_span_with_correlation_id(monkeypatch) -> None:

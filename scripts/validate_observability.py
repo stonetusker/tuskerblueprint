@@ -143,11 +143,31 @@ def validate_collection_contract() -> None:
         'loki.source.kubernetes "pod_logs"',
         "targets    = discovery.relabel.pod_logs.output",
         "forward_to = [loki.process.pod_logs.receiver]",
+        'stage.json {',
+        'correlation_id = "correlation_id"',
+        'trace_id       = "trace_id"',
+        'level          = "level"',
+        'stage.structured_metadata {',
+        'correlation_id = ""',
+        'trace_id       = ""',
+        'level          = ""',
         'url = "http://loki-gateway.monitoring.svc.cluster.local/loki/api/v1/push"',
     )
     for fragment in required_fragments:
         if fragment not in alloy_config:
             raise ValueError(f"Alloy collection contract is missing: {fragment}")
+
+    if 'target_label  = "correlation_id"' in alloy_config:
+        raise ValueError("correlation_id must not be emitted as a Loki label")
+    if 'target_label  = "trace_id"' in alloy_config:
+        raise ValueError("trace_id must not be emitted as a Loki label")
+    if 'target_label  = "level"' in alloy_config:
+        raise ValueError("level must not be emitted as a Loki label")
+
+    if loki_values["loki"].get("limits_config", {}).get(
+        "allow_structured_metadata"
+    ) is not True:
+        raise ValueError("Loki structured metadata is not enabled")
 
     alloy_daemon_set = load_yaml(ALLOY_DAEMON_SET_PATH)
     containers = alloy_daemon_set["spec"]["template"]["spec"]["containers"]

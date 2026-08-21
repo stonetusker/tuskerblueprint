@@ -58,6 +58,23 @@ data:
     loki.process "pod_logs" {
       // The Kubernetes API returns the application line without the CRI file
       // envelope, so structured JSON reaches Loki unchanged.
+      stage.json {
+        expressions = {
+          correlation_id = "correlation_id"
+          trace_id       = "trace_id"
+          level          = "level"
+        }
+      }
+
+      // Request-scoped values belong in structured metadata, never in labels.
+      stage.structured_metadata {
+        values = {
+          correlation_id = ""
+          trace_id       = ""
+          level          = ""
+        }
+      }
+
       forward_to = [loki.write.default.receiver]
     }
 

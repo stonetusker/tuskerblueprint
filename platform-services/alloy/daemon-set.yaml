@@ -14,7 +14,7 @@ spec:
   template:
     metadata:
       annotations:
-        tuskerblueprint.io/config-revision: kubernetes-api-logs-v3
+        tuskerblueprint.io/config-revision: kubernetes-api-logs-v4
       labels:
         app.kubernetes.io/name: alloy
         app.kubernetes.io/component: log-collector

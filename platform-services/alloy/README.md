@@ -25,6 +25,15 @@ follow the TuskerBlueprint service template are therefore queryable with:
 {namespace="demo-service-development", app="demo-service", container="app"}
 ```
 
+Alloy parses the service JSON line at ingest and stores `correlation_id`,
+`trace_id`, and `level` as Loki structured metadata. They are intentionally not
+labels, because request-scoped IDs would create high-cardinality index entries.
+The metadata can be filtered directly in LogQL, for example:
+
+```logql
+{namespace="demo-service-development", app="demo-service"} | correlation_id = "<id>"
+```
+
 After changing `config-map.yaml`, also update the
 `tuskerblueprint.io/config-revision` annotation in `daemon-set.yaml`. That makes
 the GitOps reconciliation roll the collectors onto the new configuration.
