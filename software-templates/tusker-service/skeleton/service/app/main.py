@@ -52,6 +52,7 @@ resource = Resource.create(
 
 otlp_exporter = OTLPSpanExporter(
     endpoint=os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317"),
+    insecure=True,
 )
 current_provider = trace.get_tracer_provider()
 tracer_provider: trace.TracerProvider

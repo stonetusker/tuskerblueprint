@@ -217,6 +217,33 @@ loki_has_result() {
     >/dev/null <<<"${response}"
 }
 
+tempo_has_result() {
+  local response
+
+  response="$(curl -fsS --get "http://127.0.0.1:${tempo_port}/api/search" \
+    --data-urlencode 'q={}' \
+    --data-urlencode 'limit=20')" || return 1
+  jq -e '.traces | length > 0' >/dev/null <<<"${response}"
+}
+
+printf '\nChecking trace ingestion into Tempo\n'
+traces_found=0
+for _ in $(seq 1 40); do
+  if tempo_has_result; then
+    traces_found=1
+    break
+  fi
+  sleep 1
+done
+
+if [[ "${traces_found}" -ne 1 ]]; then
+  echo "ERROR: Tempo is ready but returned no searchable traces" >&2
+  echo "       Check the demo-service OTLP exporter, Alloy receiver/exporter, and Tempo logs" >&2
+  print_alloy_diagnostics
+  exit 1
+fi
+echo "  Tempo trace search           data present"
+
 log_query="{namespace=\"${workload_namespace}\", app=\"${workload_service}\"} | json | message=\"request_completed\" | correlation_id=\"${correlation_id}\""
 structured_metadata_query="{namespace=\"${workload_namespace}\", app=\"${workload_service}\"} | correlation_id = \"${correlation_id}\""
 

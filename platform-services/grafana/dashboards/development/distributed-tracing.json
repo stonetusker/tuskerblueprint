@@ -58,7 +58,7 @@
       },
       "targets": [
         {
-          "query": "{ .service.name = \"demo-service\" && .correlation_id =~ \"$correlation_id\" }",
+          "query": "{}",
           "queryType": "traceql",
           "refId": "A"
         }

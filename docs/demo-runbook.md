@@ -69,9 +69,11 @@ curl -i -X POST http://127.0.0.1:8082/api/v1/notifications \
 ```
 
 Enter `cust-1042-checkout` in the dashboard field. The log panel narrows to
-that request, and the trace panel narrows to its Tempo trace. If the panel is
-empty even with the default `.*`, first verify the app instrumentation, Alloy
-OTLP receiver, and Tempo readiness before continuing with the demo.
+that request; open its `trace_id` link to jump to the matching Tempo trace.
+The Recent traces panel remains a broad recent-trace view so a dashboard query
+cannot hide valid traces. If it is empty even after the verification script
+reports trace ingestion, check the Grafana Tempo datasource and the dashboard
+time range.
 
 To verify Tempo directly during the demo:
 
