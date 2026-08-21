@@ -10,6 +10,7 @@
 # - Object storage backend (S3, GCS, Azure Blob, etc.)
 # - High-availability setup with multiple replicas
 # Refer to: https://grafana.com/docs/tempo/latest/setup/install/helm/
+fullnameOverride: tempo-production
 replicas: 1
 
 tempo:
@@ -17,7 +18,7 @@ tempo:
   multitenancyEnabled: false
 
   # Retention policy for traces: 30 days for production
-  retention: 30d
+  retention: 720h
 
   # Storage backend configuration
   # Single-binary with persistent storage

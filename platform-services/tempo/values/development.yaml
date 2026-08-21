@@ -6,6 +6,7 @@
 
 # Development runs single-binary Tempo with local ephemeral storage.
 # Traces are lost on pod restart. This is acceptable for development use.
+fullnameOverride: tempo
 replicas: 1
 
 tempo:

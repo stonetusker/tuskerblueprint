@@ -7,6 +7,7 @@
 # Staging runs single-binary Tempo with persistent storage.
 # Note: This topology is suitable for staging validation. For production use,
 # review distributed deployment options and object storage backend.
+fullnameOverride: tempo-staging
 replicas: 1
 
 tempo:
@@ -14,7 +15,7 @@ tempo:
   multitenancyEnabled: false
 
   # Retention policy for traces: 7 days for staging
-  retention: 7d
+  retention: 168h
 
   # Storage backend configuration
   # Single-binary with persistent storage
