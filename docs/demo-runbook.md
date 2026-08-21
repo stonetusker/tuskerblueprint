@@ -128,6 +128,152 @@ DEMO_CONTINUOUS=1 DEMO_ALLOW_FAILURES=1 ./scripts/demo/generate-traffic.sh
 
 Restore the healthy mode through Git before ending the recording.
 
+## Customer issue investigation demo
+
+Use this scenario to demonstrate how a platform engineer handles a customer
+report that the notification API is slow or returning errors. The scenario is
+controlled and development-only: it changes the demo deployment environment,
+does not contact real recipients, and must be restored before the demo ends.
+
+### Prepare the evidence
+
+Use two terminals. In the first terminal, expose the demo service and Grafana:
+
+```bash
+kubectl -n demo-service-development port-forward service/demo-service 8082:80
+kubectl -n grafana port-forward service/grafana 3000:80
+```
+
+Open Grafana at `http://127.0.0.1:3000`, select **Stonetusker Demo Service |
+Golden Path**, and set the time range to **Last 30 minutes** with a 5-second
+refresh. Keep **Platform Observability Overview** and **Distributed Tracing
+Demo** available in separate browser tabs.
+
+Before starting, verify the observability path:
+
+```bash
+./scripts/demo/verify-observability.sh
+```
+
+The overview dashboard should show `LIVE`, healthy replicas, and a visible
+request rate. `MISSING` means the telemetry path is broken and the scenario
+should not continue.
+
+### Scenario A: customer reports latency
+
+1. Put the demo service into controlled latency mode:
+
+    ```bash
+    kubectl -n demo-service-development set env deployment/demo-service \
+       DEMO_FAILURE_MODE=latency FAILURE_DELAY_MS=2500
+    kubectl -n demo-service-development rollout status deployment/demo-service
+    ```
+
+2. Send a request with a memorable customer correlation ID:
+
+    ```bash
+    curl -sS -X POST http://127.0.0.1:8082/api/v1/notifications \
+       -H 'Content-Type: application/json' \
+       -H 'X-Correlation-ID: cust-1042-latency' \
+       -H 'X-Demo-Request: customer-latency-demo' \
+       -d '{"channel":"email","recipient":"customer@example.invalid","message":"Order confirmation"}'
+    ```
+
+3. On **Stonetusker Demo Service | Golden Path**, show:
+
+    - **p95 latency** rising above the 500 ms illustrative target.
+    - **Customer latency percentiles** showing the slow tail.
+    - **API success** remaining healthy because latency mode returns HTTP 200.
+    - **Recent demo-service requests** showing `duration_ms` and
+       `correlation_id=cust-1042-latency`.
+
+4. Open **Distributed Tracing Demo**, enter `cust-1042-latency` in the
+    correlation field, and open the matching `POST /api/v1/notifications`
+    trace. Show the long span duration and use the trace-to-Loki link to prove
+    that the slow request and its log entry are the same request.
+
+5. Explain the operational conclusion: the customer symptom is latency, not
+    an availability failure. The trace identifies the request, the log records
+    the correlation ID and duration, and Prometheus shows the aggregate impact.
+
+### Scenario B: customer reports errors
+
+1. Change the controlled failure mode:
+
+    ```bash
+    kubectl -n demo-service-development set env deployment/demo-service \
+       DEMO_FAILURE_MODE=errors
+    kubectl -n demo-service-development rollout status deployment/demo-service
+    ```
+
+2. Send a request with a different correlation ID:
+
+    ```bash
+    curl -i -sS -X POST http://127.0.0.1:8082/api/v1/notifications \
+       -H 'Content-Type: application/json' \
+       -H 'X-Correlation-ID: cust-1042-error' \
+       -H 'X-Demo-Request: customer-error-demo' \
+       -d '{"channel":"email","recipient":"customer@example.invalid","message":"Order confirmation"}'
+    ```
+
+    The expected response is HTTP `500` with the same correlation ID.
+
+3. On **Stonetusker Demo Service | Golden Path**, show:
+
+    - **API success** falling below 100%.
+    - **Server error percentage** rising above zero.
+    - **Request outcomes** showing HTTP 5xx responses.
+    - **Recent demo-service requests** showing the failed request and its
+       `failure_mode`.
+
+4. In **Distributed Tracing Demo**, enter `cust-1042-error`, open the matching
+    trace, and follow the trace-to-Loki link. Confirm the trace, log, HTTP 500,
+    and correlation ID all describe the same customer event.
+
+5. Explain the operational conclusion: the platform engineer can distinguish
+    an application error from a platform outage because Kubernetes capacity and
+    telemetry remain available while the application error ratio increases.
+
+### Restore the healthy service
+
+Always restore the development workload after the demonstration:
+
+```bash
+kubectl -n demo-service-development set env deployment/demo-service \
+   DEMO_FAILURE_MODE=none FAILURE_DELAY_MS=2500
+kubectl -n demo-service-development rollout status deployment/demo-service
+```
+
+Then generate one normal request and confirm **API success** is back to 100%,
+**Server error percentage** returns to zero, and **p95 latency** returns below
+the illustrative threshold. Because the demo uses an in-memory store, a pod
+restart also resets retained notification records; this is expected behavior.
+
+### Direct verification commands
+
+Use these commands when explaining that the dashboard is backed by real
+telemetry rather than static panels:
+
+```bash
+# Prometheus: aggregate p95 latency
+curl -sG http://127.0.0.1:19090/api/v1/query \
+   --data-urlencode 'query=demo_service:http_latency:p95_seconds:5m' | jq .
+
+# Prometheus: server error ratio
+curl -sG http://127.0.0.1:19090/api/v1/query \
+   --data-urlencode 'query=demo_service:http_errors:rate5m' | jq .
+
+# Loki: find the customer request by correlation ID
+curl -sG http://127.0.0.1:13100/loki/api/v1/query_range \
+   --data-urlencode 'query={namespace="demo-service-development",app="demo-service"} | correlation_id = "cust-1042-latency"' \
+   --data-urlencode 'since=30m' | jq .
+
+# Tempo: find the corresponding notification trace
+curl -sG http://127.0.0.1:13200/api/search \
+   --data-urlencode 'q={ resource.service.name = "demo-service" && name = "POST /api/v1/notifications" }' \
+   --data-urlencode 'limit=20' | jq .
+```
+
 ## New-developer demonstration
 
 Use `subeeshlearn` in a clean browser session. Create a service through Backstage, show the generated repository and workflows, merge the service release PR, merge the platform onboarding PR, and show Argo CD and Backstage operational views.
