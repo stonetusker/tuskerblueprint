@@ -60,6 +60,7 @@
         {
           "query": "{}",
           "queryType": "traceql",
+          "tableType": "traces",
           "refId": "A"
         }
       ],
