@@ -109,7 +109,7 @@ timestamp:      2026-08-21T07:43:36.947515+00:00
 Executed against the live Tempo HTTP API:
 
 ```text
-GET /api/search?tags=service.name=demo-service&limit=5
+GET /api/search?q={.service.name="demo-service"}&limit=5
 ```
 
 Observed result:
@@ -118,8 +118,9 @@ Observed result:
 {"traces":[],"metrics":{"completedJobs":1,"totalJobs":1}}
 ```
 
-Because no trace was returned, this artifact does not claim a trace click
-through or trace-to-log result.
+The search uses Tempo's TraceQL query parameter. Because no trace was returned
+in the original recording, this artifact does not claim a trace click-through
+or trace-to-log result.
 
 ## Presentation script
 
