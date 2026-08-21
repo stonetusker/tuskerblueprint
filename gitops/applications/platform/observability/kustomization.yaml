@@ -4,6 +4,6 @@ kind: Kustomization
 resources:
   - prometheus
   - loki
-  - tempo
+  - tempo/application-development.yaml
   - alloy
   - grafana
