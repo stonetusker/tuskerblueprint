@@ -67,6 +67,23 @@ curl http://127.0.0.1:13200/ready
 
 The expected response is `ready` with HTTP status `200`.
 
+### Current trace-demo status
+
+Tempo is deployed and healthy, and the demo service now emits OTLP spans with
+the same `correlation_id` used in logs. Alloy accepts OTLP traces from the
+application and forwards them to Tempo, which means a populated **Recent traces**
+panel is now a valid expected result for a live demo.
+
+For the current recording, present the **Platform Observability Overview** as the
+working observability path: generate traffic, show the `LIVE` telemetry state,
+request rate, latency and HTTP outcomes, then open a log row in Loki and show
+its correlation ID. Use the **Distributed Tracing Demo** dashboard to show the
+matching trace and the Tempo-to-Loki correlation link for the same request.
+
+Do not describe an empty trace panel as a Tempo failure. If traces are absent,
+check the app instrumentation, Alloy OTLP receiver configuration, and Tempo
+readiness before starting the recording.
+
 The top-left **Telemetry state** tile is authoritative:
 
 - `LIVE` means application metrics are being scraped.
