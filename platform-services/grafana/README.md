@@ -41,7 +41,8 @@ Validate the complete Prometheus, Grafana, Alloy, Loki and Tempo readiness path 
 ```
 
 The development dashboard ConfigMap also provisions **Platform Observability
-Overview** and **Distributed Tracing Demo**. The tracing board is ready for
-Tempo data, but it remains empty until the application or Alloy pipeline emits
-OTLP traces. Tempo trace-to-Loki navigation is provisioned for the `tempo`
-datasource.
+Overview** and **Distributed Tracing Demo**. Prometheus request latency
+histograms now carry exemplars with the current trace ID, the latency panels
+show the exemplar data in Grafana, and the `tempo` datasource is wired to Loki
+via `tracesToLogsV2` for direct trace-to-log navigation. A populated tracing
+panel indicates the OTLP pipeline is working end to end.

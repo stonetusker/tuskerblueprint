@@ -44,6 +44,13 @@ datasources:
         access: proxy
         url: http://loki-gateway.monitoring.svc.cluster.local
         editable: false
+        jsonData:
+          derivedFields:
+            - datasourceUid: tempo
+              matcherRegex: 'correlation_id["\s:]+[=: ]*"?(?P<correlation_id>[A-Za-z0-9-]+)'
+              name: Trace by correlation ID
+              url: '$__value.raw'
+              urlDisplayLabel: 'View trace'
       - name: Tempo
         uid: tempo
         type: tempo

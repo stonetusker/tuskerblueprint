@@ -6,6 +6,8 @@
 
 server:
   replicaCount: 1
+  extraFlags:
+    - --enable-feature=exemplar-storage
 
 alertmanager:
   enabled: false

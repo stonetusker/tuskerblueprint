@@ -154,6 +154,15 @@ def sync_notification_store_metric() -> None:
     ).set(current_size)
 
 
+def get_current_trace_id() -> str | None:
+    """Return the current OpenTelemetry trace ID for Prometheus exemplars."""
+    current_span = trace.get_current_span()
+    span_context = current_span.get_span_context()
+    if not span_context or not span_context.is_valid:
+        return None
+    return format(span_context.trace_id, "032x")
+
+
 sync_notification_store_metric()
 
 
@@ -212,6 +221,7 @@ async def request_observability(request: Request, call_next):  # type: ignore[no
     route = request.scope.get("route")
     route_path = getattr(route, "path", None) or "<unmatched>"
     elapsed = time.perf_counter() - started
+    trace_id = get_current_trace_id()
 
     REQUESTS.labels(
         service=settings.service_name,
@@ -220,12 +230,16 @@ async def request_observability(request: Request, call_next):  # type: ignore[no
         route=route_path,
         status=str(response.status_code),
     ).inc()
-    REQUEST_LATENCY.labels(
+    request_latency = REQUEST_LATENCY.labels(
         service=settings.service_name,
         environment=settings.environment,
         method=request.method,
         route=route_path,
-    ).observe(elapsed)
+    )
+    if trace_id:
+        request_latency.observe(elapsed, exemplar={"traceID": trace_id})
+    else:
+        request_latency.observe(elapsed)
 
     logger.info(
         "request_completed",

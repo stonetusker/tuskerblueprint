@@ -80,6 +80,29 @@ def test_correlation_id_max_length(monkeypatch) -> None:
     assert len(returned_correlation_id) == 128
 
 
+def test_latency_histogram_has_trace_exemplar(monkeypatch) -> None:
+    """Verify the request latency histogram includes the current trace ID as an exemplar."""
+    monkeypatch.setenv("DEMO_FAILURE_MODE", "none")
+
+    import app.main as app_main
+
+    client = TestClient(app_main.app)
+    response = client.get(
+        "/api/v1/status",
+        headers={"X-Correlation-ID": "trace-exemplar-correlation-id"},
+    )
+
+    assert response.status_code == 200
+    trace_ids = set()
+    for metric in app_main.REQUEST_LATENCY.collect():
+        for sample in metric.samples:
+            exemplar = getattr(sample, "exemplar", None)
+            if exemplar is not None:
+                trace_ids.add(exemplar.labels.get("traceID"))
+
+    assert any(trace_ids)
+
+
 def test_notification_request_includes_correlation_id(monkeypatch) -> None:
     """Verify that notification requests include correlation_id in the response."""
     monkeypatch.setenv("DEMO_FAILURE_MODE", "none")
