@@ -58,7 +58,7 @@
       },
       "targets": [
         {
-          "query": "{}",
+          "query": "{ resource.service.name = \"demo-service\" }",
           "queryType": "traceql",
           "tableType": "traces",
           "refId": "A"
