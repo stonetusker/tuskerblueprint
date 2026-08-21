@@ -53,10 +53,10 @@ the `LIVE` telemetry tile, request rate, p95 latency, HTTP outcomes, and the
 same request events arriving in Loki.
 
 For the tracing view, open **Distributed Tracing Demo**. The **Recent traces**
-panel is populated only after the application sends OTLP traces to Tempo. When
-traces are present, open a trace and use **Logs for this span** to demonstrate
-the Tempo-to-Loki correlation link. An empty trace panel before trace
-instrumentation is enabled is expected and does not indicate a Tempo failure.
+panel should populate as soon as the app sends OTLP traces to Tempo. Open one
+trace, then use **Logs for this span** to demonstrate the Tempo-to-Loki
+correlation link. If the panel is empty, first verify the app instrumentation,
+Alloy OTLP receiver, and Tempo readiness before continuing with the demo.
 
 To verify Tempo directly during the demo:
 
@@ -77,12 +77,24 @@ panel is now a valid expected result for a live demo.
 For the current recording, present the **Platform Observability Overview** as the
 working observability path: generate traffic, show the `LIVE` telemetry state,
 request rate, latency and HTTP outcomes, then open a log row in Loki and show
-its correlation ID. Use the **Distributed Tracing Demo** dashboard to show the
-matching trace and the Tempo-to-Loki correlation link for the same request.
+its correlation ID. Next, switch to **Distributed Tracing Demo** and show the
+matching trace in Tempo for the same request, then click through to the linked
+Loki logs to demonstrate end-to-end traceability.
 
-Do not describe an empty trace panel as a Tempo failure. If traces are absent,
-check the app instrumentation, Alloy OTLP receiver configuration, and Tempo
-readiness before starting the recording.
+A concrete traceability demo flow is:
+
+1. In **Platform Observability Overview**, show the latency panel and a recent
+   request spike or exemplar.
+2. Click the exemplar or the trace icon on the latency panel to open the matching
+   request span in **Distributed Tracing Demo**.
+3. In Tempo, open the selected trace and use **Logs for this span** to jump to
+   the exact log lines for the same request.
+4. Confirm the same `correlation_id` appears in both the trace metadata and the
+   log output, proving the metric → trace → log chain for one request.
+
+If the trace panel is empty, do not describe it as a Tempo failure. Check the
+app instrumentation, Alloy OTLP receiver configuration, and Tempo readiness
+before moving on with the recording.
 
 The top-left **Telemetry state** tile is authoritative:
 
