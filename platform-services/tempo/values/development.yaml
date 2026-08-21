@@ -40,6 +40,17 @@ tempo:
   server:
     http_listen_port: 3200
 
+  # Explicitly enable the TraceQL search path used by Grafana dashboards.
+  queryFrontend:
+    search:
+      default_result_limit: 20
+      max_duration: 24h
+      query_backend_after: 0s
+
+  querier:
+    search:
+      query_timeout: 30s
+
 # Persistence disabled for development
 # Traces stored in ephemeral pod storage
 persistence:
