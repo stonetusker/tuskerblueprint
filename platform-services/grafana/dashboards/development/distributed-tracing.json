@@ -60,7 +60,7 @@
         {
           "query": "{ resource.service.name = \"demo-service\" }",
           "queryType": "traceql",
-          "tableType": "traces",
+          "tableType": "spans",
           "refId": "A"
         }
       ],
