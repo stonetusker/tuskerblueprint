@@ -218,6 +218,7 @@ loki_has_result() {
 }
 
 log_query="{namespace=\"${workload_namespace}\", app=\"${workload_service}\"} | json | message=\"request_completed\" | correlation_id=\"${correlation_id}\""
+structured_metadata_query="{namespace=\"${workload_namespace}\", app=\"${workload_service}\"} | correlation_id = \"${correlation_id}\""
 
 printf '\nChecking correlated application logs\n'
 logs_found=0
@@ -236,6 +237,35 @@ if [[ "${logs_found}" -ne 1 ]]; then
   exit 1
 fi
 echo "  Correlation ID               searchable in Loki"
+
+printf '\nChecking structured metadata and label cardinality\n'
+structured_metadata_found=0
+for _ in $(seq 1 40); do
+  if loki_has_result "${structured_metadata_query}"; then
+    structured_metadata_found=1
+    break
+  fi
+  sleep 1
+done
+
+if [[ "${structured_metadata_found}" -ne 1 ]]; then
+  echo "ERROR: Loki did not return the verification request through structured metadata" >&2
+  echo "       ${structured_metadata_query}" >&2
+  exit 1
+fi
+
+loki_labels="$(
+  curl -fsS "http://127.0.0.1:${loki_port}/loki/api/v1/labels" \
+    | jq -r '.data[]?'
+)"
+for high_cardinality_field in correlation_id trace_id; do
+  if grep -Fxq "${high_cardinality_field}" <<<"${loki_labels}"; then
+    echo "ERROR: ${high_cardinality_field} was indexed as a Loki label" >&2
+    exit 1
+  fi
+done
+echo "  Structured metadata          correlation_id query passed"
+echo "  Loki label cardinality       request IDs absent from labels"
 
 printf '\nObservability verification passed.\n'
 echo "Open Grafana when ready: kubectl -n grafana port-forward service/grafana 3000:80"

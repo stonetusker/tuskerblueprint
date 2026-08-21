@@ -7,7 +7,7 @@
 server:
   replicaCount: 1
   extraFlags:
-    - --enable-feature=exemplar-storage
+    - enable-feature=exemplar-storage
   global:
     # The dashboard refreshes every five seconds. A 15-second scrape interval
     # provides enough samples for Grafana's $__rate_interval without creating
