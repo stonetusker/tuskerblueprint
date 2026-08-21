@@ -1,0 +1,60 @@
+# ==============================================================================
+# TuskerBlueprint
+# Tempo Helm Values
+# Environment: Production
+# ==============================================================================
+
+# Production deployment: This single-binary configuration is a starting point.
+# For production-grade observability at scale, consider:
+# - Distributed topology (distributor, ingester, querier, query-frontend)
+# - Object storage backend (S3, GCS, Azure Blob, etc.)
+# - High-availability setup with multiple replicas
+# Refer to: https://grafana.com/docs/tempo/latest/setup/install/helm/
+replicas: 1
+
+tempo:
+  # Disable authentication for production (configure OIDC/OAuth if multi-tenant)
+  multitenancyEnabled: false
+
+  # Retention policy for traces: 30 days for production
+  retention: 30d
+
+  # Storage backend configuration
+  # Single-binary with persistent storage
+  # TODO: Migrate to object storage (S3, GCS, etc.) and distributed topology
+  storage:
+    trace:
+      backend: local
+      local:
+        path: /var/tempo/traces
+      wal:
+        path: /var/tempo/wal
+
+  # OTLP receiver configuration (gRPC and HTTP)
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+
+  # Server configuration
+  server:
+    http_listen_port: 3200
+
+# Persistence enabled for production
+persistence:
+  enabled: true
+  size: 100Gi
+  accessModes:
+    - ReadWriteOnce
+
+# Resource constraints for production
+resources:
+  requests:
+    cpu: 500m
+    memory: 512Mi
+  limits:
+    cpu: 2000m
+    memory: 2Gi

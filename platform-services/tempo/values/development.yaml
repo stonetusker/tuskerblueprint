@@ -1,0 +1,54 @@
+# ==============================================================================
+# TuskerBlueprint
+# Tempo Helm Values
+# Environment: Development
+# ==============================================================================
+
+# Development runs single-binary Tempo with local ephemeral storage.
+# Traces are lost on pod restart. This is acceptable for development use.
+replicas: 1
+
+tempo:
+  # Disable authentication for development simplicity
+  multitenancyEnabled: false
+
+  # Retention policy for traces: 24 hours for development
+  retention: 24h
+
+  # Storage backend configuration
+  # Single-binary mode with local ephemeral storage
+  storage:
+    trace:
+      backend: local
+      local:
+        path: /var/tempo/traces
+      wal:
+        path: /var/tempo/wal
+
+  # OTLP receiver configuration (gRPC and HTTP)
+  # This is how traces arrive from Alloy and other instrumented services
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+
+  # Server configuration
+  server:
+    http_listen_port: 3200
+
+# Persistence disabled for development
+# Traces stored in ephemeral pod storage
+persistence:
+  enabled: false
+
+# Resource constraints for development
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi

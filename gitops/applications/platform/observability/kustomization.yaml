@@ -4,5 +4,6 @@ kind: Kustomization
 resources:
   - prometheus
   - loki
+  - tempo
   - alloy
   - grafana

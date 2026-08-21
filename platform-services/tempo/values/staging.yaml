@@ -1,0 +1,56 @@
+# ==============================================================================
+# TuskerBlueprint
+# Tempo Helm Values
+# Environment: Staging
+# ==============================================================================
+
+# Staging runs single-binary Tempo with persistent storage.
+# Note: This topology is suitable for staging validation. For production use,
+# review distributed deployment options and object storage backend.
+replicas: 1
+
+tempo:
+  # Disable authentication for staging
+  multitenancyEnabled: false
+
+  # Retention policy for traces: 7 days for staging
+  retention: 7d
+
+  # Storage backend configuration
+  # Single-binary with persistent storage
+  storage:
+    trace:
+      backend: local
+      local:
+        path: /var/tempo/traces
+      wal:
+        path: /var/tempo/wal
+
+  # OTLP receiver configuration (gRPC and HTTP)
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+
+  # Server configuration
+  server:
+    http_listen_port: 3200
+
+# Persistence enabled for staging
+persistence:
+  enabled: true
+  size: 20Gi
+  accessModes:
+    - ReadWriteOnce
+
+# Resource constraints for staging
+resources:
+  requests:
+    cpu: 200m
+    memory: 256Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi
