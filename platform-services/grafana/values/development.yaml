@@ -70,6 +70,9 @@ datasources:
         jsonData:
           tracesToLogsV2:
             datasourceUid: loki
+            tags:
+              - key: service.name
+                value: app
             spanStartTimeShift: "-5m"
             spanEndTimeShift: "5m"
             filterByTraceID: true

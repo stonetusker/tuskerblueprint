@@ -119,6 +119,15 @@ def validate_collection_contract() -> None:
     ):
         raise ValueError("Grafana is not mounting the demo dashboard ConfigMap")
 
+    tempo_datasource = next(
+        datasource
+        for datasource in grafana_values["datasources"]["datasources.yaml"]["datasources"]
+        if datasource.get("uid") == "tempo"
+    )
+    traces_to_logs = tempo_datasource["jsonData"]["tracesToLogsV2"]
+    if traces_to_logs.get("tags") != [{"key": "service.name", "value": "app"}]:
+        raise ValueError("Tempo-to-Loki service tag mapping is missing or invalid")
+
     derived_fields = grafana_values["datasources"]["datasources.yaml"]["datasources"][1][
         "jsonData"
     ]["derivedFields"]
