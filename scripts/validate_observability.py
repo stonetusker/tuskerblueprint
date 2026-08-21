@@ -25,6 +25,12 @@ OBSERVABILITY_KUSTOMIZATION_PATH = (
 ALLOY_CONFIG_MAP_PATH = ROOT / "platform-services/alloy/config-map.yaml"
 ALLOY_DAEMON_SET_PATH = ROOT / "platform-services/alloy/daemon-set.yaml"
 ALLOY_SERVICE_PATH = ROOT / "platform-services/alloy/service.yaml"
+SERVICE_DEPLOYMENT_PATH = (
+    ROOT / "software-templates/tusker-service/skeleton/service/deploy/base/deployment.yaml"
+)
+SERVICE_NETWORK_POLICY_PATH = (
+    ROOT / "software-templates/tusker-service/skeleton/service/deploy/base/network-policy.yaml"
+)
 
 
 def load_yaml(path: Path) -> dict[str, Any]:
@@ -32,6 +38,14 @@ def load_yaml(path: Path) -> dict[str, Any]:
     if not isinstance(document, dict):
         raise TypeError(f"Expected a YAML object in {path.relative_to(ROOT)}")
     return document
+
+
+def load_yaml_documents(path: Path) -> list[dict[str, Any]]:
+    documents = yaml.safe_load_all(path.read_text(encoding="utf-8"))
+    result = [document for document in documents if document is not None]
+    if not all(isinstance(document, dict) for document in result):
+        raise TypeError(f"Expected YAML objects in {path.relative_to(ROOT)}")
+    return result
 
 
 def expanded_promql(expression: str) -> str:
@@ -231,6 +245,39 @@ def validate_collection_contract() -> None:
     pod_spec = alloy_daemon_set["spec"]["template"]["spec"]
     if any("hostPath" in volume for volume in pod_spec.get("volumes", [])):
         raise ValueError("Kubernetes API log collection must not mount hostPath")
+
+    service_deployment = load_yaml(SERVICE_DEPLOYMENT_PATH)
+    service_container = service_deployment["spec"]["template"]["spec"]["containers"][0]
+    service_env = {
+        entry["name"]: entry.get("value")
+        for entry in service_container.get("env", [])
+    }
+    if service_env.get("OTEL_EXPORTER_OTLP_ENDPOINT") != (
+        "http://alloy.monitoring.svc.cluster.local:4317"
+    ):
+        raise ValueError("Service must export OTLP traces to Alloy on 4317/TCP")
+
+    service_network_policies = load_yaml_documents(SERVICE_NETWORK_POLICY_PATH)
+    egress_rules = [
+        rule
+        for policy in service_network_policies
+        if policy.get("kind") == "NetworkPolicy"
+        for rule in policy.get("spec", {}).get("egress", [])
+    ]
+    if not any(
+        rule.get("to") == [
+            {
+                "namespaceSelector": {
+                    "matchLabels": {
+                        "kubernetes.io/metadata.name": "monitoring"
+                    }
+                }
+            }
+        ]
+        and rule.get("ports") == [{"port": 4317, "protocol": "TCP"}]
+        for rule in egress_rules
+    ):
+        raise ValueError("Service NetworkPolicy must allow monitoring:4317/TCP")
 
 
 def main() -> None:
