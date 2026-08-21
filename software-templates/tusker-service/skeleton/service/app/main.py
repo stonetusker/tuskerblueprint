@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import time
 import uuid
 from collections import OrderedDict
@@ -16,7 +17,21 @@ from typing import Annotated
 from fastapi import FastAPI, Header, HTTPException, Query, Request, Response, status
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, Histogram, generate_latest
+from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.trace import ProxyTracerProvider
+from prometheus_client import (
+    CONTENT_TYPE_LATEST,
+    CollectorRegistry,
+    Counter,
+    Gauge,
+    Histogram,
+    generate_latest,
+)
 from pydantic import BaseModel, Field
 
 from .config import Settings, get_failure_mode
@@ -27,25 +42,60 @@ settings = Settings.from_environment()
 logger = logging.getLogger(settings.service_name)
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 
+# Initialize OpenTelemetry tracing
+resource = Resource.create({
+    "service.name": settings.service_name,
+    "deployment.environment": settings.environment,
+})
+
+otlp_exporter = OTLPSpanExporter(
+    endpoint=os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317"),
+)
+current_provider = trace.get_tracer_provider()
+if isinstance(current_provider, ProxyTracerProvider):
+    tracer_provider = TracerProvider(resource=resource)
+    tracer_provider.add_span_processor(BatchSpanProcessor(otlp_exporter))
+    trace.set_tracer_provider(tracer_provider)
+else:
+    tracer_provider = current_provider
+
+# Auto-instrument FastAPI
+app = FastAPI(
+    title="${{ values.name }}",
+    description=(
+        "${{ values.description }}. "
+        "This reference workload demonstrates secure CI, GitOps, "
+        "observability, failure detection, and rollback. It does not send real messages."
+    ),
+    version="1.2.0",
+)
+FastAPIInstrumentor.instrument_app(app, tracer_provider=tracer_provider)
+
+PROMETHEUS_REGISTRY = CollectorRegistry()
+
 REQUESTS = Counter(
     "http_requests_total",
     "Total HTTP requests handled by the demo service",
     ["service", "environment", "method", "route", "status"],
+    registry=PROMETHEUS_REGISTRY,
 )
 REQUEST_LATENCY = Histogram(
     "http_request_duration_seconds",
     "HTTP request duration in seconds",
     ["service", "environment", "method", "route"],
+    registry=PROMETHEUS_REGISTRY,
 )
 NOTIFICATIONS = Counter(
     "notification_requests_total",
     "Accepted notification requests",
     ["service", "environment", "channel"],
+    registry=PROMETHEUS_REGISTRY,
 )
 APPLICATION_INFO = Gauge(
     "application_info",
     "Static information about the running application release",
     ["service", "environment", "version"],
+    registry=PROMETHEUS_REGISTRY,
 )
 APPLICATION_INFO.labels(
     service=settings.service_name,
@@ -90,6 +140,7 @@ NOTIFICATION_STORE_RECORDS = Gauge(
     "notification_store_records",
     "Current number of retained demo notification records",
     ["service", "environment"],
+    registry=PROMETHEUS_REGISTRY,
 )
 
 
@@ -106,15 +157,6 @@ def sync_notification_store_metric() -> None:
 sync_notification_store_metric()
 
 
-app = FastAPI(
-    title="${{ values.name }}",
-    description=(
-        "${{ values.description }}. "
-        "This reference workload demonstrates secure CI, GitOps, "
-        "observability, failure detection, and rollback. It does not send real messages."
-    ),
-    version="1.2.0",
-)
 app.mount("/assets", StaticFiles(directory=STATIC_DIR), name="assets")
 
 
@@ -124,6 +166,11 @@ async def request_observability(request: Request, call_next):  # type: ignore[no
     supplied_correlation_id = request.headers.get("x-correlation-id", "").strip()
     correlation_id = supplied_correlation_id[:128] or str(uuid.uuid4())
     request.state.correlation_id = correlation_id
+
+    current_span = trace.get_current_span()
+    if current_span and current_span.is_recording():
+        current_span.set_attribute("correlation_id", correlation_id)
+
     mode = get_failure_mode()
 
     if mode == "latency" and request.url.path.startswith("/api/"):
@@ -243,7 +290,7 @@ def readiness() -> dict[str, str]:
 
 @app.get("/metrics", include_in_schema=False)
 def metrics() -> Response:
-    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
+    return Response(generate_latest(PROMETHEUS_REGISTRY), media_type=CONTENT_TYPE_LATEST)
 
 
 @app.get("/api/v1/notifications", response_model=list[NotificationRecord])

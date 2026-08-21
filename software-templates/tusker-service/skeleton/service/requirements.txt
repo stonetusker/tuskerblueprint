@@ -2,3 +2,7 @@ fastapi==0.141.1
 prometheus-client==0.26.0
 starlette==1.4.1
 uvicorn[standard]==0.52.1
+opentelemetry-api==1.44.0
+opentelemetry-sdk==1.44.0
+opentelemetry-exporter-otlp==1.44.0
+opentelemetry-instrumentation-fastapi==0.65b0

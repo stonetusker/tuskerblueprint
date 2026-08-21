@@ -70,3 +70,27 @@ data:
         max_segment_age = "1h"
       }
     }
+
+    // Receive OTLP traces from applications and forward to Tempo
+    otelcol.receiver.otlp "default" {
+      grpc {
+        endpoint = "0.0.0.0:4317"
+      }
+      http {
+        endpoint = "0.0.0.0:4318"
+      }
+      output {
+        traces = [otelcol.exporter.otlp.tempo.input]
+      }
+    }
+
+    // Export OTLP traces to Tempo
+    otelcol.exporter.otlp "tempo" {
+      client {
+        endpoint = "tempo.monitoring.svc.cluster.local:4317"
+        tls {
+          insecure             = true
+          insecure_skip_verify = true
+        }
+      }
+    }
