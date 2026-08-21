@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import re
 from typing import Any
 
 import yaml
@@ -116,6 +117,19 @@ def validate_collection_contract() -> None:
         "grafana-dashboard-demo-service"
     ):
         raise ValueError("Grafana is not mounting the demo dashboard ConfigMap")
+
+    derived_fields = grafana_values["datasources"]["datasources.yaml"]["datasources"][1][
+        "jsonData"
+    ]["derivedFields"]
+    trace_derived_field = next(
+        field for field in derived_fields if field.get("datasourceUid") == "tempo"
+    )
+    matcher_regex = trace_derived_field.get("matcherRegex", "")
+    if "(?P<" in matcher_regex:
+        raise ValueError("Grafana derived fields must not use Python named groups")
+    if not re.search(r"\([^)]+\{32\}\)", matcher_regex):
+        raise ValueError("Grafana Tempo derived field must capture a 32-character trace ID")
+    re.compile(matcher_regex)
 
     if loki_values["loki"]["commonConfig"]["replication_factor"] != 1:
         raise ValueError("Single-binary Loki must use replication_factor: 1")

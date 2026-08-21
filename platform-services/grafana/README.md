@@ -44,5 +44,7 @@ The development dashboard ConfigMap also provisions **Platform Observability
 Overview** and **Distributed Tracing Demo**. Prometheus request latency
 histograms now carry exemplars with the current trace ID, the latency panels
 show the exemplar data in Grafana, and the `tempo` datasource is wired to Loki
-via `tracesToLogsV2` for direct trace-to-log navigation. A populated tracing
-panel indicates the OTLP pipeline is working end to end.
+via `tracesToLogsV2` for direct trace-to-log navigation. Loki log rows expose
+the actual 32-character `trace_id` as a derived Tempo link; `correlation_id`
+remains request-level metadata and is not used as a Tempo trace identifier. A
+populated tracing panel indicates the OTLP pipeline is working end to end.

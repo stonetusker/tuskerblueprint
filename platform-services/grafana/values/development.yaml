@@ -57,8 +57,8 @@ datasources:
         jsonData:
           derivedFields:
             - datasourceUid: tempo
-              matcherRegex: 'correlation_id["\s:]+[=: ]*"?(?P<correlation_id>[A-Za-z0-9-]+)'
-              name: Trace by correlation ID
+              matcherRegex: 'trace_id["\s:]+[=: ]*"?([A-Fa-f0-9]{32})'
+              name: Trace by trace ID
               url: '$__value.raw'
               urlDisplayLabel: 'View trace'
       - name: Tempo
