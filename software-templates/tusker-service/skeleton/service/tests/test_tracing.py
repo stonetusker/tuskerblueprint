@@ -6,7 +6,6 @@ import importlib
 
 from fastapi.testclient import TestClient
 from opentelemetry import trace
-from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
@@ -36,9 +35,7 @@ def test_request_produces_span_with_correlation_id(monkeypatch) -> None:
 
     spans = in_memory_exporter.get_finished_spans()
     assert len(spans) > 0
-    assert any(
-        span.attributes.get("correlation_id") == test_correlation_id for span in spans
-    )
+    assert any(span.attributes.get("correlation_id") == test_correlation_id for span in spans)
 
 
 def test_auto_generated_correlation_id_in_span(monkeypatch) -> None:

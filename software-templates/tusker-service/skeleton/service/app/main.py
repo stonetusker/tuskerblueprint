@@ -43,19 +43,23 @@ logger = logging.getLogger(settings.service_name)
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 # Initialize OpenTelemetry tracing
-resource = Resource.create({
-    "service.name": settings.service_name,
-    "deployment.environment": settings.environment,
-})
+resource = Resource.create(
+    {
+        "service.name": settings.service_name,
+        "deployment.environment": settings.environment,
+    }
+)
 
 otlp_exporter = OTLPSpanExporter(
     endpoint=os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317"),
 )
 current_provider = trace.get_tracer_provider()
+tracer_provider: trace.TracerProvider
 if isinstance(current_provider, ProxyTracerProvider):
-    tracer_provider = TracerProvider(resource=resource)
-    tracer_provider.add_span_processor(BatchSpanProcessor(otlp_exporter))
-    trace.set_tracer_provider(tracer_provider)
+    sdk_tracer_provider = TracerProvider(resource=resource)
+    sdk_tracer_provider.add_span_processor(BatchSpanProcessor(otlp_exporter))
+    trace.set_tracer_provider(sdk_tracer_provider)
+    tracer_provider = sdk_tracer_provider
 else:
     tracer_provider = current_provider
 

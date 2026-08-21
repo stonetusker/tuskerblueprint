@@ -55,7 +55,10 @@ def load_documents(path: Path) -> list[Any]:
 # Parse every maintained YAML source with duplicate-key protection. Raw Backstage
 # template sources are rendered and validated separately.
 for path in sorted(ROOT.rglob("*.yaml")) + sorted(ROOT.rglob("*.yml")):
-    if any(part in {"__MACOSX", ".generated", "node_modules"} for part in path.parts):
+    if any(
+        part in {"__MACOSX", ".generated", "node_modules", ".venv", "venv"}
+        for part in path.parts
+    ):
         continue
     text = path.read_text(encoding="utf-8")
     if "{%" in text or "${{ values." in text:
@@ -124,9 +127,13 @@ check("--write-kubeconfig-mode=600" in k3s_defaults, "k3s kubeconfig mode is not
 
 for cache_name in ("__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache"):
     for cache_path in ROOT.rglob(cache_name):
+        if any(part in {".venv", "venv"} for part in cache_path.parts):
+            continue
         errors.append(f"generated cache directory committed: {cache_path.relative_to(ROOT)}")
 for artifact_name in (".coverage", "coverage.xml"):
     for artifact_path in ROOT.rglob(artifact_name):
+        if any(part in {".venv", "venv"} for part in artifact_path.parts):
+            continue
         errors.append(f"generated test artifact committed: {artifact_path.relative_to(ROOT)}")
 
 

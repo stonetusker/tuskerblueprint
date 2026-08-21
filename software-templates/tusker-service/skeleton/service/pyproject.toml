@@ -25,5 +25,8 @@ warn_unused_ignores = true
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
-module = ["prometheus_client.*"]
+module = [
+	"prometheus_client.*",
+	"opentelemetry.instrumentation.fastapi",
+]
 ignore_missing_imports = true
