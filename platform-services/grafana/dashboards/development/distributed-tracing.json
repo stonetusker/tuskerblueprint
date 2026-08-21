@@ -51,21 +51,27 @@
       },
       "id": 1,
       "options": {
-        "showTable": true,
-        "spanBar": {
-          "type": "Tag"
-        }
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
       },
       "targets": [
         {
           "query": "{ resource.service.name = \"demo-service\" }",
           "queryType": "traceql",
-          "tableType": "spans",
+          "tableType": "traces",
           "refId": "A"
         }
       ],
       "title": "Recent traces",
-      "type": "traces"
+      "type": "table"
     },
     {
       "datasource": {

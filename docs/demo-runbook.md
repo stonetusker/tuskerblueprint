@@ -53,7 +53,7 @@ the `LIVE` telemetry tile, request rate, p95 latency, HTTP outcomes, and the
 same request events arriving in Loki.
 
 For the tracing view, open **Distributed Tracing Demo**. The **Recent traces**
-panel uses span-shaped Tempo results and should populate as soon as the app
+table uses Tempo trace-search results and should populate as soon as the app
 sends OTLP traces to Tempo. Use the
 **Customer/request correlation ID** field at the top of the dashboard to paste
 the ID from the customer issue, then open the matching trace and use **Logs for
