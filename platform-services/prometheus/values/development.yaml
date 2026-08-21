@@ -24,7 +24,114 @@ server:
       memory: 1Gi
 
 alertmanager:
-  enabled: false
+  enabled: true
+  config:
+    enabled: true
+    route:
+      group_by:
+        - alertname
+        - service
+        - slo
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+      receiver: demo-webhook-placeholder
+    receivers:
+      - name: demo-webhook-placeholder
+        webhook_configs:
+          - url: https://example.invalid/alertmanager-webhook
+            send_resolved: true
+
+serverFiles:
+  recording_rules.yml:
+    groups:
+      - name: demo-service-red
+        interval: 15s
+        rules:
+          - record: demo_service:http_requests:rate5m
+            expr: sum(rate(http_requests_total{service="demo-service",environment="development"}[5m]))
+          - record: demo_service:http_requests:rate1h
+            expr: sum(rate(http_requests_total{service="demo-service",environment="development"}[1h]))
+          - record: demo_service:http_requests:rate30m
+            expr: sum(rate(http_requests_total{service="demo-service",environment="development"}[30m]))
+          - record: demo_service:http_requests:rate6h
+            expr: sum(rate(http_requests_total{service="demo-service",environment="development"}[6h]))
+          - record: demo_service:http_errors:rate5m
+            expr: sum(rate(http_requests_total{service="demo-service",environment="development",status=~"5.."}[5m]))
+          - record: demo_service:http_errors:rate1h
+            expr: sum(rate(http_requests_total{service="demo-service",environment="development",status=~"5.."}[1h]))
+          - record: demo_service:http_errors:rate30m
+            expr: sum(rate(http_requests_total{service="demo-service",environment="development",status=~"5.."}[30m]))
+          - record: demo_service:http_errors:rate6h
+            expr: sum(rate(http_requests_total{service="demo-service",environment="development",status=~"5.."}[6h]))
+          - record: demo_service:http_error_ratio:rate5m
+            expr: demo_service:http_errors:rate5m / clamp_min(demo_service:http_requests:rate5m, 0.001)
+          - record: demo_service:http_error_ratio:rate1h
+            expr: demo_service:http_errors:rate1h / clamp_min(demo_service:http_requests:rate1h, 0.001)
+          - record: demo_service:http_error_ratio:rate30m
+            expr: demo_service:http_errors:rate30m / clamp_min(demo_service:http_requests:rate30m, 0.001)
+          - record: demo_service:http_error_ratio:rate6h
+            expr: demo_service:http_errors:rate6h / clamp_min(demo_service:http_requests:rate6h, 0.001)
+          - record: demo_service:http_latency:p50_seconds:5m
+            expr: histogram_quantile(0.50, sum by (le) (rate(http_request_duration_seconds_bucket{service="demo-service",environment="development"}[5m])))
+          - record: demo_service:http_latency:p95_seconds:5m
+            expr: histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{service="demo-service",environment="development"}[5m])))
+          - record: demo_service:http_latency:p99_seconds:5m
+            expr: histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{service="demo-service",environment="development"}[5m])))
+          - record: demo_service:http_latency_error_ratio:rate5m
+            expr: 1 - (sum(rate(http_request_duration_seconds_bucket{service="demo-service",environment="development",le="0.5"}[5m])) / clamp_min(demo_service:http_requests:rate5m, 0.001))
+          - record: demo_service:http_latency_error_ratio:rate1h
+            expr: 1 - (sum(rate(http_request_duration_seconds_bucket{service="demo-service",environment="development",le="0.5"}[1h])) / clamp_min(demo_service:http_requests:rate1h, 0.001))
+          - record: demo_service:http_latency_error_ratio:rate30m
+            expr: 1 - (sum(rate(http_request_duration_seconds_bucket{service="demo-service",environment="development",le="0.5"}[30m])) / clamp_min(demo_service:http_requests:rate30m, 0.001))
+          - record: demo_service:http_latency_error_ratio:rate6h
+            expr: 1 - (sum(rate(http_request_duration_seconds_bucket{service="demo-service",environment="development",le="0.5"}[6h])) / clamp_min(demo_service:http_requests:rate6h, 0.001))
+
+  alerting_rules.yml:
+    groups:
+      - name: demo-service-slo-burn-rate
+        interval: 15s
+        rules:
+          - alert: DemoServiceAvailabilityFastBurn
+            expr: demo_service:http_error_ratio:rate5m > 14.4 * 0.005 and demo_service:http_error_ratio:rate1h > 14.4 * 0.005
+            for: 2m
+            labels:
+              service: demo-service
+              slo: availability
+              severity: page
+            annotations:
+              summary: Demo service availability SLO is fast burning
+              description: Error budget burn is above 14.4x in both the 5m and 1h windows.
+          - alert: DemoServiceAvailabilitySlowBurn
+            expr: demo_service:http_error_ratio:rate30m > 6 * 0.005 and demo_service:http_error_ratio:rate6h > 6 * 0.005
+            for: 15m
+            labels:
+              service: demo-service
+              slo: availability
+              severity: ticket
+            annotations:
+              summary: Demo service availability SLO is slow burning
+              description: Error budget burn is above 6x in both the 30m and 6h windows.
+          - alert: DemoServiceLatencyFastBurn
+            expr: demo_service:http_latency_error_ratio:rate5m > 14.4 * 0.005 and demo_service:http_latency_error_ratio:rate1h > 14.4 * 0.005
+            for: 2m
+            labels:
+              service: demo-service
+              slo: latency
+              severity: page
+            annotations:
+              summary: Demo service latency SLO is fast burning
+              description: More than 0.5% of requests exceed the illustrative 500ms latency target in both the 5m and 1h windows.
+          - alert: DemoServiceLatencySlowBurn
+            expr: demo_service:http_latency_error_ratio:rate30m > 6 * 0.005 and demo_service:http_latency_error_ratio:rate6h > 6 * 0.005
+            for: 15m
+            labels:
+              service: demo-service
+              slo: latency
+              severity: ticket
+            annotations:
+              summary: Demo service latency SLO is slow burning
+              description: More than 0.5% of requests exceed the illustrative 500ms latency target in both the 30m and 6h windows.
 
 prometheus-pushgateway:
   enabled: false

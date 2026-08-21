@@ -412,7 +412,7 @@
         {
           "editorMode": "code",
           "exemplar": true,
-          "expr": "1000 * (histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{service=\"$service\",environment=\"$environment\"}[$__rate_interval]))) or vector(0))",
+          "expr": "1000 * (demo_service:http_latency:p95_seconds:5m or vector(0))",
           "legendFormat": "p95",
           "refId": "A"
         }
@@ -562,21 +562,21 @@
         {
           "editorMode": "code",
           "exemplar": true,
-          "expr": "1000 * (histogram_quantile(0.50, sum by (le) (rate(http_request_duration_seconds_bucket{service=\"$service\",environment=\"$environment\"}[$__rate_interval]))) or vector(0))",
+          "expr": "1000 * (demo_service:http_latency:p50_seconds:5m or vector(0))",
           "legendFormat": "p50",
           "refId": "A"
         },
         {
           "editorMode": "code",
           "exemplar": true,
-          "expr": "1000 * (histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{service=\"$service\",environment=\"$environment\"}[$__rate_interval]))) or vector(0))",
+          "expr": "1000 * (demo_service:http_latency:p95_seconds:5m or vector(0))",
           "legendFormat": "p95",
           "refId": "B"
         },
         {
           "editorMode": "code",
           "exemplar": true,
-          "expr": "1000 * (histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket{service=\"$service\",environment=\"$environment\"}[$__rate_interval]))) or vector(0))",
+          "expr": "1000 * (demo_service:http_latency:p99_seconds:5m or vector(0))",
           "legendFormat": "p99",
           "refId": "C"
         }
@@ -806,7 +806,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "100 * ((sum(rate(http_requests_total{service=\"$service\",environment=\"$environment\",status=~\"5..\"}[$__rate_interval])) or vector(0)) / clamp_min((sum(rate(http_requests_total{service=\"$service\",environment=\"$environment\"}[$__rate_interval])) or vector(0)), 0.001))",
+          "expr": "100 * (demo_service:http_error_ratio:rate5m or vector(0))",
           "legendFormat": "5xx error rate",
           "refId": "A"
         }
