@@ -5,6 +5,7 @@ workload_namespace="${DEMO_NAMESPACE:-demo-service-development}"
 workload_service="${DEMO_SERVICE:-demo-service}"
 prometheus_port="${DEMO_PROMETHEUS_PORT:-19090}"
 loki_port="${DEMO_LOKI_PORT:-13100}"
+tempo_port="${DEMO_TEMPO_PORT:-13200}"
 grafana_port="${DEMO_GRAFANA_PORT:-13000}"
 application_port="${DEMO_VERIFY_APP_PORT:-18082}"
 
@@ -17,7 +18,7 @@ done
 
 failed=0
 alloy_health_status=""
-applications=(prometheus loki alloy grafana demo-service-development)
+applications=(prometheus loki tempo alloy grafana demo-service-development)
 
 print_alloy_diagnostics() {
   local pod_name restart_count
@@ -144,11 +145,13 @@ wait_for_http() {
 printf '\nStarting temporary read-only port-forwards\n'
 start_port_forward monitoring prometheus-server "${prometheus_port}:80" prometheus
 start_port_forward monitoring loki-gateway "${loki_port}:80" loki
+start_port_forward monitoring tempo "${tempo_port}:3200" tempo
 start_port_forward grafana grafana "${grafana_port}:80" grafana
 start_port_forward "${workload_namespace}" "${workload_service}" "${application_port}:80" application
 
 wait_for_http "http://127.0.0.1:${prometheus_port}/-/ready" Prometheus "${work_dir}/prometheus.log"
 wait_for_http "http://127.0.0.1:${loki_port}/loki/api/v1/status/buildinfo" Loki "${work_dir}/loki.log"
+wait_for_http "http://127.0.0.1:${tempo_port}/ready" Tempo "${work_dir}/tempo.log"
 wait_for_http "http://127.0.0.1:${grafana_port}/api/health" Grafana "${work_dir}/grafana.log"
 wait_for_http "http://127.0.0.1:${application_port}/readyz" "Demo service" "${work_dir}/application.log"
 

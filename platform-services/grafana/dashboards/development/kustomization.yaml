@@ -7,6 +7,8 @@ configMapGenerator:
   - name: grafana-dashboard-demo-service
     files:
       - demo-service-delivery.json
+      - platform-observability.json
+      - distributed-tracing.json
 
 generatorOptions:
   disableNameSuffixHash: true
