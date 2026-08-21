@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: demo-service-allow-otlp-egress
+  namespace: demo-service-development
+  annotations:
+    argocd.argoproj.io/sync-wave: "82"
+    app.kubernetes.io/name: demo-service
+    app.kubernetes.io/component: networking
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: demo-service
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - port: 4317
+          protocol: TCP

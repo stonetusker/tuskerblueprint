@@ -3,4 +3,5 @@ kind: Kustomization
 
 resources:
   - application-development.yaml
+  - allow-otlp-egress.yaml
   - ingress.yaml
