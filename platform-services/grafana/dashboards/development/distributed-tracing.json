@@ -21,6 +21,25 @@
   "panels": [
     {
       "datasource": {
+        "type": "grafana",
+        "uid": "-- Grafana --"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "content": "## Customer issue lookup\n\nEnter the customer or request correlation ID above. The trace and log panels below will narrow to that request. Leave the default `.*` to show all recent demo-service traces.\n\nFlow: issue -> correlation ID -> application log -> trace ID -> Tempo trace -> linked logs.",
+        "mode": "markdown"
+      },
+      "title": "How to investigate a customer issue",
+      "type": "text"
+    },
+    {
+      "datasource": {
         "type": "tempo",
         "uid": "tempo"
       },
@@ -28,7 +47,7 @@
         "h": 14,
         "w": 24,
         "x": 0,
-        "y": 0
+        "y": 4
       },
       "id": 1,
       "options": {
@@ -39,7 +58,7 @@
       },
       "targets": [
         {
-          "query": "{}",
+          "query": "{ .service.name = \"demo-service\" && .correlation_id =~ \"$correlation_id\" }",
           "queryType": "traceql",
           "refId": "A"
         }
@@ -56,7 +75,7 @@
         "h": 10,
         "w": 12,
         "x": 0,
-        "y": 14
+        "y": 18
       },
       "id": 2,
       "options": {
@@ -70,7 +89,7 @@
       },
       "targets": [
         {
-          "expr": "{namespace=\"demo-service-development\", app=\"demo-service\"} | json | message=\"request_completed\"",
+          "expr": "{namespace=\"demo-service-development\", app=\"demo-service\"} | json | message=\"request_completed\" | correlation_id=~\"${correlation_id}\"",
           "refId": "A"
         }
       ],
@@ -92,7 +111,7 @@
         "h": 10,
         "w": 12,
         "x": 12,
-        "y": 14
+        "y": 18
       },
       "id": 3,
       "options": {
@@ -124,7 +143,19 @@
     "tracing"
   ],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "current": {
+          "text": ".*",
+          "value": ".*"
+        },
+        "label": "Customer/request correlation ID",
+        "name": "correlation_id",
+        "query": ".*",
+        "skipUrlSync": false,
+        "type": "textbox"
+      }
+    ]
   },
   "time": {
     "from": "now-30m",

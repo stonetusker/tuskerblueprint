@@ -53,10 +53,25 @@ the `LIVE` telemetry tile, request rate, p95 latency, HTTP outcomes, and the
 same request events arriving in Loki.
 
 For the tracing view, open **Distributed Tracing Demo**. The **Recent traces**
-panel should populate as soon as the app sends OTLP traces to Tempo. Open one
-trace, then use **Logs for this span** to demonstrate the Tempo-to-Loki
-correlation link. If the panel is empty, first verify the app instrumentation,
-Alloy OTLP receiver, and Tempo readiness before continuing with the demo.
+panel should populate as soon as the app sends OTLP traces to Tempo. Use the
+**Customer/request correlation ID** field at the top of the dashboard to paste
+the ID from the customer issue, then open the matching trace and use **Logs for
+this span** to demonstrate the Tempo-to-Loki correlation link. The default
+value `.*` shows all recent demo-service traces.
+
+For a simple customer-issue scene, create a request with a memorable ID:
+
+```bash
+curl -i -X POST http://127.0.0.1:8082/api/v1/notifications \
+   -H 'Content-Type: application/json' \
+   -H 'X-Correlation-ID: cust-1042-checkout' \
+   -d '{"channel":"email","recipient":"customer@example.invalid","message":"Order confirmation"}'
+```
+
+Enter `cust-1042-checkout` in the dashboard field. The log panel narrows to
+that request, and the trace panel narrows to its Tempo trace. If the panel is
+empty even with the default `.*`, first verify the app instrumentation, Alloy
+OTLP receiver, and Tempo readiness before continuing with the demo.
 
 To verify Tempo directly during the demo:
 
