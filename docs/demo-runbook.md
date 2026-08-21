@@ -17,6 +17,7 @@ Argo CD Applications to show `Synced` and `Healthy`:
 - `loki`
 - `alloy`
 - `grafana`
+- `tempo`
 - `demo-service-development`
 
 Run the end-to-end data-path check before recording:
@@ -27,7 +28,8 @@ Run the end-to-end data-path check before recording:
 
 The check creates one buyer-safe notification, then proves that the exact metric
 families used by the dashboard are present in Prometheus and that the request's
-correlation ID is searchable in Loki.
+correlation ID is searchable in Loki. It also verifies that Tempo's HTTP API is
+ready.
 
 For a visually active dashboard, use two terminals:
 
@@ -45,6 +47,25 @@ kubectl -n grafana port-forward service/grafana 3000:80
 Open `http://127.0.0.1:3000`. In Grafana select **Dashboards**, then **Stonetusker Demo**, then
 **Stonetusker Demo Service | Golden Path**. Keep the time picker at **Last 30
 minutes** and refresh at **5s**.
+
+For the platform view, open **Platform Observability Overview**. Use it to show
+the `LIVE` telemetry tile, request rate, p95 latency, HTTP outcomes, and the
+same request events arriving in Loki.
+
+For the tracing view, open **Distributed Tracing Demo**. The **Recent traces**
+panel is populated only after the application sends OTLP traces to Tempo. When
+traces are present, open a trace and use **Logs for this span** to demonstrate
+the Tempo-to-Loki correlation link. An empty trace panel before trace
+instrumentation is enabled is expected and does not indicate a Tempo failure.
+
+To verify Tempo directly during the demo:
+
+```bash
+kubectl -n monitoring port-forward service/tempo 13200:3200
+curl http://127.0.0.1:13200/ready
+```
+
+The expected response is `ready` with HTTP status `200`.
 
 The top-left **Telemetry state** tile is authoritative:
 
