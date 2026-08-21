@@ -1,9 +1,11 @@
 # Grafana Alloy log collection
 
 Alloy tails Kubernetes container logs through the Kubernetes API and forwards
-the original application line to Loki. It does not require a privileged or root
-container, or a host filesystem mount. Each DaemonSet instance is scoped to the
-Pods on its own node so the same log is not collected more than once.
+the original application line to Loki. It also receives OTLP gRPC traces on
+4317/TCP through the `alloy` ClusterIP Service. It does not require a
+privileged or root container, or a host filesystem mount. Each DaemonSet
+instance is scoped to the Pods on its own node so the same log is not collected
+more than once.
 
 The development observability stack enables Alloy through the root Argo CD
 Kustomization so the provisioned Grafana log panels work after bootstrap.

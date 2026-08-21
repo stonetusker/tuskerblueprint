@@ -63,3 +63,10 @@ spec:
         - namespaceSelector:
             matchLabels:
               platform.stonetusker.com/workload: "true"
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - port: 4317
+          protocol: TCP

@@ -24,6 +24,7 @@ OBSERVABILITY_KUSTOMIZATION_PATH = (
 )
 ALLOY_CONFIG_MAP_PATH = ROOT / "platform-services/alloy/config-map.yaml"
 ALLOY_DAEMON_SET_PATH = ROOT / "platform-services/alloy/daemon-set.yaml"
+ALLOY_SERVICE_PATH = ROOT / "platform-services/alloy/service.yaml"
 
 
 def load_yaml(path: Path) -> dict[str, Any]:
@@ -184,6 +185,23 @@ def validate_collection_contract() -> None:
         raise ValueError("Loki structured metadata is not enabled")
 
     alloy_daemon_set = load_yaml(ALLOY_DAEMON_SET_PATH)
+    alloy_service = load_yaml(ALLOY_SERVICE_PATH)
+    if alloy_service.get("metadata", {}).get("name") != "alloy":
+        raise ValueError("Alloy OTLP Service must be named alloy")
+    if alloy_service.get("spec", {}).get("selector") != {
+        "app.kubernetes.io/name": "alloy"
+    }:
+        raise ValueError("Alloy OTLP Service selector does not target Alloy")
+    if alloy_service.get("spec", {}).get("ports") != [
+        {
+            "name": "otlp-grpc",
+            "port": 4317,
+            "protocol": "TCP",
+            "targetPort": 4317,
+        }
+    ]:
+        raise ValueError("Alloy OTLP Service must expose only 4317/TCP")
+
     containers = alloy_daemon_set["spec"]["template"]["spec"]["containers"]
     alloy_container = next(
         container for container in containers if container.get("name") == "alloy"
