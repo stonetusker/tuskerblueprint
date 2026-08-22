@@ -64,7 +64,7 @@
       },
       "targets": [
         {
-          "query": "{ resource.service.name = \"demo-service\" }",
+          "query": "{ resource.service.name = \"demo-service\" && span.http.target != \"/healthz\" && span.http.target != \"/readyz\" && span.http.target != \"/metrics\" }",
           "queryType": "traceql",
           "tableType": "traces",
           "refId": "A"
